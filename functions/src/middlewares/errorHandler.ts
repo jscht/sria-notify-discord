@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { ResponseHandler } from "../types/responseHandler.d";
-import { logger } from "../providers/firebase";
+import { logger } from "firebase-functions";
 
 export default function errorHandler(err: ResponseHandler, req: Request, res: Response, next: NextFunction) {
   // error logger
