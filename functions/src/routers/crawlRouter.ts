@@ -21,7 +21,7 @@ crawlRouter.get("/recruit", async (req, res, next) => {
     next({ status: 500, message: result.message }); // 에러 객체 반환
     return;
   }
-  logger.info(`"/recruit" 정상 처리`);
+  logger.info("/recruit 정상 처리");
   res.status(200).json({ message: "정상 처리" });
 });
 
