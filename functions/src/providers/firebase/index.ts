@@ -1,4 +1,5 @@
 import { checkFirebaseConnection } from "./checkFirebaseConnection";
+import { firebaseDeploy } from "./firebaseDeploy";
 import { initFirebaseApp } from "./initFirebaseApp";
 
-export { initFirebaseApp, checkFirebaseConnection };
+export { initFirebaseApp, firebaseDeploy, checkFirebaseConnection };
