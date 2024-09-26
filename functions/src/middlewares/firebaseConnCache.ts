@@ -6,11 +6,13 @@ import { checkFirebaseConnection } from "../providers/firebase";
 let fbLastCheckTime: number | null = null;
 
 /**
- * @description 30분 간격 파이어베이스 연결 확인
+ * @description 10분 간격 파이어베이스 연결 확인
  */
 export async function firebaseConnCache(req: Request, res: Response, next: NextFunction) {
   const currentTime = Date.now();
-  if (fbLastCheckTime && (currentTime - fbLastCheckTime < 1800000)) {
+  // 10분
+  const coolTime = 10 * 60 * 1000;
+  if (fbLastCheckTime && (currentTime - fbLastCheckTime < coolTime)) {
     logger.info("Using cached connection");
     console.log("Using cached connection");
     return next();
