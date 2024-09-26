@@ -1,4 +1,4 @@
-import { requestDummyData } from "../crawl";
+import { requestDummyData } from "../crawlers/sriagent";
 import { logger } from "firebase-functions";
 import { City } from "../types/city";
 
