@@ -2,7 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 dotenv.config();
 import { firebaseDeploy, initFirebaseApp } from "./providers/firebase";
-import { crawlRouter } from "./routers/crawlRouter";
+import { recruitRouter } from "./routers/recruitRouter";
 import { firebaseConnCache } from "./middlewares/firebaseConnCache";
 import pageNotFound from "./middlewares/pageNotFound";
 import errorHandler from "./middlewares/errorHandler";
@@ -14,7 +14,7 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use(firebaseConnCache);
 // app.use(discordConnCache);
-app.use("/api", crawlRouter);
+app.use("/api", recruitRouter);
 
 // catch 404 and forward to error handler
 app.use(pageNotFound);
