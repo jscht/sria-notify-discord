@@ -1,15 +1,11 @@
-import { logger } from "firebase-functions";
 import { City } from "../../types/city";
+import { ResponseRecruitData } from "../../types/responseRecruitData.d";
 import recruitList from "../../constants/recruit_list.json";
 
 export async function requestDummyData(city?: City) {
-  try {
-    if (!city) {
-      return recruitList;
-    }
-    return recruitList.filter((job) => job.title.includes(city));
-  } catch (error) {
-    logger.error("더미데이터 반환 실패");
-    return new Error("더미데이터 에러");
+  const recruitDataList: ResponseRecruitData[] = recruitList;
+  if (!city) {
+    return recruitDataList;
   }
+  return recruitDataList.filter((job) => job.title.includes(city));
 }

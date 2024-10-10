@@ -1,26 +1,31 @@
-import { requestDummyData } from "../crawlers/sriagent";
-import { logger } from "firebase-functions";
+import { logger } from "firebase-functions/v1";
+import { requestCrawling, requestDummyData } from "../crawlers/sriagent";
 import { City } from "../types/city";
+import { ResponseRecruitData } from "../types/responseRecruitData";
 
-export const crawlService = async function(city?: City) {
+export const crawlService = async function(type: "dummy" | "crawl", city?: City) {
+  let result: ResponseRecruitData[] | null = null;
+
   try {
-    // 캐시, 데이터베이스 확인
-
-    // 크롤링 -> 더미데이터로 진행
-    const crawlResult = await requestDummyData(city);
-    if (crawlResult instanceof Error) {
-      throw crawlResult;
+    if (type === "dummy") {
+      result = await requestDummyData(city);
+    } else if (type === "crawl") {
+      result = await requestCrawling(city);
     }
-
-    // 디스코드 request
-
-    return;
+  
+    if (!result || !Array.isArray(result)) {
+      throw new Error('Result is not an array.');
+    }
+  
+    if (result.length === 0) {
+      throw new Error('Result is empty.');
+    }
+  
+    return result;
   } catch (error) {
     if (error instanceof Error) {
-      logger.error("service failed:", error.message);
-      return error;
+      logger.error('Error in crawlServices:', error.message);
+      throw error;
     }
-    logger.error("service failed", error);
-    return new Error("service failed"); // 에러 객체 반환
   }
 };
