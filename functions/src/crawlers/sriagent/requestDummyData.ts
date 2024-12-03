@@ -3,7 +3,7 @@ import { ResponseRecruitData } from "../../types/responseRecruitData.d";
 import recruitList from "../../constants/recruit_list.json";
 
 export async function requestDummyData(city?: City) {
-  const recruitDataList: ResponseRecruitData[] = recruitList;
+  const recruitDataList = recruitList as ResponseRecruitData[];
   if (!city) {
     return recruitDataList;
   }
