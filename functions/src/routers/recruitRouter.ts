@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { logger } from "firebase-functions";
 import { recruitServices } from "../services/recruitService";
 import { discordService } from "../services/discordService";
 import { ResponseRecruitData } from "../types/responseRecruitData";
@@ -18,16 +17,14 @@ recruitRouter.get("/recruit", async (req, res, next) => {
       await discordService(recruitList as ResponseRecruitData[]);
     }
 
-    if (!city) {
-      logger.info("/recruit 정상 처리");
-    } else {
-      logger.info(`/recruit/?city=${city} 정상 처리`);
-    }
-    res.status(200).json({ message: "정상 처리" });
+    const logMessage = !city
+      ? "/recruit 정상 처리"
+      : `/recruit/?city=${city} 정상 처리`;
+    DebugLogger.server(logMessage);
+    
+    res.status(200).json({ message: "정상 처리", result: recruitList });
   } catch (error) {
-    if (error instanceof Error) {
-      next(error);
-    }
+    next(error);
   }
 });
 
