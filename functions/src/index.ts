@@ -8,7 +8,7 @@ import { recruitRouter } from "./routers/recruitRouter";
 // import { discordConnCache } from "./middlewares/discordConnCache";
 import pageNotFound from "./middlewares/pageNotFound";
 import errorHandler from "./middlewares/errorHandler";
-import { testScrapRouter } from "./routers/scraper";
+import { testRouter } from "./routers/test";
 
 const app = express();
 
@@ -18,7 +18,7 @@ app.use(express.urlencoded({ extended: false }));
 // app.use(firebaseConnCache);
 // app.use(discordConnCache);
 app.use("/api", recruitRouter);
-app.use("/test", testScrapRouter);
+app.use("/test", testRouter);
 
 // catch 404 and forward to error handler
 app.use(pageNotFound);
