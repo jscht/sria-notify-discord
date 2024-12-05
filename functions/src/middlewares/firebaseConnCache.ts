@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from "express";
-import { logger } from "firebase-functions";
 import { checkFirebaseConnection } from "../providers/firebase";
 
 // redis로 변경
@@ -13,8 +12,7 @@ export async function firebaseConnCache(req: Request, res: Response, next: NextF
   // 10분
   const coolTime = 10 * 60 * 1000;
   if (fbLastCheckTime && (currentTime - fbLastCheckTime < coolTime)) {
-    logger.info("Using cached connection");
-    console.log("Using cached connection");
+    DebugLogger.server("Using cached connection");
     return next();
   }
 
@@ -22,9 +20,10 @@ export async function firebaseConnCache(req: Request, res: Response, next: NextF
 
   if (firestoreReady) {
     fbLastCheckTime = currentTime;
+    DebugLogger.provider("Firestore connection successful", "firebase");
     return next();
   } else {
-    console.error("Firestore connection failed");
+    DebugLogger.error("Firestore connection failed");
     return res.status(500).send("Firestore connection failed");
   }
 }
