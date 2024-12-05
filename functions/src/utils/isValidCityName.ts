@@ -1,7 +1,7 @@
 import { CITY } from "../constants/city";
 import { City } from "../types/city.d";
 
-export function isValidCityName(cityName: string): boolean {
+export function isValidCityName(cityName: any): boolean {
   if (typeof cityName !== 'string') {
     return false;
   }
