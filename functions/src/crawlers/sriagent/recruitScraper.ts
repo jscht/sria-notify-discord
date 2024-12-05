@@ -6,7 +6,7 @@ import { isNextPageAvailable } from "./isNextPageAvailable";
 export async function recruitScraper() {
   const browser = await playwright.chromium.launch({
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    headless: true
+    headless: false
   });
 
   try {
