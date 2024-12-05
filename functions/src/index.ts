@@ -4,7 +4,8 @@ dotenv.config();
 import "./utils/logger";
 import { firebaseDeploy, initFirebaseApp } from "./providers/firebase";
 import { recruitRouter } from "./routers/recruitRouter";
-import { firebaseConnCache } from "./middlewares/firebaseConnCache";
+// import { firebaseConnCache } from "./middlewares/firebaseConnCache";
+// import { discordConnCache } from "./middlewares/discordConnCache";
 import pageNotFound from "./middlewares/pageNotFound";
 import errorHandler from "./middlewares/errorHandler";
 import { testScrapRouter } from "./routers/scraper";
@@ -26,5 +27,5 @@ app.use(pageNotFound);
 app.use(errorHandler);
 
 // 서버 실행 -> 파이어베이스 서버/데이터베이스 연결 확인, 디스코드 서버 연결 확인
-// initFirebaseApp();
+initFirebaseApp();
 export const appServer = firebaseDeploy(app);
