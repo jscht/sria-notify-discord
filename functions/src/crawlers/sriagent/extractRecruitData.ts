@@ -18,7 +18,7 @@ export async function extractRecruitData(page: Page) {
     }));
 
     const { rawDDay, rawDayTxt } = await item.locator(".recruit_tit .day_box").evaluate((el) => ({
-      rawDDay: el.querySelector(".d_day")?.textContent || "",
+      rawDDay: el.querySelector(".d_day")?.textContent || el.querySelector(".today")?.textContent || "",
       rawDayTxt: el.querySelector(".day_txt")?.textContent || "",
     }));
 
