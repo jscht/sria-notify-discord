@@ -31,9 +31,12 @@ testRouter.get("/firebase-stores", async (req, res) => {
 });
 
 testRouter.get("/playwright-scraper", async (req, res) => {
-  DebugLogger.server("route /playwright-scraper");
+  const mode = req.query.mode || "dummy";
+  DebugLogger.server(`route /playwright-scraper with mode: ${mode}`);
+
   try {
-    const crawl_data = await crawlService(CRAWL_MODE.DUMMY);
+    const scrapMode = mode === 'crawl' ? CRAWL_MODE.CRAWL : CRAWL_MODE.DUMMY;
+    const crawl_data = await crawlService(scrapMode);
     if (crawl_data.length !== 0) res.json({ result: crawl_data });
     else res.json({ result: "No recruitment data" });
   } catch (error) {
