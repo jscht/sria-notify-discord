@@ -1,5 +1,5 @@
 import { Page } from "playwright";
-import { ResponseRecruitData } from "../../types/responseRecruitData";
+import { ResponseRecruitData } from "../../../types/responseRecruitData";
 
 export async function extractRecruitData(page: Page) {
   let recruitListItems: ResponseRecruitData[] = [];

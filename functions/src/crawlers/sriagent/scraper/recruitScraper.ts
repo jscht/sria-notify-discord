@@ -1,5 +1,5 @@
 import playwright from "playwright";
-import { ResponseRecruitData } from "../../types/responseRecruitData";
+import { ResponseRecruitData } from "../../../types/responseRecruitData";
 import { extractRecruitData } from "./extractRecruitData";
 import { isNextPageAvailable } from "./isNextPageAvailable";
 import { getPaginationItemCount } from "./getPaginationItemCount";
