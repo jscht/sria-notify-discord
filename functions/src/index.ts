@@ -1,31 +1,23 @@
-import express from "express";
 import dotenv from "dotenv";
 dotenv.config();
 import "./utils/logger";
-import { firebaseDeploy, initFirebaseApp } from "./providers/firebase";
-import { recruitRouter } from "./routers/recruitRouter";
-// import { firebaseConnCache } from "./middlewares/firebaseConnCache";
-// import { discordConnCache } from "./middlewares/discordConnCache";
-import pageNotFound from "./middlewares/pageNotFound";
-import errorHandler from "./middlewares/errorHandler";
-import { testRouter } from "./routers/test";
+import { initializeProviders } from "./providers";
+import { initExpress } from "./server/express";
+import { firebaseDeploy } from "./providers/firebase";
+import { runScraper } from "./crawlers/sriagent";
 
-const app = express();
+initializeProviders()
+.then(() => runScraper())
+.catch((error) => {
+  DebugLogger.error('Error during initialization or scraping:', error);
+});
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+const expressApp = initExpress();
+const appServer = firebaseDeploy(expressApp);
 
-// app.use(firebaseConnCache);
-// app.use(discordConnCache);
-app.use("/api", recruitRouter);
-app.use("/test", testRouter);
+if (!appServer) {
+  DebugLogger.error("App server failed to start. Exiting express process.");
+  process.exit(1);
+}
 
-// catch 404 and forward to error handler
-app.use(pageNotFound);
-
-// error handler
-app.use(errorHandler);
-
-// 서버 실행 -> 파이어베이스 서버/데이터베이스 연결 확인, 디스코드 서버 연결 확인
-initFirebaseApp();
-export const appServer = firebaseDeploy(app);
+export default appServer;

@@ -19,8 +19,8 @@ export function initFirebaseApp() {
     initializeApp({
       credential: cert(serviceAccount)
     });
-    console.log("Firebase initialized successfully");
+    DebugLogger.request("Firebase initialized successfully");
   } else {
-    console.log("Firebase app already initialized");
+    DebugLogger.request("Firebase app already initialized");
   }
 }
