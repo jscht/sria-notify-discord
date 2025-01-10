@@ -1,5 +1,5 @@
 import { recruitScraper } from "./scraper/recruitScraper";
-import { requestDummyData } from "./dummyData/requestDummyData";
+import { getCityFilteredList } from "./getCityFilteredList";
 import { runScraper } from "./schedulers/runScraper";
 
-export { requestDummyData, recruitScraper, runScraper };
+export { getCityFilteredList, recruitScraper, runScraper };

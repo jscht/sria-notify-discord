@@ -34,7 +34,7 @@ export class ScrapScheduler {
   private performWork(mode?: CRAWL_MODE): void {
     this.lastRunTime = new Date();
     DebugLogger.server(`[Scraper] Scraping work at ${formatDate(this.lastRunTime)}`);
-    // 실제 작업 로직
+    // crawling data renewal
     if (!mode) {
       crawlService(CRAWL_MODE.DUMMY);
     } else {
