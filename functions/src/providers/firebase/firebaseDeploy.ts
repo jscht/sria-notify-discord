@@ -8,7 +8,6 @@ export function firebaseDeploy(app: Express) {
       memory: "1GiB", 
       timeoutSeconds: 180
     }, app);
-    // 바로 크롤링을 해버릴까?
   } catch (error) {
     if (error instanceof Error) {
       DebugLogger.error(error.message, error);
