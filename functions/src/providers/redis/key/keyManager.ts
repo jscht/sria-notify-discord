@@ -12,8 +12,8 @@ export class RecruitKeyManager extends KeyNamePrefix {
 
   getKeys() {
     return {
-      list: (city?: CityEn) => this.generateKey(["jobs", city ? city : "all"]),
-      list_hash: (city?: CityEn) => this.generateKey(["jobs", city ? city : "all", "hash"])
+      list: (city?: CityEn) => this.generateKey(["stringify", `city:${city || "all"}`]),
+      list_hash: (city?: CityEn) => this.generateKey(["hash", `city:${city || "all"}`])
     };
   }
 }
