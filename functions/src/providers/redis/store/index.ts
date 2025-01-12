@@ -261,13 +261,12 @@ export class RedisStore {
       }
 
       // 새 데이터의 ID와 기존 데이터의 ID 비교
-      // 여기 부분 set 자료구조를 이용하면 복잡도가 더 낮아지지 않을까?
-      const currentIds = Object.keys(currentHashes!);
-      const newIds = Object.keys(newHashes);
+      const currentIdSet = new Set(Object.keys(currentHashes!));
+      const newIdSet = new Set(Object.keys(newHashes));
 
       // 추가, 삭제 데이터
-      const addedJobs = newData.filter((job) => !currentIds.includes(this.#extractId(job.id)));
-      const deletedIds = currentIds.filter((id) => !newIds.includes(id));
+      const addedJobs = newData.filter((job) => !currentIdSet.has(this.#extractId(job.id)));
+      const deletedIds = Array.from(currentIdSet).filter((id) => !newIdSet.has(id));
 
       // 수정된 데이터 (해시 비교)
       const updatedJobs = newData.filter((job) => {
