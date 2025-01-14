@@ -48,7 +48,7 @@ testRouter.get("/playwright-scraper", async (req, res) => {
   try {
     const scrapMode = mode === 'crawl' ? CRAWL_MODE.CRAWL : CRAWL_MODE.DUMMY;
     const crawl_data = await crawlService(scrapMode);
-    if (crawl_data.length !== 0) res.json({ result: crawl_data });
+    if (!crawl_data) res.json({ result: crawl_data });
     else res.json({ result: "No recruitment data" });
   } catch (error) {
     if (error instanceof Error) {

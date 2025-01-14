@@ -30,7 +30,11 @@ class Logger {
   // Application Error, Failure Log Group
   static error = (message: string, error?: Error) => {
     let log = `[error:server] ${message}`;
-    console.error(log, error?.message);
+    if (!error) {
+      console.error(log);
+    } else {
+      console.error(log, error?.message);
+    }
   };
   static fail = (message: string) => {
     let log = `[error:request] ${message}`;

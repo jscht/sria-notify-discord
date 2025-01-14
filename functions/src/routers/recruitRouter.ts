@@ -1,7 +1,7 @@
 import { Router } from "express";
+import { CRAWL_MODE } from "../constants/crawlMode";
 import { recruitServices } from "../services/recruitService";
 import { discordService } from "../services/discordService";
-import { ResponseRecruitData } from "../types/responseRecruitData";
 
 const recruitRouter = Router();
 
@@ -10,11 +10,11 @@ recruitRouter.get("/recruit", async (req, res, next) => {
     const { city } = req.query;
 
     console.time("recruitServices");
-    const recruitList = await recruitServices(city);
+    const recruitList = await recruitServices(CRAWL_MODE.DUMMY, city);
     console.timeEnd("recruitServices");
 
     if (recruitList) {
-      await discordService(recruitList as ResponseRecruitData[]);
+      await discordService(recruitList);
     }
 
     const logMessage = !city

@@ -27,7 +27,7 @@ export const crawlService = async function(mode: CRAWL_MODE, city?: CityKo) {
 
     const firestore = new RecruitFireStore();
 
-    Promise.all([
+    await Promise.all([
       firestore.saveRecruitList(result),
       redisInstance.setToRedis(result)
     ]);
@@ -37,6 +37,6 @@ export const crawlService = async function(mode: CRAWL_MODE, city?: CityKo) {
     if (error instanceof Error) {
       DebugLogger.error('Error in crawlServices:', error);
     }
-    throw error;
+    return;
   }
 };
