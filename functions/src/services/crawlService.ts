@@ -18,24 +18,24 @@ export const crawlService = async function(mode: CRAWL_MODE, city?: CityKo) {
     }
 
     if (!result || !Array.isArray(result)) {
-      throw new Error('Result is not an array.');
+      throw new Error("Result is not an array.");
     }
 
     if (result.length === 0) {
-      throw new Error('Result is empty.');
+      throw new Error("Result is empty.");
     }
 
     const firestore = new RecruitFireStore();
 
     await Promise.all([
       firestore.saveRecruitList(result),
-      redisInstance.setToRedis(result)
+      redisInstance.setToRedis(result),
     ]);
 
     return result;
   } catch (error) {
     if (error instanceof Error) {
-      DebugLogger.error('Error in crawlServices:', error);
+      DebugLogger.error("Error in crawlServices:", error);
     }
     return;
   }

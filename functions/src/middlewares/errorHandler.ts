@@ -1,7 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { ResponseHandler } from "../types/responseHandler.d";
 
-export default function errorHandler(err: ResponseHandler, req: Request, res: Response, next: NextFunction) {
+export default function errorHandler(
+  err: ResponseHandler, req: Request, res: Response, next: NextFunction
+) {
   // error logger
   const { status, message } = err;
   DebugLogger.error(`Error code ${status}: ${message}`);

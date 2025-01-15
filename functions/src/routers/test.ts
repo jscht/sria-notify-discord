@@ -2,7 +2,7 @@ import { Router } from "express";
 import { CRAWL_MODE } from "../constants/crawlMode";
 import { crawlService } from "../services/crawlService";
 import { getRedisInstance } from "../providers/redis/client/getInstance";
-import { RecruitFireStore } from "../providers/firebase/firestore"; 
+import { RecruitFireStore } from "../providers/firebase/firestore";
 import { scanKeys } from "../providers/redis/client/scanKeys";
 import { discordService } from "../services/discordService";
 import dummyData from "../crawlers/sriagent/dummyData/recruit_list.json";
@@ -14,10 +14,10 @@ testRouter.get("/redis-stores", async (req, res) => {
   const redisInstance = getRedisInstance();
   const recruitServiceName = redisInstance.getKeyManager().recruit.getServiceName() || "";
   const pattern = recruitServiceName + "*";
-  
+
   // RedisStore 내부에서 서비스를 호출할 때 부르는 키는 어떻게 할 것인지 생각해보기
   const keys: string[] = await scanKeys(pattern);
-  DebugLogger.request(`🚀 ~ testRouter.get ~ found keys: ${keys.length}`)
+  DebugLogger.request(`🚀 ~ testRouter.get ~ found keys: ${keys.length}`);
   const redisValues: Record<string, any> = {};
 
   for (const key of keys) {
@@ -46,9 +46,9 @@ testRouter.get("/playwright-scraper", async (req, res) => {
   DebugLogger.server(`route /playwright-scraper with mode: ${mode}`);
 
   try {
-    const scrapMode = mode === 'crawl' ? CRAWL_MODE.CRAWL : CRAWL_MODE.DUMMY;
-    const crawl_data = await crawlService(scrapMode);
-    if (!crawl_data) res.json({ result: crawl_data });
+    const scrapMode = mode === "crawl" ? CRAWL_MODE.CRAWL : CRAWL_MODE.DUMMY;
+    const crawlData = await crawlService(scrapMode);
+    if (!crawlData) res.json({ result: crawlData });
     else res.json({ result: "No recruitment data" });
   } catch (error) {
     if (error instanceof Error) {

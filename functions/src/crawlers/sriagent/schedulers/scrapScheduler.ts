@@ -23,7 +23,7 @@ export class ScrapScheduler {
 
     const startTime = Date.now();
 
-    this.performWork(mode);
+    await this.performWork(mode);
 
     const elapsedTime = Date.now() - startTime;
     const delay = Math.max(0, this.workIntervalMs - elapsedTime);
@@ -31,14 +31,20 @@ export class ScrapScheduler {
     setTimeout(() => this.scheduleNextWork(mode), delay);
   }
 
-  private performWork(mode?: CRAWL_MODE): void {
-    this.lastRunTime = new Date();
-    DebugLogger.server(`[Scraper] Scraping work at ${formatDate(this.lastRunTime)}`);
-    // crawling data renewal
-    if (!mode) {
-      crawlService(CRAWL_MODE.DUMMY);
-    } else {
-      crawlService(mode);
+  private async performWork(mode?: CRAWL_MODE): Promise<void> {
+    try {
+      this.lastRunTime = new Date();
+      DebugLogger.server(`[Scraper] Scraping work at ${formatDate(this.lastRunTime)}`);
+      // Crawling data renewal
+      if (!mode) {
+        await crawlService(CRAWL_MODE.DUMMY);
+      } else {
+        await crawlService(mode);
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        DebugLogger.error("Error during scraping work:", error);
+      }
     }
   }
 

@@ -10,13 +10,13 @@ export async function initializeProviders() {
   try {
     await Promise.all([
       initFirebaseApp(),
-      initRedis()
+      initRedis(),
     ]);
     console.timeEnd("worker time");
-    DebugLogger.server('All providers initialized successfully.');
+    DebugLogger.server("All providers initialized successfully.");
   } catch (error) {
     if (error instanceof Error) {
-      DebugLogger.error('Error during providers initialization:', error);
+      DebugLogger.error("Error during providers initialization:", error);
     }
     throw error;
   }

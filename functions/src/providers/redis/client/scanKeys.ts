@@ -2,7 +2,7 @@ import { getRedisInstance } from "./getInstance";
 
 export async function scanKeys(pattern: string) {
   const redisInstance = getRedisInstance();
-  
+
   let cursor = 0;
   const keys: string[] = [];
 

@@ -7,7 +7,7 @@ import { ResponseRecruitData } from "../../../types/responseRecruitData";
 interface Job {
   id: string;
   value: ResponseRecruitData;
-};
+}
 
 type HashedString = string;
 
@@ -18,10 +18,10 @@ export class RedisStore {
   private static instance: RedisStore | null = null;
   private readonly redisKeyManager;
   private readonly DataChangeStatus = {
-    NO_DATA: "NO_DATA", 
-    NO_CHANGES: "NO_CHANGES", 
-    DATA_CHANGED: "DATA_CHANGED" 
-  }
+    NO_DATA: "NO_DATA",
+    NO_CHANGES: "NO_CHANGES",
+    DATA_CHANGED: "DATA_CHANGED",
+  };
 
   constructor(client: RedisClientType) {
     RedisStore.getClient = () => client;
@@ -75,7 +75,9 @@ export class RedisStore {
       return { newCursor: cursor, foundKeys: keys };
     } catch (error) {
       if (error instanceof Error) {
-        DebugLogger.error(`Error during SCAN with cursor "${cursorCount}" and pattern "${pattern}"\nmessage: `, error);
+        DebugLogger.error(
+          `During SCAN with cursor "${cursorCount}" and pattern "${pattern}"\nmessage: `, error
+        );
       }
       return { newCursor: 0, foundKeys: [] };
     }
@@ -123,7 +125,12 @@ export class RedisStore {
     }
   }
 
-  private async saveToRedis(client: RedisClientType, id: string, newData: Record<string, any>, expirationTimeInSeconds: number) {
+  private async saveToRedis(
+    client: RedisClientType,
+    id: string,
+    newData: Record<string, any>,
+    expirationTimeInSeconds: number
+  ) {
     const key = this.redisKeyManager.recruit.getKeys().list();
 
     try {
@@ -138,7 +145,12 @@ export class RedisStore {
     }
   }
 
-  private async saveHashToRedis(client: RedisClientType, id: string, newData: string, expirationTimeInSeconds: number) {
+  private async saveHashToRedis(
+    client: RedisClientType,
+    id: string,
+    newData: string,
+    expirationTimeInSeconds: number
+  ) {
     const key = this.redisKeyManager.recruit.getKeys().list_hash();
 
     try {
@@ -181,9 +193,14 @@ export class RedisStore {
     }
   }
 
-  private async addJobsToRedis(client: RedisClientType, newData: Job[], newHashes: JobHashes, expirationTimeInSeconds: number) {
+  private async addJobsToRedis(
+    client: RedisClientType,
+    newData: Job[],
+    newHashes: JobHashes,
+    expirationTimeInSeconds: number
+  ) {
     try {
-      for (let job of newData) {
+      for (const job of newData) {
         const { id, value: recruitData } = job;
         await this.saveToRedis(client, id, recruitData, expirationTimeInSeconds);
         await this.saveHashToRedis(client, id, newHashes[id], expirationTimeInSeconds);
@@ -210,7 +227,12 @@ export class RedisStore {
     }
   }
 
-  private async updateJobsInRedis(client: RedisClientType, updatedJobs: Job[], newHashes: JobHashes, expirationTimeInSeconds: number) {
+  private async updateJobsInRedis(
+    client: RedisClientType,
+    updatedJobs: Job[],
+    newHashes: JobHashes,
+    expirationTimeInSeconds: number
+  ) {
     try {
       for (const job of updatedJobs) {
         const { id, value: recruitData } = job;
@@ -228,7 +250,7 @@ export class RedisStore {
   private mapToJob(responseData: ResponseRecruitData[]): Job[] {
     return responseData.map((recruitData) => ({
       id: this.#extractId(recruitData.href),
-      value: recruitData
+      value: recruitData,
     }));
   }
 
@@ -256,7 +278,7 @@ export class RedisStore {
         changeStatus = NO_DATA;
 
         await this.addJobsToRedis(client, newData, newHashes, expirationTimeInSeconds);
-        DebugLogger.server(`No data found. Data cached successfully and expiry of 6 hours.`);
+        DebugLogger.server("No data found. Data cached successfully and expiry of 6 hours.");
         return;
       }
 
@@ -279,9 +301,9 @@ export class RedisStore {
         // 기존 캐시와의 변경점이 있음 -> 캐시 수정 필요
         changeStatus = DATA_CHANGED;
 
-        DebugLogger.server(`addedJobs: ${addedJobs.length}`)
-        DebugLogger.server(`deletedIds: ${deletedIds.length}`)
-        DebugLogger.server(`updatedJobs: ${updatedJobs.length}`)
+        DebugLogger.server(`addedJobs: ${addedJobs.length}`);
+        DebugLogger.server(`deletedIds: ${deletedIds.length}`);
+        DebugLogger.server(`updatedJobs: ${updatedJobs.length}`);
       }
 
       if (changeStatus === DATA_CHANGED) {
