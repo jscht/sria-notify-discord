@@ -15,7 +15,6 @@ testRouter.get("/redis-stores", async (req, res) => {
   const recruitServiceName = redisInstance.getKeyManager().recruit.getServiceName() || "";
   const pattern = recruitServiceName + "*";
 
-  // RedisStore 내부에서 서비스를 호출할 때 부르는 키는 어떻게 할 것인지 생각해보기
   const keys: string[] = await scanKeys(pattern);
   DebugLogger.request(`🚀 ~ testRouter.get ~ found keys: ${keys.length}`);
   const redisValues: Record<string, any> = {};

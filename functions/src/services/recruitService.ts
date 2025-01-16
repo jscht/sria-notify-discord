@@ -19,33 +19,32 @@ export const recruitServices = async function(mode: CRAWL_MODE, city?: any) {
       DebugLogger.warn("Invalid cityName");
       throw HttpError.BadRequest("Invalid cityName");
     }
-    
+
     // check redis cache
     const cachedRecruitHash = await redisInstance.getHashDataFromRedis();
-    
+
     if (cachedRecruitHash !== null) {
       DebugLogger.server("Returning cached recruit list");
-      const cachedRecruitList: ResponseRecruitData[] = Object.values(cachedRecruitHash).map(value => JSON.parse(value));
+      const cachedRecruitList: ResponseRecruitData[] =
+        Object.values(cachedRecruitHash).map((value) => JSON.parse(value));
       return getCityFilteredList(mode, cityNameConverter.toKorean(city), cachedRecruitList);
     }
-    
+
     // check firestore
     const recruitFS = new RecruitFireStore();
     const firestoreRecruitList = await recruitFS.getRecruitList();
 
     if (firestoreRecruitList && Object.keys(firestoreRecruitList).length > 0) {
-      // redis cache renewal
-      console.log("🚀 ~ recruitServices ~ firestoreRecruitList:", firestoreRecruitList)
-      console.log("🚀 ~ recruitServices ~ recruitList:", firestoreRecruitList.recruitList)
       const firestoreList = firestoreRecruitList.recruitList as ResponseRecruitData[];
 
+      // redis cache renewal
       DebugLogger.server("Cache updated in Redis with new recruit list from Firestore.");
       redisInstance.setToRedis(firestoreList);
 
       DebugLogger.server("Returning Firestore recruit list");
       return getCityFilteredList(mode, cityNameConverter.toKorean(city), firestoreList);
     }
-    
+
     // request crawling
     // 크롤링 요청이 과할 경우 무시하는 로직 추가 (redis, firestore 둘 다 장애 시)
     const crawlData = await crawlService(mode, cityNameConverter.toKorean(city));
@@ -53,13 +52,13 @@ export const recruitServices = async function(mode: CRAWL_MODE, city?: any) {
       DebugLogger.error("Failed to retrieve data from crawling service");
       throw HttpError.ServiceUnavailable();
     }
-    
+
     DebugLogger.server("Returning crawl data");
     return getCityFilteredList(mode, cityNameConverter.toKorean(city), crawlData);
   } catch (error) {
     if (error instanceof Error) {
-      DebugLogger.error('Error in recruitServices:', error);
+      DebugLogger.error("Error in recruitServices:", error);
     }
     throw error;
   }
-}
+};

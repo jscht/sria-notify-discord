@@ -7,6 +7,8 @@ import errorHandler from "../middlewares/errorHandler";
 import { recruitRouter } from "../routers/recruitRouter";
 import { testRouter } from "../routers/test";
 
+// 서버 실행 -> 파이어베이스 서버/데이터베이스, 레디스, 디스코드 서버 연결 확인
+
 export function initExpress() {
   const app = express();
 

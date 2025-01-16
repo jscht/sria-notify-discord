@@ -1,4 +1,4 @@
-import { KeyManager } from './../../../types/redisKeyManager.d';
+import { KeyManager } from "./../../../types/redisKeyManager.d";
 import { RecruitKeyManager } from "./keyManager";
 
 const redisKeys = {
