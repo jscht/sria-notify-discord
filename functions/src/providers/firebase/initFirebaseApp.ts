@@ -15,7 +15,7 @@ const serviceAccount: ServiceAccount = {
 };
 
 export function initFirebaseApp() {
-  if (!getApps.length) {
+  if (getApps().length === 0) {
     initializeApp({
       credential: cert(serviceAccount)
     });

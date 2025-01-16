@@ -1,4 +1,5 @@
 import express from "express";
+import initializeWorker from "../middlewares/initializeWorker";
 import pageNotFound from "../middlewares/pageNotFound";
 import errorHandler from "../middlewares/errorHandler";
 // import { firebaseConnCache } from "../middlewares/firebaseConnCache";
@@ -8,6 +9,8 @@ import { testRouter } from "../routers/test";
 
 export function initExpress() {
   const app = express();
+
+  app.use(initializeWorker);
 
   app.use(express.json());
   app.use(express.urlencoded({ extended: false }));
