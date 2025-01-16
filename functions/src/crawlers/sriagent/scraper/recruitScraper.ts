@@ -4,25 +4,31 @@ import { extractRecruitData } from "./extractRecruitData";
 import { isNextPageAvailable } from "./isNextPageAvailable";
 import { getPaginationItemCount } from "./getPaginationItemCount";
 
-// 1초에서 3초 사이의 랜덤 대기 시간
+// 1초 ~ 3초 딜레이
 function getDelay() {
-  const min: number = 1000;
-  const max: number = 3000;
+  const min = 1000;
+  const max = 3000;
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 export async function recruitScraper() {
   const browser = await playwright.chromium.launch({
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    headless: false
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
+      "--single-process",
+    ],
+    headless: true,
   });
 
   try {
     const page = await browser.newPage();
 
     await page.route("**/*", (route, request) => {
-      if (request.resourceType() === "image" || 
-        request.resourceType() === "stylesheet" || 
+      if (request.resourceType() === "image" ||
+        request.resourceType() === "stylesheet" ||
         request.resourceType() === "font") {
         route.abort();
       } else {
@@ -31,7 +37,10 @@ export async function recruitScraper() {
     });
 
     const targetUrl = `${process.env.SRI_URL}/jobs/`;
-    await page.goto(targetUrl, { waitUntil: "networkidle" });
+    await page.goto(targetUrl, { 
+      waitUntil: "load",
+      timeout: 10 * 1000
+    });
 
     const recruitData: ResponseRecruitData[] = [];
     const totalPages = await getPaginationItemCount(page);
@@ -63,7 +72,7 @@ export async function recruitScraper() {
 
         await Promise.all([
           nextPageButton.click(),
-          page.waitForLoadState("networkidle")
+          page.waitForLoadState("load"),
         ]);
       }
     }
