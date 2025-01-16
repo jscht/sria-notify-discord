@@ -1,14 +1,14 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "CommonJS",
+    "target": "ES2017",
+    "esModuleInterop": true,  // ES6 모듈과 CommonJS 모듈 간 호환성
+    "resolveJsonModule": true,
     "noImplicitReturns": true,
     "noUnusedLocals": false,
-    "outDir": "lib",
-    "sourceMap": true,
     "strict": true,
-    "target": "es2017",
-    "resolveJsonModule": true,
-    "esModuleInterop": true
+    "sourceMap": true,
+    "outDir": "lib",  // 컴파일된 파일 출력 디렉토리
   },
   "compileOnSave": true,
   "include": [
