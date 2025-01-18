@@ -26,6 +26,16 @@ export default {
   rules: {
     quotes: ['error', 'double'],
     'import/no-unresolved': 0,
-    indent: ['error', 2]
+    indent: ['error', 2],
+    'object-curly-spacing': ['error', 'always'],
+    'max-len': ['error', { code: 100 }],
+    'require-jsdoc': 'off',
+    'valid-jsdoc': 'off',
+    'no-var': 'warn',
+    'new-cap': 'off',
+    '@typescript-eslint/no-empty-function': 'off',
+    '@typescript-eslint/no-unused-vars': 'off',
+    '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/no-non-null-assertion': 'off'
   }
 };

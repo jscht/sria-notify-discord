@@ -1,3 +1,4 @@
-import { CITY } from "../constants/city";
+import { CITIES } from "../constants/city";
 
-export type City = typeof CITY[keyof typeof CITY];
+export type CityEn = keyof typeof CITIES;
+export type CityKo = typeof CITIES[CityEn];

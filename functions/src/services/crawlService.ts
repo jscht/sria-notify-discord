@@ -1,26 +1,42 @@
-import { requestDummyData } from "../crawl";
-import { logger } from "firebase-functions";
-import { City } from "../types/city";
+import { CRAWL_MODE } from "../constants/crawlMode";
+import { getCityFilteredList, recruitScraper } from "../crawlers/sriagent";
+import { CityKo } from "../types/city";
+import { ResponseRecruitData } from "../types/responseRecruitData";
+import { RecruitFireStore } from "../providers/firebase/firestore";
+import { getRedisInstance } from "../providers/redis";
 
-export const crawlService = async function(city?: City) {
+export const crawlService = async function(mode: CRAWL_MODE, city?: CityKo) {
+  const redisInstance = getRedisInstance();
+  let result: ResponseRecruitData[] = [];
+
   try {
-    // 캐시, 데이터베이스 확인
-
-    // 크롤링 -> 더미데이터로 진행
-    const crawlResult = await requestDummyData(city);
-    if (crawlResult instanceof Error) {
-      throw crawlResult;
+    if (mode === CRAWL_MODE.DUMMY) {
+      result = await getCityFilteredList(mode, city);
+    } else if (mode === CRAWL_MODE.CRAWL) {
+      const recruitData = await recruitScraper();
+      result = await getCityFilteredList(mode, city, recruitData);
     }
 
-    // 디스코드 request
+    if (!result || !Array.isArray(result)) {
+      throw new Error("Result is not an array.");
+    }
 
-    return;
+    if (result.length === 0) {
+      throw new Error("Result is empty.");
+    }
+
+    const firestore = new RecruitFireStore();
+
+    await Promise.all([
+      firestore.saveRecruitList(result),
+      redisInstance.setToRedis(result),
+    ]);
+
+    return result;
   } catch (error) {
     if (error instanceof Error) {
-      logger.error("service failed:", error.message);
-      return error;
+      DebugLogger.error("Error in crawlServices:", error);
     }
-    logger.error("service failed", error);
-    return new Error("service failed"); // 에러 객체 반환
+    return;
   }
 };

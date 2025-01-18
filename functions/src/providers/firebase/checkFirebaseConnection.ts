@@ -1,22 +1,23 @@
-import { getFirestore, doc, getDoc } from "firebase/firestore";
-import { logger } from "firebase-functions";
+import { getFirestore } from "firebase-admin/firestore";
 
 export async function checkFirebaseConnection() {
   try {
     const db = getFirestore();
-    const docRef = doc(db, "connection", "check");
+    const docRef = db.doc("connection/check");
 
-    const docSnap = await getDoc(docRef);
+    const docSnap = await docRef.get();
 
-    if (docSnap.exists()) {
-      logger.info("Firestore connection successful");
+    if (docSnap.exists) {
+      DebugLogger.server("Firestore connection successful");
       return true;
     } else {
-      logger.warn("Document 'connection/check' does not exist");
+      DebugLogger.warn("Document 'connection/check' does not exist");
       return false;
     }
   } catch (error) {
-    logger.error("Firestore connection failed:", error);
+    if (error instanceof Error) {
+      DebugLogger.error("Firestore connection failed:", error);
+    }
     return false;
   }
 }

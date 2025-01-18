@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS",  // 빌드 시 CommonJS 모듈 사용
+    "target": "ES2017"     // ES2017로 타겟 설정 (빌드 최적화)
+  },
+  "exclude": [
+    "node_modules",
+    "lib"
+  ]
+}

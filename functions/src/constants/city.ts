@@ -114,7 +114,7 @@ const JejuCities = {
 } as const;
 
 // 모든 도시를 합친 객체
-export const CITY = {
+export const CITIES = {
   ...MetropolitanCities,
   ...GyeonggiCities,
   ...GangwonCities,

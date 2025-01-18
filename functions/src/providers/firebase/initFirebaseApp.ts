@@ -1,21 +1,26 @@
-import { initializeApp, getApps } from "firebase/app";
+import { ServiceAccount, getApps, initializeApp, cert } from "firebase-admin/app";
 
-const firebaseConfig = {
-  apiKey: process.env.FB_APIKEY,
-  authDomain: process.env.FB_AUTHDOMAIN,
-  projectId: process.env.FB_PROJECTID,
-  storageBucket: process.env.FB_STORAGEBUCKET,
-  messagingSenderId: process.env.FB_MESSAGINGSENDERID,
-  appId: process.env.FB_APPID,
+const serviceAccount: ServiceAccount = {
+  type: process.env.FB_TYPE,
+  project_id: process.env.FB_PROJECT_ID,
+  private_key_id: process.env.FB_PRIVATE_KEY_ID,
+  private_key: process.env.FB_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+  client_email: process.env.FB_CLIENT_EMAIL,
+  client_id: process.env.FB_CLIENT_ID,
+  auth_uri: process.env.FB_AUTH_URI,
+  token_uri: process.env.FB_TOKEN_URI,
+  auth_provider_x509_cert_url: process.env.FB_AUTH_PROVIDER_X509_CERT_URL,
+  client_x509_cert_url: process.env.FB_CLIENT_X509_CERT_URL,
+  universe_domain: process.env.FB_UNIVERSE_DOMAIN
 };
 
-// 파이어베이스 객체를 사용하는 작업이 아직 없으므로 반환 없음.
 export function initFirebaseApp() {
-  if (!getApps().length) {
-    initializeApp(firebaseConfig);
-    console.log("Firebase initialized successfully");
+  if (getApps().length === 0) {
+    initializeApp({
+      credential: cert(serviceAccount)
+    });
+    DebugLogger.request("Firebase initialized successfully");
   } else {
-    getApps()[0];
-    console.log("Firebase app already initialized");
+    DebugLogger.request("Firebase app already initialized");
   }
 }
