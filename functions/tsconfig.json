@@ -1,17 +1,18 @@
 {
   "compilerOptions": {
-    "module": "CommonJS",
-    "target": "ES2017",
-    "esModuleInterop": true,  // ES6 모듈과 CommonJS 모듈 간 호환성
-    "resolveJsonModule": true,
-    "noImplicitReturns": true,
-    "noUnusedLocals": false,
-    "strict": true,
-    "sourceMap": true,
-    "outDir": "lib",  // 컴파일된 파일 출력 디렉토리
+    "module": "CommonJS",           // CommonJS 모듈 사용
+    "target": "ES2020",             // ES2020으로 타겟 설정
+    "esModuleInterop": true,        // ES6 모듈과 CommonJS 모듈 간 호환성
+    "moduleResolution": "node",     // 모듈 해석 방식 (Node.js 방식)
+    "resolveJsonModule": true,      // JSON 파일 모듈로 가져오기
+    "noImplicitReturns": true,      // 함수에서 암묵적 반환을 금지
+    "noUnusedLocals": false,        // 사용하지 않는 지역 변수는 경고하지 않음
+    "strict": true,                 // 엄격한 타입 검사를 활성화
+    "sourceMap": true,              // 소스 맵 파일 생성
+    "outDir": "lib",                // 컴파일된 파일 출력 디렉토리
   },
-  "compileOnSave": true,
+  "compileOnSave": true,            // 저장 시 자동으로 컴파일
   "include": [
-    "src"
+    "src"                           // src 폴더 내의 파일들만 포함
   ]
 }

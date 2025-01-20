@@ -1,3 +1,4 @@
+import { connectDiscord } from "./discord";
 import { initFirebaseApp } from "./firebase";
 import { initRedis } from "./redis";
 
@@ -8,6 +9,7 @@ export async function initializeProviders() {
     await Promise.all([
       initFirebaseApp(),
       initRedis(),
+      connectDiscord()
     ]);
     DebugLogger.server("All providers initialized successfully.");
   } catch (error) {
