@@ -1,4 +1,5 @@
 import { ServiceAccount, getApps, initializeApp, cert } from "firebase-admin/app";
+import { seedCollection } from "./seedCollection";
 
 const serviceAccount: ServiceAccount = {
   type: process.env.FB_TYPE,
@@ -16,9 +17,8 @@ const serviceAccount: ServiceAccount = {
 
 export function initFirebaseApp() {
   if (getApps().length === 0) {
-    initializeApp({
-      credential: cert(serviceAccount)
-    });
+    initializeApp({ credential: cert(serviceAccount) });
+    seedCollection();
     DebugLogger.request("Firebase initialized successfully");
   } else {
     DebugLogger.request("Firebase app already initialized");
