@@ -9,9 +9,6 @@ export function firebaseDeploy(app: Express) {
       timeoutSeconds: 180,
     }, app);
   } catch (error) {
-    if (error instanceof Error) {
-      DebugLogger.error(error.message, error);
-    }
     throw error;
   }
 }

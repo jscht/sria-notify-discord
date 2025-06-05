@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { checkFirebaseConnection } from "../providers/firebase";
+import { ConnectionStore } from "../providers/firebase/store/connection";
 
 // redis로 변경
 let fbLastCheckTime: number | null = null;
@@ -9,21 +9,22 @@ let fbLastCheckTime: number | null = null;
  */
 export async function firebaseConnCache(req: Request, res: Response, next: NextFunction) {
   const currentTime = Date.now();
-  // 10분
-  const coolTime = 10 * 60 * 1000;
+
+  const coolTime = 10 * 60 * 1000; // 10분
+
   if (fbLastCheckTime && (currentTime - fbLastCheckTime < coolTime)) {
     DebugLogger.server("Using cached connection");
     return next();
   }
 
-  const firestoreReady = await checkFirebaseConnection();
-
-  if (firestoreReady) {
+  const conn = new ConnectionStore;
+  const firestoreReady = await conn.getRecruitList();
+  
+  if (typeof firestoreReady === "string" && firestoreReady === conn.getConnectionCheckMessage()) {
     fbLastCheckTime = currentTime;
-    DebugLogger.provider("Firestore connection successful", "firebase");
-    return next();
+    DebugLogger.provider("Firestore connection is alive.", "firebase");
+    next();
   } else {
-    DebugLogger.error("Firestore connection failed");
-    return res.status(500).send("Firestore connection failed");
+    next(new Error("Firestore connection failed"));
   }
 }

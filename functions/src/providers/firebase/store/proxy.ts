@@ -1,13 +1,19 @@
 import { getFirestore } from "firebase-admin/firestore";
 import { ProxyDoc } from "../../../types/proxyData";
+import { FirebaseCollection } from "./../constants/collections";
 
 export class ProxyStore {
   private readonly db = getFirestore();
+  private static readonly INIT_DOC_ID = "init";
 
   constructor() {}
 
+  getInitDoc() {
+    return ProxyStore.INIT_DOC_ID;
+  }
+
   #getProxyRef() {
-    return this.db.collection("proxy");
+    return this.db.collection(FirebaseCollection.PROXY);
   }
 
   #getBatch() {
@@ -23,7 +29,7 @@ export class ProxyStore {
       }
 
       return snapshot.docs
-        .filter(doc => doc.id != "init")
+        .filter(doc => doc.id != ProxyStore.INIT_DOC_ID)
         .map(doc => doc.data());
     } catch (error) {
       throw error;

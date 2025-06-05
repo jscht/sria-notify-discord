@@ -1,5 +1,5 @@
 import { ServiceAccount, getApps, initializeApp, cert } from "firebase-admin/app";
-import { seedCollection } from "./seedCollection";
+import { seedCollection } from "./seeds/seedCollection";
 
 const serviceAccount: ServiceAccount = {
   type: process.env.FB_TYPE,

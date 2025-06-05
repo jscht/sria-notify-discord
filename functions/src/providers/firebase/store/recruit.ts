@@ -1,18 +1,24 @@
 import { getFirestore } from "firebase-admin/firestore";
 import { ResponseRecruitData } from "../../../types/responseRecruitData";
+import { FirebaseCollection } from "./../constants/collections";
 
 export class RecruitStore {
   private readonly db = getFirestore();
+  private static readonly INIT_DOC_ID = "list";
 
   constructor() {}
 
+  getInitDoc() {
+    return RecruitStore.INIT_DOC_ID;
+  }
+
   #getRecruitCollectionRef() {
-    return this.db.collection("recruit"); // doc("recruit/list");
+    return this.db.collection(FirebaseCollection.RECRUIT);
   }
 
   async getRecruitList() {
     try {
-      const docRef = this.#getRecruitCollectionRef().doc("list");
+      const docRef = this.#getRecruitCollectionRef().doc(RecruitStore.INIT_DOC_ID);
       const snapshot = await docRef.get();
 
       if (!snapshot.exists) {
@@ -27,7 +33,7 @@ export class RecruitStore {
 
   async saveRecruitList(data: ResponseRecruitData[]) {
     try {
-      const docRef = this.#getRecruitCollectionRef().doc("list");
+      const docRef = this.#getRecruitCollectionRef().doc(RecruitStore.INIT_DOC_ID);
       await docRef.set({ recruitList: data });
       DebugLogger.server("Recruit list saved to Firestore successfully.");
     } catch (error) {

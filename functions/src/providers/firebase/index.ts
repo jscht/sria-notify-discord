@@ -1,5 +1,2 @@
-import { checkFirebaseConnection } from "./checkFirebaseConnection";
-import { firebaseDeploy } from "./firebaseDeploy";
-import { initFirebaseApp } from "./initFirebaseApp";
-
-export { initFirebaseApp, firebaseDeploy, checkFirebaseConnection };
+export { firebaseDeploy } from "./firebaseDeploy";
+export { initFirebaseApp } from "./initFirebaseApp";
