@@ -15,7 +15,10 @@ export class ScrapScheduler {
     }
 
     this.isRunning = true;
-    this.scheduleNextWork(mode);
+    this.scheduleNextWork(mode).catch((err) => {
+      DebugLogger.error(`[startWork] An error occurred: ${err.message}`);
+      this.isRunning = false;
+    });
   }
 
   private async scheduleNextWork(mode?: CRAWL_MODE): Promise<void> {
@@ -23,12 +26,21 @@ export class ScrapScheduler {
 
     const startTime = Date.now();
 
-    await this.performWork(mode);
+    await this.performWork(mode).catch((err) => {
+      this.isRunning = false;
+      throw err;
+    });
 
     const elapsedTime = Date.now() - startTime;
     const delay = Math.max(0, this.workIntervalMs - elapsedTime);
 
-    setTimeout(() => this.scheduleNextWork(mode), delay);
+    setTimeout(() => {
+      if (!this.isRunning) return;
+      this.scheduleNextWork(mode).catch((err) => {
+        this.isRunning = false;
+        throw err;
+      });
+    }, delay);
   }
 
   private async performWork(mode?: CRAWL_MODE): Promise<void> {
@@ -42,9 +54,7 @@ export class ScrapScheduler {
         await crawlService(mode);
       }
     } catch (error) {
-      if (error instanceof Error) {
-        DebugLogger.error("Error during scraping work:", error);
-      }
+      throw error;
     }
   }
 
