@@ -1,8 +1,8 @@
 import dotenv from "dotenv";
 dotenv.config();
-import "./utils/logger";
-import { initExpress } from "./server/express";
-import { firebaseDeploy } from "./providers/firebase";
+import "../utils/logger";
+import { initExpress } from "./express";
+import { firebaseDeploy } from "../providers/firebase";
 
 const expressApp = initExpress();
 const appServer = firebaseDeploy(expressApp);

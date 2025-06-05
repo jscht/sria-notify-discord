@@ -4,10 +4,7 @@ import pageNotFound from "../middlewares/pageNotFound";
 import errorHandler from "../middlewares/errorHandler";
 // import { firebaseConnCache } from "../middlewares/firebaseConnCache";
 // import { discordConnCache } from "../middlewares/discordConnCache";
-import { recruitRouter } from "../routers/recruitRouter";
-import { testRouter } from "../routers/test";
-
-// 서버 실행 -> 파이어베이스 서버/데이터베이스, 레디스, 디스코드 서버 연결 확인
+import { testRouter } from "../test/routes";
 
 export function initExpress() {
   const app = express();
@@ -20,7 +17,6 @@ export function initExpress() {
   // app.use(firebaseConnCache);
   // app.use(discordConnCache);
 
-  app.use("/api", recruitRouter);
   app.use("/test", testRouter);
 
   // catch 404 and forward to error handler
