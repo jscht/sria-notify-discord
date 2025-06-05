@@ -1,9 +1,10 @@
 import { CRAWL_MODE } from "../constants/crawlMode";
-import { getCityFilteredList, recruitScraper } from "../crawlers/sriagent";
+import { recruitScraper } from "../crawlers/sriagent";
 import { CityKo } from "../types/city";
 import { ResponseRecruitData } from "../types/responseRecruitData";
-import { RecruitFireStore } from "../providers/firebase/firestore";
+import { RecruitStore } from "../providers/firebase/store";
 import { getRedisInstance } from "../providers/redis";
+import { getCityFilteredList } from "../utils/getCityFilteredList";
 
 export const crawlService = async function(mode: CRAWL_MODE, city?: CityKo) {
   const redisInstance = getRedisInstance();
@@ -25,7 +26,7 @@ export const crawlService = async function(mode: CRAWL_MODE, city?: CityKo) {
       throw new Error("Result is empty.");
     }
 
-    const firestore = new RecruitFireStore();
+    const firestore = new RecruitStore();
 
     await Promise.all([
       firestore.saveRecruitList(result),
@@ -34,9 +35,6 @@ export const crawlService = async function(mode: CRAWL_MODE, city?: CityKo) {
 
     return result;
   } catch (error) {
-    if (error instanceof Error) {
-      DebugLogger.error("Error in crawlServices:", error);
-    }
-    return;
+    throw error;
   }
 };

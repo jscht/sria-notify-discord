@@ -7,6 +7,7 @@ export class HttpError extends Error {
   private static readonly requestTimeoutCode = 408;
   private static readonly conflictCode = 409;
   private static readonly unprocessableContent = 422;
+  private static readonly tooManyRequests = 429;
   private static readonly internalServerErrorCode = 500;
   private static readonly serviceUnavailable = 503;
 
@@ -47,6 +48,10 @@ export class HttpError extends Error {
 
   static UnprocessableContent(message?: string) {
     return new this(this.unprocessableContent, message || "Unprocessable Content");
+  }
+
+  static TooManyRequests(message?: string) {
+    return new this(this.tooManyRequests, message || "Too Many Requests");
   }
 
   static InternalServerError(message?: string) {

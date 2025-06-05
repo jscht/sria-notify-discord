@@ -2,13 +2,29 @@ import { Router } from "express";
 import { CRAWL_MODE } from "../constants/crawlMode";
 import { crawlService } from "../services/crawlService";
 import { getRedisInstance } from "../providers/redis/client/getInstance";
-import { RecruitFireStore } from "../providers/firebase/firestore";
+import { ProxyStore, RecruitStore } from "../providers/firebase/store";
 import { scanKeys } from "../providers/redis/client/scanKeys";
-import { discordService } from "../services/discordService";
-import dummyData from "../crawlers/sriagent/dummyData/recruit_list.json";
-import { ResponseRecruitData } from "../types/responseRecruitData";
+import { proxyScraper } from "../crawlers/proxy";
+import { recruitServices } from "../services/recruitService";
 
 const testRouter = Router();
+
+testRouter.get("/recruit", async (req, res, next) => {
+  try {
+    const { city } = req.query;
+
+    const recruitList = await recruitServices(CRAWL_MODE.DUMMY, city);
+
+    const logMessage = !city
+      ? "/recruit 정상 처리"
+      : `/recruit/?city=${city} 정상 처리`;
+    DebugLogger.server(logMessage);
+
+    res.status(200).json({ message: "정상 처리", result: recruitList });
+  } catch (error) {
+    next(error);
+  }
+});
 
 testRouter.get("/redis-stores", async (req, res) => {
   const redisInstance = getRedisInstance();
@@ -33,10 +49,24 @@ testRouter.get("/redis-stores", async (req, res) => {
   res.json({ result: redisValues });
 });
 
-testRouter.get("/firebase-stores", async (req, res) => {
-  const firestore = new RecruitFireStore();
+testRouter.get("/firestore-recruit", async (req, res) => {
+  const firestore = new RecruitStore();
   const result = await firestore.getRecruitList();
 
+  res.json({ result });
+});
+
+testRouter.get("/firestore-proxy", async (req, res) => {
+  const firestore = new ProxyStore();
+  const result = await firestore.getProxyList();
+
+  res.json({ result });
+});
+
+testRouter.get("/proxy-scraper", async (req, res) => {
+  const result = await proxyScraper();
+  const firestore = new ProxyStore();
+  firestore.saveProxyList(result);
   res.json({ result });
 });
 
@@ -58,7 +88,7 @@ testRouter.get("/playwright-scraper", async (req, res) => {
 });
 
 testRouter.get("/discord", async (req, res) => {
-  await discordService(dummyData as ResponseRecruitData[]);
+  
 });
 
 export { testRouter };

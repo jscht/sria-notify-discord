@@ -3,12 +3,10 @@ import { CRAWL_MODE } from "../constants/crawlMode";
 import { isValidCityName } from "../utils/isValidCityName";
 import { HttpError } from "../utils/httpError";
 import { cityNameConverter } from "../utils/cityNameConverter";
-import { RecruitFireStore } from "../providers/firebase/firestore";
+import { RecruitStore } from "../providers/firebase/store";
 import { getRedisInstance } from "../providers/redis";
-import { getCityFilteredList } from "../crawlers/sriagent";
+import { getCityFilteredList } from "../utils/getCityFilteredList";
 import { ResponseRecruitData } from "../types/responseRecruitData";
-
-
 
 export const recruitServices = async function(mode: CRAWL_MODE, city?: any) {
   const redisInstance = getRedisInstance();
@@ -31,7 +29,7 @@ export const recruitServices = async function(mode: CRAWL_MODE, city?: any) {
     }
 
     // check firestore
-    const recruitFS = new RecruitFireStore();
+    const recruitFS = new RecruitStore();
     const firestoreRecruitList = await recruitFS.getRecruitList();
 
     if (firestoreRecruitList && Object.keys(firestoreRecruitList).length > 0) {
@@ -46,8 +44,16 @@ export const recruitServices = async function(mode: CRAWL_MODE, city?: any) {
     }
 
     // request crawling
-    // 크롤링 요청이 과할 경우 무시하는 로직 추가 (redis, firestore 둘 다 장애 시)
+    // 직접적인 크롤링 요청에 10분 제한(redis, firestore 둘 다 장애 시)
+    const isRequestAllowed = await redisInstance.isRequestAllowed();
+
+    if (!isRequestAllowed) {
+      DebugLogger.error("Crawling request limited");
+      throw HttpError.TooManyRequests();
+    }
+
     const crawlData = await crawlService(mode, cityNameConverter.toKorean(city));
+
     if (!crawlData) {
       DebugLogger.error("Failed to retrieve data from crawling service");
       throw HttpError.ServiceUnavailable();
@@ -56,9 +62,6 @@ export const recruitServices = async function(mode: CRAWL_MODE, city?: any) {
     DebugLogger.server("Returning crawl data");
     return getCityFilteredList(mode, cityNameConverter.toKorean(city), crawlData);
   } catch (error) {
-    if (error instanceof Error) {
-      DebugLogger.error("Error in recruitServices:", error);
-    }
     throw error;
   }
 };
