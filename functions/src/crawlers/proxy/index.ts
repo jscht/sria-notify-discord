@@ -1,3 +1,1 @@
-import { proxyScraper } from "./scraper/proxyScraper";
-
-export { proxyScraper };
+export { proxyScraper } from "./scraper/proxyScraper";

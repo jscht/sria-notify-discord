@@ -8,6 +8,7 @@ export const cityNameConverter = {
     if (typeof cityName === "string" && Object.keys(CITIES).includes(cityName)) {
       return CITIES[cityName as CityEn];
     }
+
     return cityName as CityKo;
   },
 
@@ -20,6 +21,7 @@ export const cityNameConverter = {
         return cityEntry[0] as CityEn;
       }
     }
+
     return cityName as CityEn;
   },
 };

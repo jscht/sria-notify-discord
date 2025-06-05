@@ -1,18 +1,18 @@
-import playwright from "playwright";
+import { chromium } from "playwright-extra";
+import stealth from "puppeteer-extra-plugin-stealth";
 import { ResponseRecruitData } from "../../../types/responseRecruitData";
 import { extractRecruitData } from "./extractRecruitData";
 import { isNextPageAvailable } from "./isNextPageAvailable";
 import { getPaginationItemCount } from "./getPaginationItemCount";
-
-// 1초 ~ 3초 딜레이
-function getDelay() {
-  const min = 1000;
-  const max = 3000;
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
+import { getDelay } from "../../../utils/getDelay";
+import { getCookie } from "./getCookie";
+import { proxyScraper } from "../../proxy";
+import { getRandomUserAgent } from "../../../utils/getRandomUserAgent";
 
 export async function recruitScraper() {
-  const browser = await playwright.chromium.launch({
+  chromium.use(stealth());
+
+  const browser = await chromium.launch({
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
@@ -21,35 +21,53 @@ export async function recruitScraper() {
       "--single-process",
     ],
     headless: true,
+  })
+  .catch((error) => {
+    throw error;
   });
 
+  const cookies = await getCookie(browser);
+
+  if (!cookies) {
+    throw new Error("Missing one or more required cookies");
+  }
+
+  // redis에서 proxyList 확인
+  // get redis proxy list
+  // const proxyList = await proxyScraper();
+
+  const context = await browser.newContext({
+    userAgent: getRandomUserAgent(),
+    extraHTTPHeaders: {
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Cache-Control': 'no-cache',
+      'Upgrade-Insecure-Requests': '1',
+    },
+    proxy: { server: "" } // proxy address
+  })
+  .catch((error) => {
+    throw error;
+  });
+
+  context.addCookies(cookies);
+
   try {
-    const page = await browser.newPage();
+    const page = await context.newPage();
 
-    await page.route("**/*", (route, request) => {
-      if (request.resourceType() === "image" ||
-        request.resourceType() === "stylesheet" ||
-        request.resourceType() === "font") {
-        route.abort();
-      } else {
-        route.continue();
-      }
-    });
+    const targetUrl = `${process.env.SRI_URL}`;
+    const pageWaitDelay = getDelay(7);
 
-    const targetUrl = `${process.env.SRI_URL}/jobs/`;
-    await page.goto(targetUrl, { 
-      waitUntil: "load",
-      timeout: 10 * 1000
-    });
+    await page.goto(targetUrl, {
+      waitUntil: "domcontentloaded",
+      timeout: pageWaitDelay
+    })
 
     const recruitData: ResponseRecruitData[] = [];
     const totalPages = await getPaginationItemCount(page);
     DebugLogger.server(`total page: ${totalPages.toString()}`);
 
     for (let currentPage = 1; currentPage <= totalPages; currentPage++) {
-      console.time("scraping");
       const extractRecruitList = await extractRecruitData(page);
-      console.timeEnd("scraping");
 
       if (!extractRecruitList || extractRecruitList.length === 0) {
         DebugLogger.warn("No recruitment data found.");
@@ -58,7 +76,7 @@ export async function recruitScraper() {
 
       recruitData.push(...extractRecruitList);
 
-      const delay = getDelay();
+      const delay = getDelay(3, 5);
       DebugLogger.server(`Waiting for ${delay}ms...`);
       await page.waitForTimeout(delay);
 
@@ -72,18 +90,16 @@ export async function recruitScraper() {
 
         await Promise.all([
           nextPageButton.click(),
-          page.waitForLoadState("load"),
+          page.waitForLoadState("domcontentloaded"),
         ]);
       }
     }
 
     return recruitData;
   } catch (error) {
-    if (error instanceof Error) {
-      DebugLogger.error("Error during scraping:", error);
-    }
     throw error;
   } finally {
+    await context.close();
     await browser.close();
   }
 }

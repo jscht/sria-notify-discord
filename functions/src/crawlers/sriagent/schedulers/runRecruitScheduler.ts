@@ -2,7 +2,7 @@ import { CRAWL_MODE } from "../../../constants/crawlMode";
 import { ScrapScheduler } from "./scrapScheduler";
 import { TimeLogScheduler } from "./timeLogScheduler";
 
-export async function runScraper() {
+export async function runRecruitScheduler() {
   // const workIntervalMs = 4 * 60 * 60 * 1000; // 4시간 (4시간 * 60분 * 60초 * 1000ms)
   // const logIntervalMs = 1 * 60 * 60 * 1000; // 1시간 (1시간 * 60분 * 60초 * 1000ms)
 

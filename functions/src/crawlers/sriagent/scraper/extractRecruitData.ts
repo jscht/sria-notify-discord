@@ -1,4 +1,4 @@
-import { Page } from "playwright";
+import { Page } from "playwright-core";
 import { ResponseRecruitData } from "../../../types/responseRecruitData";
 
 export async function extractRecruitData(page: Page) {

@@ -1,8 +1,8 @@
 import { chromium } from "playwright-extra";
 import stealth from "puppeteer-extra-plugin-stealth";
-import { getDelay } from "../../getDelay";
+import { getDelay } from "../../../utils/getDelay";
 import { getList } from "./getList";
-import { userAgentStrings } from "../../userAgentStrings";
+import { getRandomUserAgent } from "../../../utils/getRandomUserAgent";
 
 export async function proxyScraper() {
   chromium.use(stealth());
@@ -16,7 +16,7 @@ export async function proxyScraper() {
   });
 
   const context = await browser.newContext({
-    userAgent: userAgentStrings[Math.floor(Math.random() * userAgentStrings.length)],
+    userAgent: getRandomUserAgent(),
   })
   .catch((error) => {
     throw error;

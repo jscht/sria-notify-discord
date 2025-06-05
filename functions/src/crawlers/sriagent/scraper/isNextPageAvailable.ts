@@ -1,4 +1,4 @@
-import { Page } from "playwright";
+import { Page } from "playwright-core";
 
 export async function isNextPageAvailable(page: Page) {
   const nextPageButton = page.locator(".v-pagination__navigation[aria-label='다음 페이지']");

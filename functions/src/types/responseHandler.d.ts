@@ -1,3 +1,5 @@
-export type Status = number;
-export type Message = string;
-export type ResponseHandler = { status: Status; message: Message };
+export type ResponseHandler = {
+  status: number; 
+  message: string;
+  name?: string;
+};
