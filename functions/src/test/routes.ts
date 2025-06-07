@@ -1,11 +1,11 @@
 import { Router } from "express";
 import { CRAWL_MODE } from "../constants/crawlMode";
-import { crawlService } from "../services/crawlService";
-import { getRedisInstance } from "../providers/redis/client/getInstance";
-import { ProxyStore, RecruitStore } from "../providers/firebase/store";
+import { RecruitService } from "../services/recruitService";
+import { CrawlService } from "../services/crawlService";
 import { scanKeys } from "../providers/redis/client/scanKeys";
-import { proxyScraper } from "../crawlers/proxy";
-import { recruitServices } from "../services/recruitService";
+import { SERVICE_NAME } from "../providers/redis/constants/serviceName";
+import { RedisManager } from "../providers/redis/manager/redisManager";
+import { ProxyStore, RecruitStore } from "../providers/firebase/store";
 
 const testRouter = Router();
 
@@ -13,7 +13,8 @@ testRouter.get("/recruit", async (req, res, next) => {
   try {
     const { city } = req.query;
 
-    const recruitList = await recruitServices(CRAWL_MODE.DUMMY, city);
+    const recruitService = new RecruitService();
+    const recruitList = await recruitService.getRecruitList(CRAWL_MODE.DUMMY, city);
 
     const logMessage = !city
       ? "/recruit 정상 처리"
@@ -27,17 +28,17 @@ testRouter.get("/recruit", async (req, res, next) => {
 });
 
 testRouter.get("/redis-stores", async (req, res) => {
-  const redisInstance = getRedisInstance();
-  const recruitServiceName = redisInstance.getKeyManager().recruit.getServiceName() || "";
-  const pattern = recruitServiceName + "*";
+  const pattern = SERVICE_NAME.RECRUIT + "*";
 
   const keys: string[] = await scanKeys(pattern);
   DebugLogger.request(`🚀 ~ testRouter.get ~ found keys: ${keys.length}`);
+  
   const redisValues: Record<string, any> = {};
+  const recruit_cacheStore = RedisManager.getInstance().store.recruit;
 
   for (const key of keys) {
     try {
-      redisValues[key] = await redisInstance.getDataByKeyFromRedis(key);
+      redisValues[key] = await recruit_cacheStore.getDataByKeyFromCache(key);
     } catch (error) {
       if (error instanceof Error) {
         DebugLogger.error(`Error fetching key "${key}" from Redis:`, error);
@@ -50,41 +51,40 @@ testRouter.get("/redis-stores", async (req, res) => {
 });
 
 testRouter.get("/firestore-recruit", async (req, res) => {
-  const firestore = new RecruitStore();
-  const result = await firestore.getRecruitList();
+  const recruit_firestore = new RecruitStore();
+  const result = await recruit_firestore.getRecruitList();
 
   res.json({ result });
 });
 
 testRouter.get("/firestore-proxy", async (req, res) => {
-  const firestore = new ProxyStore();
-  const result = await firestore.getProxyList();
+  const proxy_firestore = new ProxyStore();
+  const result = await proxy_firestore.getProxyList();
 
-  res.json({ result });
-});
-
-testRouter.get("/proxy-scraper", async (req, res) => {
-  const result = await proxyScraper();
-  const firestore = new ProxyStore();
-  firestore.saveProxyList(result);
   res.json({ result });
 });
 
 testRouter.get("/playwright-scraper", async (req, res) => {
   const mode = req.query.mode || "dummy";
-  DebugLogger.server(`route /playwright-scraper with mode: ${mode}`);
+  const scrapMode = mode === "crawl" ? CRAWL_MODE.CRAWL : CRAWL_MODE.DUMMY;
+  DebugLogger.server(`route /playwright-scraper with mode: ${scrapMode}`);
 
-  try {
-    const scrapMode = mode === "crawl" ? CRAWL_MODE.CRAWL : CRAWL_MODE.DUMMY;
-    const crawlData = await crawlService(scrapMode);
-    if (!crawlData) res.json({ result: crawlData });
-    else res.json({ result: "No recruitment data" });
-  } catch (error) {
-    if (error instanceof Error) {
-      DebugLogger.error("Error in playwright-scraper:", error);
-    }
-    res.status(500).send("An error occurred during scraping.");
-  }
+  const crawlService = new CrawlService();
+  const crawlData = await crawlService.sriagent(scrapMode);
+  let result = null;
+
+  result = !crawlData ? crawlData : "No recruitment data";
+  res.json({ result });
+});
+
+testRouter.get("/proxy-scraper", async (req, res) => {
+  const crawlService = new CrawlService();
+  const result = await crawlService.proxy();
+
+  const proxy_firestore = new ProxyStore();
+  proxy_firestore.saveProxyList(result);
+
+  res.json({ result });
 });
 
 testRouter.get("/discord", async (req, res) => {
