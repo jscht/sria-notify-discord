@@ -1,42 +1,47 @@
 import { CRAWL_MODE } from "../constants/crawlMode";
-import { getCityFilteredList, recruitScraper } from "../crawlers/sriagent";
+import { crawler, scheduler } from "../crawlers";
+import { RedisManager } from "../providers/redis/manager/redisManager";
+import { CrawlCacheStore } from "../providers/redis/store";
 import { CityKo } from "../types/city";
-import { ResponseRecruitData } from "../types/responseRecruitData";
-import { RecruitFireStore } from "../providers/firebase/firestore";
-import { getRedisInstance } from "../providers/redis";
+import { Crawler, Scheduler } from "../types/crawler";
+import { getCityFilteredList } from "../utils/getCityFilteredList";
 
-export const crawlService = async function(mode: CRAWL_MODE, city?: CityKo) {
-  const redisInstance = getRedisInstance();
-  let result: ResponseRecruitData[] = [];
+export class CrawlService {
+  private readonly crawl_cachestore: CrawlCacheStore;
+  private readonly crawler: Crawler;
+  private readonly scheduler: Scheduler;
 
-  try {
-    if (mode === CRAWL_MODE.DUMMY) {
-      result = await getCityFilteredList(mode, city);
-    } else if (mode === CRAWL_MODE.CRAWL) {
-      const recruitData = await recruitScraper();
-      result = await getCityFilteredList(mode, city, recruitData);
+  constructor() {
+    this.crawl_cachestore = RedisManager.getInstance().store.crawl;
+    this.crawler = crawler;
+    this.scheduler = scheduler;
+  }
+
+  async sriagent(mode?: CRAWL_MODE, city?: CityKo) {
+    const { DUMMY, CRAWL } = CRAWL_MODE;
+    let result = null;
+
+    if (!mode || mode === DUMMY) {
+      result = await getCityFilteredList(DUMMY, city);
+    } else if (mode === CRAWL) {
+      const scraped = await this.crawler.sriagent();
+      result = await getCityFilteredList(CRAWL, city, scraped);
     }
-
-    if (!result || !Array.isArray(result)) {
-      throw new Error("Result is not an array.");
-    }
-
-    if (result.length === 0) {
-      throw new Error("Result is empty.");
-    }
-
-    const firestore = new RecruitFireStore();
-
-    await Promise.all([
-      firestore.saveRecruitList(result),
-      redisInstance.setToRedis(result),
-    ]);
 
     return result;
-  } catch (error) {
-    if (error instanceof Error) {
-      DebugLogger.error("Error in crawlServices:", error);
+  }
+
+  async proxy() {
+    return await this.crawler.proxy();
+  }
+
+  async isRequestAllowed() {
+    const limited = await this.crawl_cachestore.isRequestLimitSet();
+
+    if (!limited) {
+      await this.crawl_cachestore.setRequestLimit();
     }
-    return;
+
+    return !limited;
   }
 };

@@ -1,4 +1,3 @@
-import { getRedisInstance } from "./client/getInstance";
-import { initRedis } from "./client/initialize";
+import { RedisManager } from "./manager/redisManager";
 
-export { initRedis, getRedisInstance };
+export const initRedis = async () => await RedisManager.initialize();

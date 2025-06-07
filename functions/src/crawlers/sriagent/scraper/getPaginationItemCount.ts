@@ -1,4 +1,4 @@
-import { Page } from "playwright";
+import { Page } from "playwright-core";
 
 export async function getPaginationItemCount(page: Page) {
   const paginationLocator = page.locator("ul.v-pagination");

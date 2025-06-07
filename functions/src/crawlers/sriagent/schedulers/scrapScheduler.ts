@@ -1,5 +1,5 @@
 import { CRAWL_MODE } from "../../../constants/crawlMode";
-import { crawlService } from "../../../services/crawlService";
+import { CrawlService } from "../../../services/crawlService";
 import { formatDate } from "../../../utils/formatDate";
 
 export class ScrapScheduler {
@@ -15,7 +15,10 @@ export class ScrapScheduler {
     }
 
     this.isRunning = true;
-    this.scheduleNextWork(mode);
+    this.scheduleNextWork(mode).catch((err) => {
+      DebugLogger.error(`[startWork] An error occurred: ${err.message}`);
+      this.isRunning = false;
+    });
   }
 
   private async scheduleNextWork(mode?: CRAWL_MODE): Promise<void> {
@@ -23,28 +26,36 @@ export class ScrapScheduler {
 
     const startTime = Date.now();
 
-    await this.performWork(mode);
+    await this.performWork(mode).catch((err) => {
+      this.isRunning = false;
+      throw err;
+    });
 
     const elapsedTime = Date.now() - startTime;
     const delay = Math.max(0, this.workIntervalMs - elapsedTime);
 
-    setTimeout(() => this.scheduleNextWork(mode), delay);
+    setTimeout(() => {
+      if (!this.isRunning) return;
+      this.scheduleNextWork(mode).catch((err) => {
+        this.isRunning = false;
+        throw err;
+      });
+    }, delay);
   }
 
   private async performWork(mode?: CRAWL_MODE): Promise<void> {
+    const crawlService = new CrawlService();
     try {
       this.lastRunTime = new Date();
       DebugLogger.server(`[Scraper] Scraping work at ${formatDate(this.lastRunTime)}`);
       // Crawling data renewal
       if (!mode) {
-        await crawlService(CRAWL_MODE.DUMMY);
+        await crawlService.sriagent(CRAWL_MODE.DUMMY);
       } else {
-        await crawlService(mode);
+        await crawlService.sriagent(mode);
       }
     } catch (error) {
-      if (error instanceof Error) {
-        DebugLogger.error("Error during scraping work:", error);
-      }
+      throw error;
     }
   }
 

@@ -1,0 +1,1 @@
+export { initDiscordBot } from "./initDiscordBot";

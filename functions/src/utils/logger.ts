@@ -20,7 +20,7 @@ class Logger {
     console.debug(log, data);
   };
   static provider = (message: string, provider: Provider, data?: any) => {
-    const log = `[debug:provider] ${provider}:${message}`;
+    const log = `[debug:provider:${provider}] ${message}`;
     if (!data) {
       console.debug(log);
     }

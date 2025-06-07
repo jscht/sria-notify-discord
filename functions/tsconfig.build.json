@@ -1,11 +1,11 @@
 {
-  "extends": "./tsconfig.json",
+  "extends": "./tsconfig.json",     // tsconfig.json의 설정을 확장
   "compilerOptions": {
-    "module": "CommonJS",  // 빌드 시 CommonJS 모듈 사용
-    "target": "ES2017"     // ES2017로 타겟 설정 (빌드 최적화)
+    "module": "CommonJS",           // CommonJS 모듈 사용
+    "target": "ES2020"              // ES2020으로 타겟 설정
   },
   "exclude": [
-    "node_modules",
-    "lib"
+    "node_modules",                 // node_modules 폴더 제외
+    "lib"                           // lib 폴더 제외 (빌드 결과물)
   ]
 }

@@ -1,64 +1,92 @@
-import { crawlService } from "./crawlService";
 import { CRAWL_MODE } from "../constants/crawlMode";
-import { isValidCityName } from "../utils/isValidCityName";
-import { HttpError } from "../utils/httpError";
-import { cityNameConverter } from "../utils/cityNameConverter";
-import { RecruitFireStore } from "../providers/firebase/firestore";
-import { getRedisInstance } from "../providers/redis";
-import { getCityFilteredList } from "../crawlers/sriagent";
+import { RecruitCacheStore } from "../providers/redis/store";
+import { RedisManager } from "../providers/redis/manager/redisManager";
+import { RecruitStore } from "../providers/firebase/store";
+import { CrawlService } from "./crawlService";
+import { CityKo } from "../types/city";
 import { ResponseRecruitData } from "../types/responseRecruitData";
+import { cityNameConverter } from "../utils/cityName";
+import { getCityFilteredList } from "../utils/getCityFilteredList";
+import { HttpError } from "../utils/httpError";
+import { isValidCityName } from "../utils/cityName";
 
+export class RecruitService {
+  private readonly recruit_cachestore: RecruitCacheStore;
+  private readonly recruit_firestore: RecruitStore;
+  private readonly crawlService: CrawlService;
 
+  constructor() {
+    this.recruit_cachestore = RedisManager.getInstance().store.recruit;
+    this.recruit_firestore = new RecruitStore();
+    this.crawlService = new CrawlService();
+  }
 
-export const recruitServices = async function(mode: CRAWL_MODE, city?: any) {
-  const redisInstance = getRedisInstance();
+  async getRecruitList(mode: CRAWL_MODE, city?: any) {
+    const cityKo = city ? cityNameConverter.toKorean(city) : undefined;
 
-  try {
-    // check city
+    // Validate city name
     if (city && !isValidCityName(city)) {
-      DebugLogger.warn("Invalid cityName");
-      throw HttpError.BadRequest("Invalid cityName");
+      DebugLogger.warn("Invalid city name.");
+      throw HttpError.BadRequest("Invalid city name.");
     }
 
-    // check redis cache
-    const cachedRecruitHash = await redisInstance.getHashDataFromRedis();
+    // 1. Check Redis Cache
+    const cachedList = await this.recruit_cachestore.getRecruitListFromCache();
 
-    if (cachedRecruitHash !== null) {
-      DebugLogger.server("Returning cached recruit list");
-      const cachedRecruitList: ResponseRecruitData[] =
-        Object.values(cachedRecruitHash).map((value) => JSON.parse(value));
-      return getCityFilteredList(mode, cityNameConverter.toKorean(city), cachedRecruitList);
+    if (cachedList) {
+      const list: ResponseRecruitData[] = cachedList;
+      DebugLogger.server("Returning recruit list from Redis cache.");
+      return getCityFilteredList(mode, cityKo, list);
     }
 
-    // check firestore
-    const recruitFS = new RecruitFireStore();
-    const firestoreRecruitList = await recruitFS.getRecruitList();
+    // 2. Check Firestore
+    const firestoreData = await this.recruit_firestore.getRecruitList();
 
-    if (firestoreRecruitList && Object.keys(firestoreRecruitList).length > 0) {
-      const firestoreList = firestoreRecruitList.recruitList as ResponseRecruitData[];
+    if (firestoreData?.recruitList?.length > 0) {
+      const list: ResponseRecruitData[] = firestoreData?.recruitList;
+      DebugLogger.server("Returning recruit list from Firestore.");
 
-      // redis cache renewal
-      DebugLogger.server("Cache updated in Redis with new recruit list from Firestore.");
-      redisInstance.setToRedis(firestoreList);
-
-      DebugLogger.server("Returning Firestore recruit list");
-      return getCityFilteredList(mode, cityNameConverter.toKorean(city), firestoreList);
+      // Cache update
+      await this.recruit_cachestore.setRecruitListToCache(list);
+      return getCityFilteredList(mode, cityKo, list);
     }
 
-    // request crawling
-    // 크롤링 요청이 과할 경우 무시하는 로직 추가 (redis, firestore 둘 다 장애 시)
-    const crawlData = await crawlService(mode, cityNameConverter.toKorean(city));
-    if (!crawlData) {
-      DebugLogger.error("Failed to retrieve data from crawling service");
+    // 3. Request Crawling
+    // 직접적인 크롤링 요청에 10분 제한(redis, firestore 둘 다 장애 시)
+    const canRequest = await this.crawlService.isRequestAllowed();
+
+    if (!canRequest) {
+      DebugLogger.error("Crawling request limited.");
+      throw HttpError.TooManyRequests();
+    }
+
+    const crawledData = await this.collectAndSaveRecruits(mode, cityKo);
+
+    if (!crawledData) {
+      DebugLogger.error("Crawling failed.");
       throw HttpError.ServiceUnavailable();
     }
 
-    DebugLogger.server("Returning crawl data");
-    return getCityFilteredList(mode, cityNameConverter.toKorean(city), crawlData);
-  } catch (error) {
-    if (error instanceof Error) {
-      DebugLogger.error("Error in recruitServices:", error);
+    DebugLogger.server("Returning recruit list from crawler.");
+    return getCityFilteredList(mode, cityKo, crawledData);
+  }
+
+  private async collectAndSaveRecruits(mode: CRAWL_MODE, city?: CityKo) {
+    const list = await this.crawlService.sriagent(mode, city);
+
+    if (!Array.isArray(list)) {
+      throw new Error("Result is not an array.");
     }
-    throw error;
+
+    if (list.length === 0) {
+      throw new Error("Result is empty.");
+    }
+
+    await Promise.all([
+      this.recruit_firestore.saveRecruitList(list),
+      this.recruit_cachestore.setRecruitListToCache(list),
+    ]);
+
+    return list;
   }
 };
