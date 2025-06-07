@@ -1,11 +1,11 @@
 import { ProxyDoc } from "./proxyData.d";
 import { ResponseRecruitData } from "./responseRecruitData.d";
 
-export type CrawlerMap = {
+export type Crawler = {
   sriagent: () => Promise<ResponseRecruitData[]>;
   proxy: () => Promise<ProxyDoc[]>;
 };
 
-export type SchedulerMap = {
+export type Scheduler = {
   sriagent: () => Promise<void>;
 };

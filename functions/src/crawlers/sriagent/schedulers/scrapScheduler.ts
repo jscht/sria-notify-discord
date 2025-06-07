@@ -1,5 +1,5 @@
 import { CRAWL_MODE } from "../../../constants/crawlMode";
-import { crawlService } from "../../../services/crawlService";
+import { CrawlService } from "../../../services/crawlService";
 import { formatDate } from "../../../utils/formatDate";
 
 export class ScrapScheduler {
@@ -44,14 +44,15 @@ export class ScrapScheduler {
   }
 
   private async performWork(mode?: CRAWL_MODE): Promise<void> {
+    const crawlService = new CrawlService();
     try {
       this.lastRunTime = new Date();
       DebugLogger.server(`[Scraper] Scraping work at ${formatDate(this.lastRunTime)}`);
       // Crawling data renewal
       if (!mode) {
-        await crawlService(CRAWL_MODE.DUMMY);
+        await crawlService.sriagent(CRAWL_MODE.DUMMY);
       } else {
-        await crawlService(mode);
+        await crawlService.sriagent(mode);
       }
     } catch (error) {
       throw error;

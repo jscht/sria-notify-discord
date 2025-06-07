@@ -1,12 +1,7 @@
-import { KeyManager } from "./../../../types/redisKeyManager.d";
-import { RecruitKeyManager } from "./keyManager";
+import { RecruitKeyManager } from "./recruitKeyManager";
+import { CrawlKeyManager } from "./crawlKeyManager";
 
-const redisKeys = {
-  recruit: RecruitKeyManager,
-};
-
-export type RedisKeyManager = KeyManager<typeof redisKeys>;
-
-export const redisKeyManager: RedisKeyManager = {
-  recruit: new RecruitKeyManager,
+export const redisKeyManager = {
+  recruit: new RecruitKeyManager(),
+  crawl: new CrawlKeyManager(),
 };

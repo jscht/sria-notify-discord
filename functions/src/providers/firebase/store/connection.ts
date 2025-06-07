@@ -8,6 +8,10 @@ export class ConnectionStore {
 
   constructor() {}
 
+  private getFirebaseConnectionRef() {
+    return this.db.collection(FirebaseCollection.CONNECTION);
+  }
+
   getConnectionCheckDoc() {
     return ConnectionStore.INIT_DOC_ID;
   }
@@ -16,13 +20,9 @@ export class ConnectionStore {
     return ConnectionStore.CONFIRMATION_MESSAGE;
   }
 
-  #getFirebaseConnectionRef() {
-    return this.db.collection(FirebaseCollection.CONNECTION);
-  }
-
   async getRecruitList() {
     try {
-      const docRef = this.#getFirebaseConnectionRef().doc(ConnectionStore.INIT_DOC_ID);
+      const docRef = this.getFirebaseConnectionRef().doc(ConnectionStore.INIT_DOC_ID);
       const snapshot = await docRef.get();
 
       if (!snapshot.exists) {

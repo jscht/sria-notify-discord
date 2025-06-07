@@ -8,23 +8,24 @@ export class RecruitStore {
 
   constructor() {}
 
+  private getRecruitCollectionRef() {
+    return this.db.collection(FirebaseCollection.RECRUIT);
+  }
+
   getInitDoc() {
     return RecruitStore.INIT_DOC_ID;
   }
 
-  #getRecruitCollectionRef() {
-    return this.db.collection(FirebaseCollection.RECRUIT);
-  }
-
   async getRecruitList() {
     try {
-      const docRef = this.#getRecruitCollectionRef().doc(RecruitStore.INIT_DOC_ID);
+      const docRef = this.getRecruitCollectionRef().doc(RecruitStore.INIT_DOC_ID);
       const snapshot = await docRef.get();
 
       if (!snapshot.exists) {
         DebugLogger.warn("No recruit list found in Firestore.");
         return null;
       }
+
       return snapshot.data();
     } catch (error) {
       throw error;
@@ -33,7 +34,7 @@ export class RecruitStore {
 
   async saveRecruitList(data: ResponseRecruitData[]) {
     try {
-      const docRef = this.#getRecruitCollectionRef().doc(RecruitStore.INIT_DOC_ID);
+      const docRef = this.getRecruitCollectionRef().doc(RecruitStore.INIT_DOC_ID);
       await docRef.set({ recruitList: data });
       DebugLogger.server("Recruit list saved to Firestore successfully.");
     } catch (error) {

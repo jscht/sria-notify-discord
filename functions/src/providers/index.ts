@@ -9,7 +9,7 @@ export async function initializeProviders() {
     await Promise.all([
       initFirebaseApp(),
       initRedis(),
-      initDiscordBot()
+      initDiscordBot(),
     ]);
     DebugLogger.server("All providers initialized successfully.");
   } catch (error) {

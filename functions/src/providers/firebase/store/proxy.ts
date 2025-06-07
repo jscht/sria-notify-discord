@@ -8,21 +8,21 @@ export class ProxyStore {
 
   constructor() {}
 
+  private getProxyRef() {
+    return this.db.collection(FirebaseCollection.PROXY);
+  }
+
+  private getBatch() {
+    return this.db.batch();
+  }
+
   getInitDoc() {
     return ProxyStore.INIT_DOC_ID;
   }
 
-  #getProxyRef() {
-    return this.db.collection(FirebaseCollection.PROXY);
-  }
-
-  #getBatch() {
-    return this.db.batch();
-  }
-
   async getProxyList() {
     try {
-      const snapshot = await this.#getProxyRef().get();
+      const snapshot = await this.getProxyRef().get();
 
       if (snapshot.empty) {
         return null;
@@ -38,10 +38,10 @@ export class ProxyStore {
 
   async saveProxyList(data: ProxyDoc[]) {
     try {
-      const batch = this.#getBatch();
+      const batch = this.getBatch();
 
       data.forEach((proxy) => {
-        const docRef = this.#getProxyRef().doc(proxy.ipAddress);
+        const docRef = this.getProxyRef().doc(proxy.ipAddress);
         batch.set(docRef, proxy);
       });
 

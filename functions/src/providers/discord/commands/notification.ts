@@ -1,8 +1,7 @@
 import { SlashCommandBuilder, CommandInteraction } from "discord.js";
 import { DiscordBotCommand } from ".";
-import { isValidCityName } from "../../../utils/isValidCityName";
+import { isValidCityName, cityNameConverter } from "../../../utils/cityName";
 import { chooseEunNeun } from "../../../utils/koreanJosaUtils";
-import { cityNameConverter } from "../../../utils/cityNameConverter";
 import { CityEn, CityKo } from "../../../types/city";
 
 export enum NotificationCommandAction {

@@ -1,7 +1,7 @@
-import { getRedisInstance } from "./getInstance";
+import { RedisManager } from "../manager/redisManager";
 
 export async function scanKeys(pattern: string) {
-  const redisInstance = getRedisInstance();
+  const redisInstance = RedisManager.getInstance();
 
   let cursor = 0;
   const keys: string[] = [];
