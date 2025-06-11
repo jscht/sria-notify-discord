@@ -1,6 +1,7 @@
 import { Events, Interaction, CommandInteraction } from "discord.js";
-import { DiscordBotCommand, handlers } from "../commands";
+import { DiscordBotCommand } from "../providers/discord/commands";
 import { EventHandler } from "./eventHandler";
+import { handlers } from "./handlers";
 
 export const onInteraction = (): EventHandler => ({
   event: Events.InteractionCreate,
