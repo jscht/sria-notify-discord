@@ -14,7 +14,7 @@ testRouter.get("/recruit", async (req, res, next) => {
     const { city } = req.query;
 
     const recruitService = new RecruitService();
-    const recruitList = await recruitService.getRecruitList(CRAWL_MODE.DUMMY, city);
+    const recruitList = await recruitService.getRecruitList(CRAWL_MODE.DUMMY, city as string | undefined);
 
     const logMessage = !city
       ? "/recruit 정상 처리"

@@ -2,7 +2,7 @@ import { CITIES } from "../constants/city";
 import { CityEn, CityKo } from "../types/city";
 
 export const cityNameConverter = {
-  toKorean(cityName?: CityEn | CityKo): CityKo | undefined {
+  toKorean(cityName?: string | undefined): CityKo | undefined {
     if (!cityName) return;
 
     if (typeof cityName === "string" && Object.keys(CITIES).includes(cityName)) {
@@ -12,7 +12,7 @@ export const cityNameConverter = {
     return cityName as CityKo;
   },
 
-  toEnglish(cityName?: CityEn | CityKo): CityEn | undefined {
+  toEnglish(cityName?: string | undefined): CityEn | undefined {
     if (!cityName) return;
 
     if (typeof cityName === "string" && Object.values(CITIES).includes(cityName as CityKo)) {

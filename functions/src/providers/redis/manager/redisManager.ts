@@ -1,5 +1,5 @@
 import { RedisClientType } from "redis";
-import { RecruitCacheStore, CrawlCacheStore } from "../store";
+import { RecruitCacheStore, RecruitHashStore, CrawlCacheStore } from "../store";
 import { redisKeyManager } from "../key";
 import { redisConnection } from "../client/connection";
 
@@ -9,6 +9,7 @@ export class RedisManager {
   
   public readonly store: {
     recruit: RecruitCacheStore;
+    recruit_hash: RecruitHashStore;
     crawl: CrawlCacheStore;
   };
 
@@ -16,6 +17,7 @@ export class RedisManager {
     this.client = client;
     this.store = {
       recruit: new RecruitCacheStore(client, redisKeyManager.recruit),
+      recruit_hash: new RecruitHashStore(client, redisKeyManager.recruit),
       crawl: new CrawlCacheStore(client, redisKeyManager.crawl),
     };
   }
