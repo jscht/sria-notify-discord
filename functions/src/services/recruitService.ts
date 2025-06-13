@@ -8,7 +8,6 @@ import { ResponseRecruitData } from "../types/responseRecruitData";
 import { cityNameConverter } from "../utils/cityName";
 import { getCityFilteredList } from "../utils/getCityFilteredList";
 import { HttpError } from "../utils/httpError";
-import { isValidCityName } from "../utils/cityName";
 
 /**
  * 사용자 요청 처리 흐름:
@@ -20,14 +19,14 @@ import { isValidCityName } from "../utils/cityName";
  * @class RecruitService
  */
 export class RecruitService {
-  private readonly recruit_firestore: RecruitStore;
   private readonly recruitCacheService: RecruitCacheService;
+  private readonly recruit_firestore: RecruitStore;
   private readonly crawlService: CrawlService;
 
   constructor() {
     const { recruit, recruit_hash } = RedisManager.getInstance().store;
-    this.recruit_firestore = new RecruitStore();
     this.recruitCacheService = new RecruitCacheService(recruit, recruit_hash);
+    this.recruit_firestore = new RecruitStore();
     this.crawlService = new CrawlService();
   }
 

@@ -2,14 +2,7 @@ import crypto from "crypto";
 import { RecruitCacheStore, RecruitHashStore } from "../providers/redis/store";
 import { CityEn } from "../types/city";
 import { ResponseRecruitData } from "../types/responseRecruitData";
-
-interface Job {
-  id: string;
-  value: ResponseRecruitData;
-}
-
-type HashedString = string;
-type JobHashes = Record<string, HashedString>;
+import { Job, HashedString, JobDiffResult, JobHashes } from "../types/recruitCache";
 
 /**
  * 공고 리스트 갱신 흐름:
@@ -27,108 +20,132 @@ export class RecruitCacheService {
     private readonly hashStore: RecruitHashStore
   ) {}
 
-  private hashObject(obj: any) {
-    return crypto.createHash("sha256").update(JSON.stringify(obj)).digest("hex");
+  async getRecruitList(city?: CityEn): Promise<ResponseRecruitData[] | null> {
+    const { getByCity, getAll } = this.cacheStore;
+    return city ? await getByCity(city) : await getAll();
   }
 
-  private extractId(href: string) {
-    return href.replace("/jobs/", "");
+  async setRecruitList(list: ResponseRecruitData[]) {
+    enum CacheUpdateStatus {
+      NO_DATA = "NO_DATA",
+      UNCHANGED = "UNCHANGED",
+      CHANGED = "CHANGED"
+    };
+
+    const expiration = 6 * 60 * 60;  // 6시간
+    const newJobs = this.mapToJob(list);
+    const newHashes = this.createHashes(newJobs);
+    const currentHashes = await this.hashStore.getAll();
+
+    let status: CacheUpdateStatus;
+    let diffJobs: JobDiffResult = {
+      addedJobs: [],
+      updatedJobs: [],
+      deletedIds: [],
+    };
+
+    if (!currentHashes) {
+      status = CacheUpdateStatus.NO_DATA;
+    } else {
+      // 데이터 변경점 비교
+      diffJobs = this.diffJobs(newJobs, newHashes, currentHashes);
+      const { addedJobs, updatedJobs, deletedIds } = diffJobs;
+
+      status = addedJobs.length || updatedJobs.length || deletedIds.length
+        ? CacheUpdateStatus.CHANGED
+        : CacheUpdateStatus.UNCHANGED;
+    }
+
+    switch (status) {
+      case CacheUpdateStatus.NO_DATA:
+        await this.saveAll(newJobs, newHashes, expiration);
+        DebugLogger.server("No data found. Data cached successfully and expiry of 6 hours.");
+        break;
+
+      case CacheUpdateStatus.CHANGED:
+        const { addedJobs, updatedJobs, deletedIds } = diffJobs;
+        await this.syncChanges(addedJobs, updatedJobs, deletedIds, newHashes, expiration);
+        DebugLogger.server(`
+          Redis cache updated.\n
+          added: ${addedJobs.length}, deleted: ${deletedIds.length}, updated: ${updatedJobs.length}
+        `);
+        break;
+
+      case CacheUpdateStatus.UNCHANGED:
+        await this.extendExpiration(expiration);
+        DebugLogger.server("No changes. Expiration extended.");
+        break;
+    }
+  }
+
+  private createHashes(jobs: Job[]): JobHashes {
+    const hashObject = (obj: any): HashedString =>
+      crypto.createHash("sha256").update(JSON.stringify(obj)).digest("hex");
+
+    return jobs.reduce<JobHashes>((acc, job) => {
+      acc[job.id] = hashObject(job.value);
+      return acc;
+    }, {});
   }
 
   private mapToJob(list: ResponseRecruitData[]): Job[] {
+    const extractId = (href: string): string => href.replace("/jobs/", "");
+
     return list.map((job) => ({
-      id: this.extractId(job.href),
+      id: extractId(job.href),
       value: job,
     }));
   }
 
-  async getRecruitList(city?: CityEn): Promise<ResponseRecruitData[] | null> {
-    return city
-      ? await this.cacheStore.getByCity(city)
-      : await this.cacheStore.getAll();
+  private async saveAll(jobs: Job[], hashes: JobHashes, expiration: number) {
+    for (const job of jobs) {
+      await this.cacheStore.save(job.id, job.value, expiration);
+      await this.hashStore.save(job.id, hashes[job.id], expiration);
+    }
   }
 
-  async setRecruitList(list: ResponseRecruitData[]) {
-    enum DataChangeStatus {
-      NO_DATA = "NO_DATA",
-      NO_CHANGES = "NO_CHANGES",
-      DATA_CHANGED = "DATA_CHANGED",
-    };
+  private diffJobs(
+    newJobs: Job[],
+    newHashes: JobHashes,
+    currentHashes: JobHashes
+  ) {
+    const addedJobs: Job[] = [];
+    const updatedJobs: Job[] = [];
+    const currentIds = new Set(Object.keys(currentHashes));
+    const newIds = new Set(Object.keys(newHashes));
 
-    const { NO_DATA, NO_CHANGES, DATA_CHANGED } = DataChangeStatus;
-    let changeStatus = NO_CHANGES;
+    for (const job of newJobs) {
+      const currentHash = currentHashes[job.id];
+      const newHash = newHashes[job.id];
 
-    const expirationTimeInSeconds = 6 * 60 * 60; // 6시간
-
-    const newData = this.mapToJob(list);
-
-    // 새 데이터의 해시 계산
-    const newHashes = newData.reduce<JobHashes>((acc, job) => {
-      acc[job.id] = this.hashObject(job.value);
-      return acc;
-    }, {});
-
-    // Redis에서 현재 저장된 해시 값 가져오기
-    const currentHash = await this.hashStore.getAll();
-
-    if (!currentHash) {
-      // 레디스에 저장된 데이터가 없음 -> 수정 여부 확인 건너뛰고 저장 필요
-      changeStatus = NO_DATA;
-
-      for (const job of newData) {
-        await this.cacheStore.save(job.id, job.value, expirationTimeInSeconds);
-        await this.hashStore.save(job.id, newHashes[job.id], expirationTimeInSeconds);
-      }
-      DebugLogger.server("No data found. Data cached successfully and expiry of 6 hours.");
-      return;
+      if (!currentHash) addedJobs.push(job);
+      else if (currentHash !== newHash) updatedJobs.push(job);
     }
 
-    // 새 데이터의 ID와 기존 데이터의 ID 비교
-    const currentIdSet = new Set(Object.keys(currentHash));
-    const newIdSet = new Set(Object.keys(newHashes));
+    const deletedIds = Array.from(currentIds).filter((id) => !newIds.has(id));
+    return { addedJobs, updatedJobs, deletedIds };
+  }
 
-    // 추가, 삭제 데이터
-    const addedJobs = newData.filter((job) => !currentIdSet.has(this.extractId(job.id)));
-    const deletedIds = Array.from(currentIdSet).filter((id) => !newIdSet.has(id));
-
-    // 수정된 데이터 (해시 비교)
-    const updatedJobs = newData.filter((job) => {
-      const current = currentHash[job.id];
-      const next = newHashes[job.id];
-      return !current || this.hashObject(current) !== next;
-    });
-
-    if (addedJobs.length || deletedIds.length || updatedJobs.length) {
-      // 기존 캐시와의 변경점이 있음 -> 캐시 수정 필요
-      changeStatus = DATA_CHANGED;
-
-      DebugLogger.server(`
-        added: ${addedJobs.length}\n
-        deleted: ${deletedIds.length}\n
-        updated: ${updatedJobs.length}
-      `);
+  private async syncChanges(
+    added: Job[],
+    updated: Job[],
+    deleted: string[],
+    hashes: JobHashes,
+    expiration: number
+  ) {
+    const jobsToSave = [...added, ...updated];
+    for (const job of jobsToSave) {
+      await this.cacheStore.save(job.id, job.value, expiration);
+      await this.hashStore.save(job.id, hashes[job.id], expiration);
     }
-
-    if (changeStatus === DATA_CHANGED) {
-      for (const job of addedJobs) {
-        await this.cacheStore.save(job.id, job.value, expirationTimeInSeconds);
-        await this.hashStore.save(job.id, newHashes[job.id], expirationTimeInSeconds);
-      }
-
-      for (const id of deletedIds) {
-        await this.cacheStore.delete(id);
-        await this.hashStore.delete(id);
-      }
-
-      for (const job of updatedJobs) {
-        await this.cacheStore.save(job.id, job.value, expirationTimeInSeconds);
-        await this.hashStore.save(job.id, newHashes[job.id], expirationTimeInSeconds);
-      }
-      DebugLogger.server("Redis cache updated.");
-    } else {
-      await this.cacheStore.expire(expirationTimeInSeconds);
-      await this.hashStore.expire(expirationTimeInSeconds);
-      DebugLogger.server("No changes. Expiration extended.");
+    for (const id of deleted) {
+      await this.cacheStore.delete(id);
+      await this.hashStore.delete(id);
     }
+  }
+
+  private async extendExpiration(expiration: number) {
+    await this.cacheStore.expire(expiration);
+    await this.hashStore.expire(expiration);
   }
 }
