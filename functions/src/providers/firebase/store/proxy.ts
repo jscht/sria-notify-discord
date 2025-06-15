@@ -21,34 +21,26 @@ export class ProxyStore {
   }
 
   async getProxyList() {
-    try {
-      const snapshot = await this.getProxyRef().get();
+    const snapshot = await this.getProxyRef().get();
 
-      if (snapshot.empty) {
-        return null;
-      }
-
-      return snapshot.docs
-        .filter(doc => doc.id != ProxyStore.INIT_DOC_ID)
-        .map(doc => doc.data());
-    } catch (error) {
-      throw error;
+    if (snapshot.empty) {
+      return null;
     }
+
+    return snapshot.docs
+      .filter(doc => doc.id != ProxyStore.INIT_DOC_ID)
+      .map(doc => doc.data());
   }
 
   async saveProxyList(data: ProxyDoc[]) {
-    try {
-      const batch = this.getBatch();
+    const batch = this.getBatch();
 
-      data.forEach((proxy) => {
-        const docRef = this.getProxyRef().doc(proxy.ipAddress);
-        batch.set(docRef, proxy);
-      });
+    data.forEach((proxy) => {
+      const docRef = this.getProxyRef().doc(proxy.ipAddress);
+      batch.set(docRef, proxy);
+    });
 
-      await batch.commit();
-      DebugLogger.server("All proxies uploaded to Firestore successfully.");
-    } catch (error) {
-      throw error;
-    }
+    await batch.commit();
+    DebugLogger.server("All proxies uploaded to Firestore successfully.");
   }
 }

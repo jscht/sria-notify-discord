@@ -2,6 +2,10 @@ import { getFirestore } from "firebase-admin/firestore";
 import { ResponseRecruitData } from "../../../types/responseRecruitData";
 import { FirebaseCollection } from "./../constants/collections";
 
+interface RecruitListDoc {
+  recruitList: ResponseRecruitData[];
+}
+
 export class RecruitStore {
   private readonly db = getFirestore();
   private static readonly INIT_DOC_ID = "list";
@@ -17,28 +21,27 @@ export class RecruitStore {
   }
 
   async getRecruitList() {
-    try {
-      const docRef = this.getRecruitCollectionRef().doc(RecruitStore.INIT_DOC_ID);
-      const snapshot = await docRef.get();
+    const docRef = this.getRecruitCollectionRef().doc(RecruitStore.INIT_DOC_ID);
+    const snapshot = await docRef.get();
 
-      if (!snapshot.exists) {
-        DebugLogger.warn("No recruit list found in Firestore.");
-        return null;
-      }
-
-      return snapshot.data();
-    } catch (error) {
-      throw error;
+    if (!snapshot.exists) {
+      DebugLogger.warn("No recruit list found in Firestore.");
+      return null;
     }
+
+    const data = snapshot.data() as Partial<RecruitListDoc> | undefined;
+
+    if (!data?.recruitList || !Array.isArray(data.recruitList)) {
+      DebugLogger.warn("Recruit list is missing or invalid in Firestore document.");
+      return null;
+    }
+
+    return data.recruitList;
   }
 
   async saveRecruitList(data: ResponseRecruitData[]) {
-    try {
-      const docRef = this.getRecruitCollectionRef().doc(RecruitStore.INIT_DOC_ID);
-      await docRef.set({ recruitList: data });
-      DebugLogger.server("Recruit list saved to Firestore successfully.");
-    } catch (error) {
-      throw error;
-    }
+    const docRef = this.getRecruitCollectionRef().doc(RecruitStore.INIT_DOC_ID);
+    await docRef.set({ recruitList: data });
+    DebugLogger.server("Recruit list saved to Firestore successfully.");
   }
 }
