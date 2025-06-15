@@ -1,5 +1,5 @@
-import { SlashCommandBuilder, CommandInteraction } from "discord.js";
-import { DiscordBotCommand } from ".";
+import { SlashCommandBuilder } from "discord.js";
+import { DiscordBotCommand } from "../../../constants/discordBotCommand";
 
 export enum AlarmSubscribeCommandAction {
   ADD = "add",
@@ -10,7 +10,7 @@ export enum AlarmSubscribeCommandAction {
 export const MAX_REGION_COUNT = 2;
 
 export const alarmSubscribeCommand = new SlashCommandBuilder()
-  .setName(DiscordBotCommand.AlarmSubscribe)
+  .setName(DiscordBotCommand.ALARM_SUBSCRIBE)
   .setDescription("공고 알림을 설정합니다.")
   .addStringOption(option =>
     option.setName("작업")

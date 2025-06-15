@@ -29,6 +29,7 @@ export class RedisManager {
     }
 
     const client = await redisConnection();
+
     if (!client) {
       throw new Error("Failed to create Redis client");
     }
@@ -41,7 +42,6 @@ export class RedisManager {
     if (!RedisManager.instance) {
       throw new Error("RedisManager not initialized. Call initialize() first.");
     }
-    DebugLogger.request("Successfully got Redis instance.");
     return RedisManager.instance;
   }
 

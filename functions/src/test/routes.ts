@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { CRAWL_MODE } from "../constants/crawlMode";
-import { RecruitService } from "../services/recruitService";
-import { CrawlService } from "../services/crawlService";
+import { RecruitService, CrawlService } from "../services";
 import { scanKeys } from "../providers/redis/client/scanKeys";
 import { SERVICE_NAME } from "../providers/redis/constants/serviceName";
 import { RedisManager } from "../providers/redis/manager/redisManager";

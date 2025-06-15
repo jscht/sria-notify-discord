@@ -1,5 +1,5 @@
 import { client } from "./client";
-import { events } from "./events";
+import { events } from "../../events";
 
 export function initDiscordBot() {
   for (const { once, event, execute } of events) {

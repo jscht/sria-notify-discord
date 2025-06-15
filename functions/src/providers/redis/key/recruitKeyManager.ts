@@ -9,7 +9,7 @@ export class RecruitKeyManager extends BaseKeyManager {
 
   getKeys() {
     return {
-      list: (city?: CityEn) => this.generateKey(["string", `city:${city || "all"}`]),
+      list: (city?: CityEn) => this.generateKey([`city:${city || "all"}`]),
       list_hash: (city?: CityEn) => this.generateKey(["hash", `city:${city || "all"}`]),
     };
   }

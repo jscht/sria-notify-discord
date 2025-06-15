@@ -4,6 +4,7 @@ import { RedisManager } from "../providers/redis/manager/redisManager";
 import { CrawlCacheStore } from "../providers/redis/store";
 import { CityKo } from "../types/city";
 import { Crawler, Scheduler } from "../types/crawler";
+import { ResponseRecruitData } from "../types/responseRecruitData";
 import { getCityFilteredList } from "../utils/getCityFilteredList";
 
 export class CrawlService {
@@ -17,18 +18,14 @@ export class CrawlService {
     this.scheduler = scheduler;
   }
 
-  async sriagent(mode?: CRAWL_MODE, city?: CityKo) {
-    const { DUMMY, CRAWL } = CRAWL_MODE;
-    let result = null;
+  async sriagent(mode: CRAWL_MODE, city?: CityKo) {
+    let scraped: ResponseRecruitData[] | undefined;
 
-    if (!mode || mode === DUMMY) {
-      result = await getCityFilteredList(DUMMY, city);
-    } else if (mode === CRAWL) {
-      const scraped = await this.crawler.sriagent();
-      result = await getCityFilteredList(CRAWL, city, scraped);
+    if (mode === CRAWL_MODE.CRAWL) {
+      scraped = await this.crawler.sriagent();
     }
 
-    return result;
+    return await getCityFilteredList(CRAWL_MODE.DUMMY, city, scraped);
   }
 
   async proxy() {

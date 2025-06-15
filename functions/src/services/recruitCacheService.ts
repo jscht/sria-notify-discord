@@ -21,8 +21,9 @@ export class RecruitCacheService {
   ) {}
 
   async getRecruitList(city?: CityEn): Promise<ResponseRecruitData[] | null> {
-    const { getByCity, getAll } = this.cacheStore;
-    return city ? await getByCity(city) : await getAll();
+    return city
+      ? await this.cacheStore.getByCity(city)
+      : await this.cacheStore.getAll();
   }
 
   async setRecruitList(list: ResponseRecruitData[]) {

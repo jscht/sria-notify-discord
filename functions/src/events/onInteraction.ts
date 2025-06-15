@@ -1,5 +1,5 @@
 import { Events, Interaction, CommandInteraction } from "discord.js";
-import { DiscordBotCommand } from "../providers/discord/commands";
+import { DiscordBotCommand } from "../constants/discordBotCommand";
 import { EventHandler } from "./eventHandler";
 import { handlers } from "./handlers";
 

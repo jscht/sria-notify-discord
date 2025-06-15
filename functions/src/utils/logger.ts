@@ -19,12 +19,9 @@ class Logger {
     }
     console.debug(log, data);
   };
-  static provider = (message: string, provider: Provider, data?: any) => {
+  static provider = (message: string, provider: Provider) => {
     const log = `[debug:provider:${provider}] ${message}`;
-    if (!data) {
-      console.debug(log);
-    }
-    console.debug(log, data);
+    console.debug(log);
   };
 
   // Application Error, Failure Log Group
