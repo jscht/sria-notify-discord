@@ -15,12 +15,10 @@ testRouter.get("/recruit", async (req, res, next) => {
     const recruitService = new RecruitService();
     const recruitList = await recruitService.getRecruitList(CRAWL_MODE.DUMMY, city as string | undefined);
 
-    const logMessage = !city
-      ? "/recruit 정상 처리"
-      : `/recruit/?city=${city} 정상 처리`;
+    const logMessage = `${!city ? "전체" : city} 지역 공고 정상 반환`;
     DebugLogger.server(logMessage);
 
-    res.status(200).json({ message: "정상 처리", result: recruitList });
+    res.status(200).json({ message: logMessage, result: recruitList });
   } catch (error) {
     next(error);
   }
