@@ -35,7 +35,6 @@ export class RecruitService {
     // Step 1: Redis Cache
     try {
       const cached = await this.cacheService.getRecruitList(convertedCity as CityEn);
-      console.log(cached);
       if (cached) {
         return getCityFilteredList(mode, convertedCity, cached);
       }
