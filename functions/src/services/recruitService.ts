@@ -29,7 +29,7 @@ export class RecruitService {
     this.crawler = new CrawlService();
   }
 
-  async getRecruitList(mode: CRAWL_MODE, city?: string | undefined): Promise<ResponseRecruitData[] | null> {
+  async getRecruitList(mode: CRAWL_MODE, city?: string): Promise<ResponseRecruitData[] | null> {
     const convertedCity = this.convertCityByMode(mode, city);
 
     // Step 1: Redis Cache
