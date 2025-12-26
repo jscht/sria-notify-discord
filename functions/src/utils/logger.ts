@@ -1,6 +1,24 @@
-type Provider = "firebase" | "firestore" | "discord";
+import { LogHandler } from "../events/logHandler";
+import { Provider } from "../constants/logSource";
+import { formatDate } from "./formatDate";
 
 class Logger {
+  private readonly DEDUP_TTL = 60;
+
+  private static log(log: LogHandler) {
+    const timestamp = formatDate(new Date());
+    const logLine = `[${timestamp}] [${log.level.toUpperCase()}] [${log.source}] ${log.message}`;
+
+    const refLogMessage = `For detailed logs, please check: ${process.env.LOG_REF_URL}`;
+
+    switch (log.level) {
+      case "info": console.info(logLine, refLogMessage); break;
+      case "debug": console.debug(logLine, refLogMessage); break;
+      case "warn": console.warn(logLine, refLogMessage); break;
+      case "error": console.error(logLine, refLogMessage); break;
+    }
+  }
+
   // Application Log Group
   static server = (message: string) => {
     const log = `[app:server] ${message}`;

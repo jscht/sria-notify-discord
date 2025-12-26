@@ -8,6 +8,7 @@ import { ProxyStore, RecruitStore } from "../providers/firebase/store";
 
 const testRouter = Router();
 
+// OK
 testRouter.get("/recruit", async (req, res, next) => {
   try {
     const { city } = req.query;
@@ -24,6 +25,7 @@ testRouter.get("/recruit", async (req, res, next) => {
   }
 });
 
+// OK
 testRouter.get("/redis-stores", async (req, res) => {
   const pattern = SERVICE_NAME.RECRUIT + "*";
 
@@ -47,6 +49,7 @@ testRouter.get("/redis-stores", async (req, res) => {
   res.json({ result: redisValues });
 });
 
+// OK
 testRouter.get("/firestore-recruit", async (req, res) => {
   const recruit_firestore = new RecruitStore();
   const result = await recruit_firestore.getRecruitList();
@@ -54,6 +57,7 @@ testRouter.get("/firestore-recruit", async (req, res) => {
   res.json({ result });
 });
 
+// OK
 testRouter.get("/firestore-proxy", async (req, res) => {
   const proxy_firestore = new ProxyStore();
   const result = await proxy_firestore.getProxyList();
@@ -61,6 +65,7 @@ testRouter.get("/firestore-proxy", async (req, res) => {
   res.json({ result });
 });
 
+// 최근 갱신 시각이 1시간 이내일 시 건너뛰기 firestore에 갱신 시간 기록
 testRouter.get("/playwright-scraper", async (req, res) => {
   const mode = req.query.mode || "dummy";
   const scrapMode = mode === "crawl" ? CRAWL_MODE.CRAWL : CRAWL_MODE.DUMMY;
@@ -74,6 +79,7 @@ testRouter.get("/playwright-scraper", async (req, res) => {
   res.json({ result });
 });
 
+// OK
 testRouter.get("/proxy-scraper", async (req, res) => {
   const crawlService = new CrawlService();
   const result = await crawlService.proxy();

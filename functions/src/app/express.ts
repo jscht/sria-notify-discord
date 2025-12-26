@@ -6,6 +6,8 @@ import errorHandler from "../middlewares/errorHandler";
 // import { discordConnCache } from "../middlewares/discordConnCache";
 import { testRouter } from "../test/routes";
 
+// 서버 실행 -> Firebase 서버/데이터베이스, Redis, Discord 서버 연결 확인
+
 export function initExpress() {
   const app = express();
 
