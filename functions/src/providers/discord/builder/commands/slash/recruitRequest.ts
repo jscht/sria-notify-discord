@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from "discord.js";
-import { DiscordBotCommand } from "../../../constants/discordBotCommand";
+import { DiscordBotCommand } from "../../../../../constants/discordBotCommand";
 
 export const recruitRequestCommand = new SlashCommandBuilder()
   .setName(DiscordBotCommand.RECRUIT_REQUEST)

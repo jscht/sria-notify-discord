@@ -1,11 +1,14 @@
+import "../../utils/logger"
 import { config } from "dotenv";
 import { REST, Routes } from "discord.js";
-import { commands } from "./commands";
+import { commands } from "./builder/commands";
 
 config();
 
 // 디스코드 Slash Command를 Discord API에 등록하는 용도
 // 봇 실행(index.ts)과는 별개이며, 명령어가 추가/변경/삭제될 때만 수동 실행
+
+// npm run register:commands
 
 const rest = new REST({ version: '10' }).setToken(process.env.SARIAN_BOT_TOKEN!);
 

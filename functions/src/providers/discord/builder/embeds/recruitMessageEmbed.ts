@@ -1,12 +1,12 @@
 import { APIEmbed, EmbedBuilder } from "discord.js";
-import { ResponseRecruitData } from "../../../types/responseRecruitData";
+import { ResponseRecruitData } from "../../../../types/responseRecruitData";
 
 function extractJobId(path: string) {
   const match = path.match(/\/jobs\/(\d+)/);
   return match ? match[1] : "";
 }
 
-export function recruitMessageBuilder(list: ResponseRecruitData[], region?: string): APIEmbed {
+export function recruitMessageEmbed(list: ResponseRecruitData[], region?: string): APIEmbed {
   const title = `📢 ${region ?? "전체"} 지역 공고`;
   const topCount = 3;
   const description = list.length 
