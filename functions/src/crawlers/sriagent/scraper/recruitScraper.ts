@@ -1,13 +1,13 @@
 import { chromium } from "playwright-extra";
 import stealth from "puppeteer-extra-plugin-stealth";
 import { ResponseRecruitData } from "../../../types/responseRecruitData";
+import { getDelay } from "../../../utils/getDelay";
+import { getRandomUserAgent } from "../../../utils/getRandomUserAgent";
 import { extractRecruitData } from "./extractRecruitData";
 import { isNextPageAvailable } from "./isNextPageAvailable";
 import { getPaginationItemCount } from "./getPaginationItemCount";
-import { getDelay } from "../../../utils/getDelay";
-import { getCookie } from "./getCookie";
 import { proxyScraper } from "../../proxy";
-import { getRandomUserAgent } from "../../../utils/getRandomUserAgent";
+import { getCookie } from "./getCookie";
 
 export async function recruitScraper() {
   chromium.use(stealth());
@@ -20,7 +20,7 @@ export async function recruitScraper() {
       "--disable-gpu",
       "--single-process",
     ],
-    headless: true,
+    headless: true,  // 디버깅 시 false
   })
   .catch((error) => {
     throw error;
@@ -55,11 +55,10 @@ export async function recruitScraper() {
     const page = await context.newPage();
 
     const targetUrl = `${process.env.SRI_URL}`;
-    const pageWaitDelay = getDelay(7);
 
     await page.goto(targetUrl, {
       waitUntil: "domcontentloaded",
-      timeout: pageWaitDelay
+      timeout: getDelay(2)
     })
 
     const recruitData: ResponseRecruitData[] = [];
@@ -76,7 +75,7 @@ export async function recruitScraper() {
 
       recruitData.push(...extractRecruitList);
 
-      const delay = getDelay(3, 5);
+      const delay = getDelay(2, 3);
       DebugLogger.server(`Waiting for ${delay}ms...`);
       await page.waitForTimeout(delay);
 

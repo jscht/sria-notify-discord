@@ -24,7 +24,7 @@ export async function getList(page: Page): Promise<ProxyDoc[]> {
       port: parseInt(port),
       type,
       latency: parseFloat(latency),
-      lastCheckStatus: status,
+      lastCheckStatus: status ? status.split("=")[1] : null,
     };
   }));
 
@@ -34,7 +34,7 @@ export async function getList(page: Page): Promise<ProxyDoc[]> {
   };
 
   const filteredProxies = proxyList
-    .filter(({ lastCheckStatus }) => lastCheckStatus?.includes("OK"))
+    .filter(({ lastCheckStatus }) => lastCheckStatus == "OK")
     .map((proxy) => ({ ...proxy, ...defaultProxyState }))
     .sort((a, b) => a.latency - b.latency);
 

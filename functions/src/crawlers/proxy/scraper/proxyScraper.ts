@@ -1,15 +1,15 @@
 import { chromium } from "playwright-extra";
 import stealth from "puppeteer-extra-plugin-stealth";
 import { getDelay } from "../../../utils/getDelay";
-import { getList } from "./getList";
 import { getRandomUserAgent } from "../../../utils/getRandomUserAgent";
+import { getList } from "./getList";
 
 export async function proxyScraper() {
   chromium.use(stealth());
 
   const browser = await chromium.launch({
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    headless: true, // 디버깅 시 false
+    headless: true,  // 디버깅 시 false
   })
   .catch((error) => {
     throw error;
