@@ -1,9 +1,7 @@
 import { Page } from "playwright-core";
-import { ResponseRecruitData } from "../../../types/responseRecruitData";
+import type { RecruitData } from "@/crawlers/types";
 
-export async function extractRecruitData(page: Page) {
-  let recruitListItems: ResponseRecruitData[] = [];
-
+export async function extractRecruitData(page: Page): Promise<RecruitData[]> {
   const normalizeWhitespace = (text: string) => text?.replace(/\s+/g, " ").trim();
   const elements = page.locator(".recruit_list ul > li");
   const itemCount = await elements.count();
@@ -28,12 +26,10 @@ export async function extractRecruitData(page: Page) {
     const href = normalizeWhitespace(rawHref);
     const dDay = normalizeWhitespace(rawDDay);
     const dayTxt = normalizeWhitespace(rawDayTxt);
-    const recruitmentStatus = normalizeWhitespace(rawRecruitmentStatus);
+    const recruitmentStatus = normalizeWhitespace(rawRecruitmentStatus) as RecruitData["recruitmentStatus"];
 
-    return { href, title, dDay, dayTxt, recruitmentStatus } as ResponseRecruitData;
+    return { href, title, dDay, dayTxt, recruitmentStatus };
   });
 
-  recruitListItems = await Promise.all(promises);
-
-  return recruitListItems;
+  return await Promise.all(promises);
 }

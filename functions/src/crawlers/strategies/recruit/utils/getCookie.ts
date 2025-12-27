@@ -2,11 +2,14 @@ import { Browser, Cookie } from "playwright-core";
 
 const requiredCookies = ["XSRF-TOKEN", "dyms_career_session"];
 
+/**
+ * 브라우저에서 필요한 쿠키 추출
+ */
 export async function getCookie(browser: Browser) {
   const context = await browser.newContext()
-  .catch((error) => {
-    throw error;
-  });
+    .catch((error) => {
+      throw error;
+    });
 
   try {
     const page = await context.newPage();
