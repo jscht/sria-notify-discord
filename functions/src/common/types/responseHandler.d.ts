@@ -1,9 +1,9 @@
 /**
- * Response Handler Type Definitions
+ * Response Handler Interface Definitions
  */
 
-export type ResponseHandler = {
-  status: number; 
+export interface ResponseHandler {
+  status?: number;
   message: string;
   name?: string;
-};
+}

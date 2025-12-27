@@ -1,9 +1,9 @@
 import { getFirestore } from "firebase-admin/firestore";
-import { ResponseRecruitData } from "../../../types/responseRecruitData";
+import type { RecruitData } from "@/crawlers/types";
 import { FirebaseCollection } from "./../constants/collections";
 
 interface RecruitListDoc {
-  recruitList: ResponseRecruitData[];
+  recruitList: RecruitData[];
 }
 
 export class RecruitStore {
@@ -20,7 +20,7 @@ export class RecruitStore {
     return RecruitStore.INIT_DOC_ID;
   }
 
-  async getRecruitList() {
+  async getRecruitList(): Promise<RecruitData[] | null> {
     const docRef = this.getRecruitCollectionRef().doc(RecruitStore.INIT_DOC_ID);
     const snapshot = await docRef.get();
 
@@ -39,7 +39,7 @@ export class RecruitStore {
     return data.recruitList;
   }
 
-  async saveRecruitList(data: ResponseRecruitData[]) {
+  async saveRecruitList(data: RecruitData[]): Promise<void> {
     const docRef = this.getRecruitCollectionRef().doc(RecruitStore.INIT_DOC_ID);
     await docRef.set({ recruitList: data });
     DebugLogger.server("Recruit list saved to Firestore successfully.");

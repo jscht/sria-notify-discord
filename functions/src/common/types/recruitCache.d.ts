@@ -2,11 +2,11 @@
  * Recruit Cache Type Definitions
  */
 
-import type { ResponseRecruitData } from "./responseRecruitData.d";
+import type { RecruitData } from "@/crawlers/types";
 
 export interface Job {
   id: string;
-  value: ResponseRecruitData;
+  value: RecruitData;
 }
 
 export type HashedString = string;

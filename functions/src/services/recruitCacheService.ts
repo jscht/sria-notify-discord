@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { RecruitCacheStore, RecruitHashStore } from "../providers/redis/store";
 import { CityEn } from "../types/city";
-import { ResponseRecruitData } from "../types/responseRecruitData";
+import type { RecruitData } from "@/crawlers/types";
 import { Job, HashedString, JobDiffResult, JobHashes } from "../types/recruitCache";
 
 /**
@@ -20,13 +20,13 @@ export class RecruitCacheService {
     private readonly hashStore: RecruitHashStore
   ) {}
 
-  async getRecruitList(city?: CityEn): Promise<ResponseRecruitData[] | null> {
+  async getRecruitList(city?: CityEn): Promise<RecruitData[] | null> {
     return city
       ? await this.cacheStore.getByCity(city)
       : await this.cacheStore.getAll();
   }
 
-  async setRecruitList(list: ResponseRecruitData[]) {
+  async setRecruitList(list: RecruitData[]) {
     enum CacheUpdateStatus {
       NO_DATA = "NO_DATA",
       UNCHANGED = "UNCHANGED",
@@ -89,7 +89,7 @@ export class RecruitCacheService {
     }, {});
   }
 
-  private mapToJob(list: ResponseRecruitData[]): Job[] {
+  private mapToJob(list: RecruitData[]): Job[] {
     const extractId = (href: string): string => href.replace("/jobs/", "");
 
     return list.map((job) => ({

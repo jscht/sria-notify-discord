@@ -1,7 +1,9 @@
-import { alertModeSelectActionId } from "../constants/alertModeSelectAction";
-import { alertRegionEditActionId } from "../constants/alertRegionEditAction";
-import { regionModeChangeActionId } from "../constants/regionModeChangeAction";
-import { subscribeOptionActionId } from "../constants/subscribeOptionAction";
+import { 
+  alertModeSelectActionId, 
+  alertRegionEditActionId, 
+  regionModeChangeActionId, 
+  subscribeOptionActionId
+} from "@/common/constants";
 
 export const fullActionId = {
   // REGION_EDIT

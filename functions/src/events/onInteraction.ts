@@ -3,9 +3,9 @@ import { EventHandler } from "./eventHandler";
 import { commandHandlers } from "./handlers/commands";
 import { buttonHandlers } from "./handlers/buttons";
 import { modalHandler } from "./handlers/modals";
-import { DiscordBotCommand } from "../constants/discordBotCommand";
-import { isValidFullActionId } from "../utils/isValidFullActionId";
- 
+import { DiscordBotCommand } from "@/common/constants";
+import { isValidFullActionId } from "@/common/utils";
+
 export const onInteraction = (): EventHandler => ({
   event: Events.InteractionCreate,
   execute: async (interaction: Interaction) => {

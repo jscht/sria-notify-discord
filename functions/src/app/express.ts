@@ -1,9 +1,11 @@
 import express from "express";
-import initializeWorker from "../middlewares/initializeWorker";
-import pageNotFound from "../middlewares/pageNotFound";
-import errorHandler from "../middlewares/errorHandler";
-// import { firebaseConnCache } from "../middlewares/firebaseConnCache";
-// import { discordConnCache } from "../middlewares/discordConnCache";
+import {
+  initializeWorker,
+  pageNotFound,
+  errorHandler,
+  // firebaseConnCache,
+  // discordConnCache,
+} from "@/common/middlewares";
 import { testRouter } from "../test/routes";
 
 // 서버 실행 -> Firebase 서버/데이터베이스, Redis, Discord 서버 연결 확인

@@ -9,12 +9,6 @@ export type { CityEn, CityKo } from "./city.d";
 // Crawler Types
 export type { Crawler, Scheduler } from "./crawler.d";
 
-// Proxy Types
-export type { ProxyData, ProxyDoc } from "./proxyData.d";
-
-// Recruit Data Types
-export type { ResponseRecruitData } from "./responseRecruitData.d";
-
 // Recruit Cache Types
 export type { Job, HashedString, JobHashes, JobDiffResult } from "./recruitCache.d";
 

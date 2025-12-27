@@ -4,16 +4,10 @@
  */
 
 import type { Request, Response, NextFunction } from "express";
-
-// 순환 참조 방지: 런타임에 타입만 정의
-interface ResponseHandlerBase {
-  status?: number;
-  message: string;
-  name?: string;
-}
+import type { ResponseHandler } from "../types";
 
 export default function errorHandler(
-  err: ResponseHandlerBase,
+  err: ResponseHandler,
   req: Request,
   res: Response,
   next: NextFunction
@@ -32,6 +26,6 @@ export default function errorHandler(
     return;
   }
 
-  const msg = err.name ? err.name : message;
+  const msg = err.name ? err.name : message;  // 에러 반환이 좀 꼬여있음
   res.status(status).json({ err, message: msg });
 }

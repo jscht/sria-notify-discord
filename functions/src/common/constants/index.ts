@@ -32,6 +32,3 @@ export { CITIES } from "./city";
 
 // Log Source
 export type { LogSource, Provider } from "./logSource";
-
-// User Alert Setting
-export type { SubscribeStatus, UserAlertSetting } from "./userAlertSetting";

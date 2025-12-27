@@ -21,7 +21,6 @@
       "@/ai/*": ["src/ai/*"],
       "@/providers/*": ["src/providers/*"],
       "@/crawlers/*": ["src/crawlers/*"],
-      "@/mocks/*": ["src/mocks/*"],
       "@/services/*": ["src/services/*"],
       "@/events/*": ["src/events/*"],
       "@/app/*": ["src/app/*"],
