@@ -1,8 +1,8 @@
 import { RecruitScheduler } from "./RecruitScheduler";
+import { ProxyScheduler } from "./ProxyScheduler";
 import { CRAWL_MODE } from "@/common/constants";
 import type { SchedulerStatus } from "./types";
 import { BaseScheduler } from "./base/BaseScheduler";
-import { DebugLogger } from "@/utils/logger";
 
 /**
  * 모든 스케줄러를 중앙에서 관리 (Singleton)
@@ -45,6 +45,30 @@ export class SchedulerManager {
    */
   stopRecruitScheduler(): void {
     const scheduler = this.schedulers.get("recruit");
+    if (scheduler) {
+      scheduler.stopWork();
+    }
+  }
+
+  /**
+   * Proxy 스케줄러 시작
+   */
+  startProxyScheduler(workIntervalMs?: number): void {
+    let scheduler = this.schedulers.get("proxy") as ProxyScheduler;
+
+    if (!scheduler) {
+      scheduler = new ProxyScheduler(workIntervalMs);
+      this.schedulers.set("proxy", scheduler);
+    }
+
+    scheduler.startWork();
+  }
+
+  /**
+   * Proxy 스케줄러 정지
+   */
+  stopProxyScheduler(): void {
+    const scheduler = this.schedulers.get("proxy");
     if (scheduler) {
       scheduler.stopWork();
     }

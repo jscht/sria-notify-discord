@@ -7,7 +7,6 @@ import {
   isNextPageAvailable 
 } from "../utils";
 import { getRandomUserAgent, getDelay } from "@/crawlers/utils";
-import { DebugLogger } from "@/utils/logger";
 import { chromium } from "playwright-extra";
 import stealth from "puppeteer-extra-plugin-stealth";
 

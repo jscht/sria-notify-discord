@@ -30,13 +30,14 @@ export default async function initializeWorker(
     await initializeProviders();
 
     // 스케줄러 초기화
-    const manager = initializeSchedulers({
-      recruitInterval: 4 * 60 * 60 * 1000, // 4시간
-      recruitMode: CRAWL_MODE.DUMMY,
-    });
+    // const manager = initializeSchedulers({
+    //   recruitInterval: 4 * 60 * 60 * 1000, // 4시간 간격
+    //   recruitMode: CRAWL_MODE.DUMMY,
+    //   proxyInterval: 6 * 60 * 60 * 1000,   // 6시간 간격
+    // });
 
     // Graceful shutdown 설정
-    setupGracefulShutdown(manager);
+    // setupGracefulShutdown(manager);
 
     isInitialized = true;
     DebugLogger.server("✅ Initialization completed successfully.");

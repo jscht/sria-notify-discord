@@ -26,9 +26,9 @@ export async function extractRecruitData(page: Page): Promise<RecruitData[]> {
     const href = normalizeWhitespace(rawHref);
     const dDay = normalizeWhitespace(rawDDay);
     const dayTxt = normalizeWhitespace(rawDayTxt);
-    const recruitmentStatus = normalizeWhitespace(rawRecruitmentStatus) as RecruitData["recruitmentStatus"];
+    const recruitmentStatus = normalizeWhitespace(rawRecruitmentStatus);
 
-    return { href, title, dDay, dayTxt, recruitmentStatus };
+    return { href, title, dDay, dayTxt, recruitmentStatus } as RecruitData;
   });
 
   return await Promise.all(promises);

@@ -16,7 +16,8 @@ crawlers/
 ├── schedulers/                 ← 스케줄러 관리
 │   ├── base/                   ← 기본 스케줄러 추상 클래스
 │   ├── utils/                  ← 스케줄러 유틸리티
-│   ├── RecruitScheduler.ts     ← 채용공고 스케줄러
+│   ├── RecruitScheduler.ts     ← 채용공고 스케줄러 (4시간 간격)
+│   ├── ProxyScheduler.ts       ← 프록시 스케줄러 (6시간 간격)
 │   └── SchedulerManager.ts     ← 스케줄러 관리자 (Singleton)
 │
 ├── utils/                      ← 공통 유틸리티
@@ -36,6 +37,7 @@ import { CRAWL_MODE } from "@/common/constants";
 const manager = initializeSchedulers({
   recruitInterval: 4 * 60 * 60 * 1000, // 4시간
   recruitMode: CRAWL_MODE.DUMMY,
+  proxyInterval: 6 * 60 * 60 * 1000,   // 6시간 (하루 4번)
 });
 
 // Graceful shutdown 설정
@@ -53,11 +55,17 @@ const manager = SchedulerManager.getInstance();
 
 // 스케줄러 시작
 manager.startRecruitScheduler(4 * 60 * 60 * 1000, CRAWL_MODE.CRAWL);
+manager.startProxyScheduler(6 * 60 * 60 * 1000);
 
 // 상태 확인
-const status = manager.getStatus("recruit");
-console.log(`Running: ${status?.isRunning}`);
-console.log(`Next run: ${status?.nextRunTime}`);
+const recruitStatus = manager.getStatus("recruit");
+const proxyStatus = manager.getStatus("proxy");
+console.log(`Recruit Running: ${recruitStatus?.isRunning}`);
+console.log(`Proxy Running: ${proxyStatus?.isRunning}`);
+
+// 개별 정지
+manager.stopRecruitScheduler();
+manager.stopProxyScheduler();
 
 // 모든 스케줄러 정지
 manager.stopAll();
@@ -66,11 +74,15 @@ manager.stopAll();
 ### 크롤러 직접 사용
 
 ```typescript
-import { SriaCrawler } from "@/crawlers/strategies/recruit";
+import { SriaCrawler, ProxyCrawler } from "@/crawlers/strategies";
 
-const crawler = new SriaCrawler();
-const data = await crawler.crawl();
-console.log(data);
+// 채용공고 크롤링
+const sriaCrawler = new SriaCrawler();
+const recruitData = await sriaCrawler.crawl();
+
+// 프록시 크롤링
+const proxyCrawler = new ProxyCrawler();
+const proxyData = await proxyCrawler.crawl();
 ```
 
 ## 📝 타입
@@ -87,6 +99,20 @@ interface RecruitData {
 }
 ```
 
+### ProxyData
+
+```typescript
+interface ProxyData {
+  ipAddress: string;
+  port: number | null;
+  type: string | null;
+  latency: number;
+  lastCheckStatus: string | null;
+  available: boolean;
+  used: boolean;
+}
+```
+
 ### SchedulerStatus
 
 ```typescript
@@ -99,6 +125,13 @@ interface SchedulerStatus {
   workDurationMs: number | null;
 }
 ```
+
+## ⏰ 스케줄러 실행 주기
+
+| 스케줄러 | 주기 | 설명 |
+|---------|------|------|
+| RecruitScheduler | 4시간 | 하루 6번 채용공고 갱신 |
+| ProxyScheduler | 6시간 | 하루 4번 프록시 목록 갱신 |
 
 ## ⚙️ 환경 변수
 

@@ -2,7 +2,6 @@ import { BaseScheduler } from "./base/BaseScheduler";
 import { CRAWL_MODE } from "@/common/constants";
 import { RecruitService } from "@/services/recruitService";
 import type { SchedulerConfig, WorkResult } from "./types";
-import { DebugLogger } from "@/utils/logger";
 
 /**
  * 채용공고 크롤링 스케줄러

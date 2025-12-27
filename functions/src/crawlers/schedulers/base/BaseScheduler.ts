@@ -1,5 +1,4 @@
 import type { SchedulerConfig, SchedulerStatus, WorkResult } from "../types";
-import { DebugLogger } from "@/utils/logger";
 
 /**
  * 모든 스케줄러의 추상 클래스

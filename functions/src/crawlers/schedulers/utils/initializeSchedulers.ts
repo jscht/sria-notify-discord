@@ -1,6 +1,5 @@
 import { SchedulerManager } from "../SchedulerManager";
 import { CRAWL_MODE } from "@/common/constants";
-import { DebugLogger } from "@/utils/logger";
 
 /**
  * 스케줄러 초기화 설정
@@ -8,6 +7,7 @@ import { DebugLogger } from "@/utils/logger";
 export interface SchedulerInitConfig {
   recruitInterval?: number;
   recruitMode?: CRAWL_MODE;
+  proxyInterval?: number;
 }
 
 /**
@@ -18,10 +18,15 @@ export function initializeSchedulers(
 ): SchedulerManager {
   const manager = SchedulerManager.getInstance();
 
-  // Recruit 스케줄러 시작
+  // Recruit 스케줄러 시작 (기본 4시간)
   manager.startRecruitScheduler(
-    config?.recruitInterval || 4 * 60 * 60 * 1000, // 기본 4시간
+    config?.recruitInterval || 4 * 60 * 60 * 1000,
     config?.recruitMode || CRAWL_MODE.DUMMY
+  );
+
+  // Proxy 스케줄러 시작 (기본 6시간, 하루 4번)
+  manager.startProxyScheduler(
+    config?.proxyInterval || 6 * 60 * 60 * 1000
   );
 
   DebugLogger.server("✅ All schedulers initialized");

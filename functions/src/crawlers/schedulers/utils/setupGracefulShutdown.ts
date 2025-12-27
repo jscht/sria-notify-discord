@@ -1,5 +1,4 @@
 import { SchedulerManager } from "../SchedulerManager";
-import { DebugLogger } from "@/utils/logger";
 
 /**
  * Graceful shutdown 설정

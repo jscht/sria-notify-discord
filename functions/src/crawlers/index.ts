@@ -5,7 +5,7 @@ export { ProxyCrawler } from "./strategies/proxy";
 
 // 스케줄러
 export { SchedulerManager } from "./schedulers";
-export { RecruitScheduler } from "./schedulers";
+export { RecruitScheduler, ProxyScheduler } from "./schedulers";
 export { initializeSchedulers, setupGracefulShutdown } from "./schedulers/utils";
 
 // 유틸리티
