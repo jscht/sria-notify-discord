@@ -1,5 +1,5 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
-import { regionModeChangeActionId } from "../../../../constants/regionModeChangeAction";
+import { regionModeChangeActionId } from "@/features/alarmSubscribe/constants";
 
 export function showConfirmChangeAlertModeButtons() {
   return new ActionRowBuilder<ButtonBuilder>().addComponents(

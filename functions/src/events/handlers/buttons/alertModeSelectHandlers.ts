@@ -3,6 +3,6 @@ import { onEnableAllRegionAlert } from "../../listeners/buttons/onEnableAllRegio
 import { onEnableSelectedRegionAlert } from "../../listeners/buttons/onEnableSelectedRegionAlert";
 
 export const alertModeSelectHandlers = {
-  [fullActionId.ALERT_MODE_SELECT_ALL]: onEnableAllRegionAlert,
-  [fullActionId.ALERT_MODE_SELECT_SELECTED]: onEnableSelectedRegionAlert
+  [fullActionId.ALERT_MODE_ALL]: onEnableAllRegionAlert,
+  [fullActionId.ALERT_MODE_SELECTED]: onEnableSelectedRegionAlert
 } as const;

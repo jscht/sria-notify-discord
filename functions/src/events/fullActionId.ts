@@ -1,9 +1,15 @@
 import { 
+  ALERT_REGION_EDIT_PREFIX, 
+  REGION_MODE_CHANGE_PREFIX, 
+  SUBSCRIBE_OPTION_PREFIX, 
+  ALERT_MODE_SELECT_PREFIX
+} from "@/features/alarmSubscribe/constants";
+import { 
   alertModeSelectActionId, 
   alertRegionEditActionId, 
   regionModeChangeActionId, 
   subscribeOptionActionId
-} from "@/common/constants";
+} from "@/features/alarmSubscribe/constants";
 
 export const fullActionId = {
   // REGION_EDIT
@@ -19,9 +25,34 @@ export const fullActionId = {
   SUBSCRIBE_OPTION_ENABLE: subscribeOptionActionId.ENABLE,
   SUBSCRIBE_OPTION_MANAGE: subscribeOptionActionId.MANAGE,
 
-  // ALERT_MODE_SELECT
-  ALERT_MODE_SELECT_ALL: alertModeSelectActionId.ALL,
-  ALERT_MODE_SELECT_SELECTED: alertModeSelectActionId.SELECTED,
+  // ALERT_MODE
+  ALERT_MODE_ALL: alertModeSelectActionId.ALL,
+  ALERT_MODE_SELECTED: alertModeSelectActionId.SELECTED,
 } as const;
 
+// ============================================
+// Type Utilities
+// ============================================
+
+/** 전체 FullActionId 유니온 타입 */
 export type FullActionId = typeof fullActionId[keyof typeof fullActionId];
+
+/** prefix로 FullActionId 필터링하는 유틸리티 타입 */
+export type ExtractByPrefix<P extends string> = 
+  Extract<FullActionId, `${P}:${string}`>;
+
+// ============================================
+// Prefix 기반 Action ID 타입
+// ============================================
+
+/** "REGION_EDIT:ADD" | "REGION_EDIT:REMOVE" | "REGION_EDIT:CLEAR" */
+export type RegionEditActionId = ExtractByPrefix<typeof ALERT_REGION_EDIT_PREFIX>;
+
+/** "ALERT_MODE:ALL" | "ALERT_MODE:SELECTED_REGIONS" */
+export type AlertModeActionId = ExtractByPrefix<typeof ALERT_MODE_SELECT_PREFIX>;
+
+/** "REGION_MODE_CHANGE:CONFIRM" | "REGION_MODE_CHANGE:CANCEL" */
+export type RegionModeChangeActionId = ExtractByPrefix<typeof REGION_MODE_CHANGE_PREFIX>;
+
+/** "SUBSCRIBE_OPTION:ENABLE" | "SUBSCRIBE_OPTION:MANAGE" */
+export type SubscribeOptionActionId = ExtractByPrefix<typeof SUBSCRIBE_OPTION_PREFIX>;
