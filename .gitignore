@@ -67,3 +67,7 @@ node_modules/
 
 # dotenv environment variables file
 .env
+
+# Documentation files (except README.md)
+*.md
+!README.md
