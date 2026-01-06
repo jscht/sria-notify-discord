@@ -2,14 +2,14 @@ import {
   ALERT_REGION_EDIT_PREFIX, 
   REGION_MODE_CHANGE_PREFIX, 
   SUBSCRIBE_OPTION_PREFIX, 
-  ALERT_MODE_SELECT_PREFIX
-} from "@/features/alarmSubscribe/constants";
-import { 
+  ALERT_MODE_SELECT_PREFIX,
   alertModeSelectActionId, 
   alertRegionEditActionId, 
   regionModeChangeActionId, 
   subscribeOptionActionId
 } from "@/features/alarmSubscribe/constants";
+
+// TODO: 액션 ID 관리 용이성을 위해 리팩토링 고려 - prefix 별로 분리해놓고 합치는 방식
 
 export const fullActionId = {
   // REGION_EDIT

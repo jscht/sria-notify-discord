@@ -1,8 +1,8 @@
 import crypto from "crypto";
 import { RecruitCacheStore, RecruitHashStore } from "../providers/redis/store";
-import { CityEn } from "../types/city";
+import type { CityEn } from "@/common/types/city.d";
+import type { Job, HashedString, JobDiffResult, JobHashes } from "@/common/types/recruitCache.d";
 import type { RecruitData } from "@/crawlers/types";
-import { Job, HashedString, JobDiffResult, JobHashes } from "../types/recruitCache";
 
 /**
  * 공고 리스트 갱신 흐름:
