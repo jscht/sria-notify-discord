@@ -2,11 +2,10 @@
  * Crawler Type Definitions
  */
 
-import type { ProxyDoc } from "./proxyData.d";
-import type { ResponseRecruitData } from "./responseRecruitData.d";
+import type { RecruitData, ProxyDoc } from "@/crawlers/types";
 
 export type Crawler = {
-  sriagent: () => Promise<ResponseRecruitData[]>;
+  sriagent: () => Promise<RecruitData[]>;
   proxy: () => Promise<ProxyDoc[]>;
 };
 

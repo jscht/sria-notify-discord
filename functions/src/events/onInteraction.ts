@@ -1,11 +1,14 @@
-import { Events, Interaction, CommandInteraction, MessageFlags, ButtonInteraction, ModalSubmitInteraction, StringSelectMenuInteraction } from "discord.js";
+import { 
+  Events, Interaction, CommandInteraction, MessageFlags, 
+  ButtonInteraction, ModalSubmitInteraction, StringSelectMenuInteraction 
+} from "discord.js";
 import { EventHandler } from "./eventHandler";
 import { commandHandlers } from "./handlers/commands";
 import { buttonHandlers } from "./handlers/buttons";
 import { modalHandler } from "./handlers/modals";
-import { DiscordBotCommand } from "../constants/discordBotCommand";
-import { isValidFullActionId } from "../utils/isValidFullActionId";
- 
+import { isValidFullActionId } from "@/common/utils";
+import { DiscordBotCommand } from "@/providers/discord/constants";
+
 export const onInteraction = (): EventHandler => ({
   event: Events.InteractionCreate,
   execute: async (interaction: Interaction) => {

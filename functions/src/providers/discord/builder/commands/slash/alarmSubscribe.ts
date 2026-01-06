@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, APIApplicationCommandOptionChoice } from "discord.js";
-import { DiscordBotCommand } from "../../../../../constants/discordBotCommand";
-import type { SubscribeCommand } from "../../../../../constants/alarmSubscribeCommand";
-import { AlertModeSelectAction } from "@/constants/alertModeSelectAction";
+import { DiscordBotCommand } from "@/providers/discord/constants";
+import { AlertModeSelectAction } from "@/features/alarmSubscribe/constants";
+import type { SubscribeCommand } from "@/features/alarmSubscribe/types";
 
 export const MAX_REGION_COUNT = 2;
 

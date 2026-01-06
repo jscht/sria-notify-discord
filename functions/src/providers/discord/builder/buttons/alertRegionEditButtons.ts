@@ -1,5 +1,5 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
-import { alertRegionEditActionId } from "../../../../constants/alertRegionEditAction";
+import { alertRegionEditActionId } from "@/features/alarmSubscribe/constants";
 
 export function alertRegionEditButtons(isSelectedRegionMode: boolean) {
   return new ActionRowBuilder<ButtonBuilder>().addComponents(

@@ -6,7 +6,8 @@
 import { formatDate } from "./formatDate";
 
 type LogLevel = "info" | "debug" | "warn" | "error";
-type LogSource = string; // 순환 참조 방지
+type Provider = "discord" | "firebase" | "redis";
+type LogSource = "server" | Provider | "crawler";
 
 interface LogHandler {
   level: LogLevel;

@@ -1,0 +1,15 @@
+/**
+ * min ~ max 초 범위의 랜덤 딜레이 생성 (ms)
+ * @param min 최소 초
+ * @param max 최대 초
+ * @returns min ~ max 초 (ms 단위)
+ */
+export function getDelay(min: number, max?: number): number {
+  if (min <= 0) {
+    return 0;
+  }
+  if (!max || max <= min) {
+    return min * 1000;
+  }
+  return Math.floor(Math.random() * ((max - min) * 1000 + 1)) + min * 1000;
+}

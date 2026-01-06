@@ -2,18 +2,8 @@
  * Alarm Subscribe Feature Types
  */
 
-// "ALL" 또는 "SELECTED_REGIONS"로 명확히 정의
-export type SubscribeCommand = "ALL" | "SELECTED_REGIONS";
+// Alarm Subscribe Command
+export type { SubscribeCommand, AlarmSubscribeAction } from "./alarmSubscribeCommand";
 
-export interface AlarmSubscription {
-  userId: string;
-  mode: SubscribeCommand;
-  regions?: string[];
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface AlarmSubscriptionInput {
-  mode: SubscribeCommand;
-  regions?: string[];
-}
+// Alarm Subscription Data
+export type { AlarmSubscription, AlarmSubscriptionInput } from "./alarmSubscription";

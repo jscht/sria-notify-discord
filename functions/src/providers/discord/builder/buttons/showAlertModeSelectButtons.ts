@@ -1,5 +1,5 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
-import { alertModeSelectActionId } from "../../../../constants/alertModeSelectAction";
+import { alertModeSelectActionId } from "@/features/alarmSubscribe/constants";
 
 export function showAlertModeSelectButtons() {
   return new ActionRowBuilder<ButtonBuilder>().addComponents(

@@ -3,11 +3,16 @@
  * Discord 상호작용 ID의 유효성 검증
  */
 
-// TODO: events/fullActionId.ts가 common으로 이동하면 import 경로 수정 필요
-// 임시로 any 타입 사용
+import { FullActionId, fullActionId } from "@/events/fullActionId";
 
-export function isValidFullActionId(id: string): boolean {
-  // TODO: fullActionId 객체의 모든 값이 포함되어 있는지 확인
-  // 현재는 문자열 형식이 유효한지만 체크
-  return typeof id === "string" && id.length > 0;
+export function isValidFullActionId(id: unknown): id is FullActionId {
+  // 1. 문자열 타입 및 길이 체크
+  if (typeof id !== "string" || id.length === 0) {
+    return false;
+  }
+
+  // 2. 정의된 객체의 값들에 포함되어 있는지 확인
+  const validIds = Object.values(fullActionId) as readonly string[];
+  
+  return validIds.includes(id);
 }

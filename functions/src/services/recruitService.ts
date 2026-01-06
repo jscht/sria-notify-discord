@@ -1,12 +1,12 @@
-import { CRAWL_MODE } from "../constants/crawlMode";
+import { CRAWL_MODE } from "@/common/constants";
 import { RedisManager } from "../providers/redis/manager/redisManager";
 import { RecruitStore } from "../providers/firebase/store";
 import { RecruitCacheService, CrawlService } from "../services";
-import { CityKo, CityEn } from "../types/city";
-import { ResponseRecruitData } from "../types/responseRecruitData";
-import { cityNameConverter } from "../utils/cityName";
-import { getCityFilteredList } from "../utils/getCityFilteredList";
-import { HttpError } from "../utils/httpError";
+import { CityKo, CityEn } from "@/common/types";
+import type { RecruitData } from "@/crawlers/types";
+import { cityNameConverter } from "@/common/utils/cityName";
+import { getCityFilteredList } from "@/common/utils";
+import { HttpError } from "@/common/utils/errors";
 
 /**
  * 사용자 요청 처리 흐름:
@@ -29,7 +29,7 @@ export class RecruitService {
     this.crawler = new CrawlService();
   }
 
-  async getRecruitList(mode: CRAWL_MODE, city?: string): Promise<ResponseRecruitData[] | null> {
+  async getRecruitList(mode: CRAWL_MODE, city?: string): Promise<RecruitData[] | null> {
     const convertedCity = this.convertCityByMode(mode, city);
 
     // Step 1: Redis Cache
@@ -75,7 +75,7 @@ export class RecruitService {
     return getCityFilteredList(mode, convertedCity, crawled);
   }
 
-  private async collectAndSaveRecruits(mode: CRAWL_MODE, city?: CityKo) {
+  private async collectAndSaveRecruits(mode: CRAWL_MODE, city?: CityKo): Promise<RecruitData[] | null> {
     const list = await this.crawler.sriagent(mode, city);
 
     if (!Array.isArray(list) || list.length === 0) {

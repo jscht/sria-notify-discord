@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, APIApplicationCommandOptionChoice } from "discord.js";
-import { DiscordBotCommand } from "@/common/constants";
+import { DiscordBotCommand } from "@/providers/discord/constants";
 import type { SubscribeCommand } from "../types";
 
 export const MAX_REGION_COUNT = 2;

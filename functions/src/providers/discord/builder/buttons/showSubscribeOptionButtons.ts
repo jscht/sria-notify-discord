@@ -1,5 +1,5 @@
 import { ActionRowBuilder, ButtonBuilder } from "discord.js";
-import { subscribeOptionActionId } from "../../../../constants/subscribeOptionAction";
+import { subscribeOptionActionId } from "@/features/alarmSubscribe/constants";
 
 export function showSubscribeOptionButtons() {
   return new ActionRowBuilder<ButtonBuilder>().addComponents(

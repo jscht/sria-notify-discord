@@ -1,4 +1,4 @@
-import { DiscordBotCommand } from "../../../constants/discordBotCommand";
+import { DiscordBotCommand } from "@/common/constants";
 import { onRecruitRequest } from "../../listeners/commands/onRecruitRequest";
 
 export const recruitCommandHandlers = {
