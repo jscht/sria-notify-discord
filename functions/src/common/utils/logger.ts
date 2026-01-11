@@ -1,97 +1,62 @@
 /**
  * Logger Utility
- * 애플리케이션 전역 로깅 시스템
+ *
+ * 레거시 호환성을 위한 간단한 로깅 시스템
+ * 새로운 코드에서는 SystemLogger 사용을 권장합니다.
  */
 
-import { formatDate } from "./formatDate";
+import { createLogger } from "./systemLogger";
 
-type LogLevel = "info" | "debug" | "warn" | "error";
-type Provider = "discord" | "firebase" | "redis";
-type LogSource = "server" | Provider | "crawler";
-
-interface LogHandler {
-  level: LogLevel;
-  source: LogSource;
-  message: string;
-}
-
+/**
+ * Logger 클래스
+ *
+ * @deprecated SystemLogger 사용을 권장합니다.
+ */
 class Logger {
-  private readonly DEDUP_TTL = 60;
-
-  private static log(log: LogHandler): void {
-    const timestamp = formatDate(new Date());
-    const logLine = `[${timestamp}] [${log.level.toUpperCase()}] [${log.source}] ${log.message}`;
-
-    const refLogMessage = `For detailed logs, please check: ${process.env.LOG_REF_URL || "console"}`;
-
-    switch (log.level) {
-      case "info":
-        console.info(logLine, refLogMessage);
-        break;
-      case "debug":
-        console.debug(logLine, refLogMessage);
-        break;
-      case "warn":
-        console.warn(logLine, refLogMessage);
-        break;
-      case "error":
-        console.error(logLine, refLogMessage);
-        break;
-    }
-  }
-
   // Application Log Group
   static server = (message: string): void => {
-    const log = `[app:server] ${message}`;
-    console.info(log);
+    const logger = createLogger("server");
+    logger.info(message);
   };
 
   static request = (message: string): void => {
-    const log = `[app:request] ${message}`;
-    console.info(log);
+    const logger = createLogger("request");
+    logger.info(message);
   };
 
   // Application Process Debugging Log Group
   static crawler = (message: string, data?: any): void => {
-    const log = `[debug:crawler] ${message}`;
-    if (!data) {
-      console.debug(log);
-    } else {
-      console.debug(log, data);
-    }
+    const logger = createLogger("crawler");
+    logger.debug(message, data ? { data } : undefined);
   };
 
   static provider = (message: string, provider: string): void => {
-    const log = `[debug:provider:${provider}] ${message}`;
-    console.debug(log);
+    const logger = createLogger(`provider:${provider}`);
+    logger.debug(message);
   };
 
   // Application Error, Failure Log Group
   static error = (message: string, error?: Error): void => {
-    const log = `[error:server] ${message}`;
-    if (!error) {
-      console.error(log);
-    } else {
-      console.error(log, error?.message);
-    }
+    const logger = createLogger("server");
+    logger.error(message, error);
   };
 
   static fail = (message: string): void => {
-    const log = `[error:request] ${message}`;
-    console.error(log);
+    const logger = createLogger("request");
+    logger.error(message);
   };
 
   static warn = (message: string): void => {
-    const log = `[warn:request] ${message}`;
-    console.warn(log);
+    const logger = createLogger("request");
+    logger.warn(message);
   };
 }
 
-// 전역 Logger 타입 확장
-declare global {
-  var DebugLogger: typeof Logger;
+/**
+ * 전역 DebugLogger 등록 (레거시 호환성)
+ */
+if (typeof global !== "undefined") {
+  (global as any).DebugLogger = Logger;
 }
-
-global.DebugLogger = Logger;
 
 export default Logger;
