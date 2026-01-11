@@ -9,8 +9,8 @@ export type { CityEn, CityKo } from "./city.d";
 // Crawler Types
 export type { Crawler, Scheduler } from "./crawler.d";
 
-// Recruit Cache Types
-export type { Job, HashedString, JobHashes, JobDiffResult } from "./recruitCache.d";
+// Job Types
+export type { Job, HashedString, JobHashes, JobDiffResult } from "./job.d";
 
 // Response Types
 export type { ResponseHandler } from "./responseHandler.d";
