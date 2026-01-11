@@ -5,9 +5,24 @@
 
 // Error Handling
 export { HttpError } from "./errors";
+export {
+  SystemError,
+  ErrorLevel,
+  ErrorCategory,
+  type ErrorContext,
+} from "./systemError";
+export {
+  withErrorHandler,
+  withRetry,
+  allSettledWithErrors,
+  errorBoundary,
+  emitSystemErrorEvent,
+  normalizeError,
+} from "./errorHandler";
 
 // Logging
 export { default as Logger } from "./logger";
+export { SystemLogger, createLogger, systemLogger, LogLevel, type LogContext } from "./systemLogger";
 
 // Date & Time
 export { formatDate } from "./formatDate";
