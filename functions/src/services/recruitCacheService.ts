@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { RecruitCacheStore, RecruitHashStore } from "../providers/redis/store";
 import type { CityEn } from "@/common/types/city.d";
-import type { Job, HashedString, JobDiffResult, JobHashes } from "@/common/types/recruitCache.d";
+import type { Job, HashedString, JobDiffResult, JobHashes } from "@/common/types/job.d";
 import type { RecruitData } from "@/crawlers/types";
 
 /**

@@ -4,7 +4,7 @@
  * 비즈니스 이벤트 타입과 페이로드 인터페이스를 정의합니다.
  */
 
-import type { Job, JobDiffResult } from "@/common/types/recruitCache.d";
+import type { Job, JobDiffResult } from "@/common/types/job.d";
 import type { CityEn } from "@/common/types/city.d";
 
 /**
@@ -12,25 +12,26 @@ import type { CityEn } from "@/common/types/city.d";
  */
 export enum EventType {
   // Recruit Domain
-  RECRUIT_CRAWL_STARTED = "recruit.crawl.started",
-  RECRUIT_CRAWL_COMPLETED = "recruit.crawl.completed",
-  RECRUIT_CRAWL_FAILED = "recruit.crawl.failed",
-  RECRUIT_NEW = "recruit.new",
-  RECRUIT_REQUESTED = "recruit.requested",
+  RECRUIT_CRAWL_STARTED = "recruit:crawl:started",
+  RECRUIT_CRAWL_COMPLETED = "recruit:crawl:completed",
+  RECRUIT_CRAWL_FAILED = "recruit:crawl:failed",
+  RECRUIT_NEW = "recruit:new",
+  RECRUIT_REQUESTED = "recruit:requested",
 
   // Notification Domain
-  NOTIFICATION_SUBSCRIBE = "notification.subscribe",
-  NOTIFICATION_UNSUBSCRIBE = "notification.unsubscribe",
-  NOTIFICATION_SEND = "notification.send",
-  NOTIFICATION_SENT = "notification.sent",
+  NOTIFICATION_SUBSCRIBE = "notification:subscribe",
+  NOTIFICATION_UNSUBSCRIBE = "notification:unsubscribe",
+  NOTIFICATION_SEND = "notification:send",
+  NOTIFICATION_SENT = "notification:sent",
 
-  // Error Domain
-  ERROR_CRITICAL = "error.critical",
-  ERROR_WARNING = "error.warning",
+  // System Error Domain (서버 내부 에러, Discord 에러와 구분)
+  SYSTEM_ERROR_CRITICAL = "system_error:critical",
+  SYSTEM_ERROR_FAILURE = "system_error:failure",
+  SYSTEM_ERROR_WARNING = "system_error:warning",
 
   // Admin Domain
-  ADMIN_BROADCAST_REQUEST = "admin.broadcast.request",
-  ADMIN_BROADCAST_SENT = "admin.broadcast.sent",
+  ADMIN_BROADCAST_REQUEST = "admin:broadcast:request",
+  ADMIN_BROADCAST_SENT = "admin:broadcast:sent",
 }
 
 /**
@@ -64,12 +65,12 @@ export interface RecruitCrawlFailedEvent extends BaseEvent {
   duration: number; // milliseconds
 }
 
-// 새 공고 발견 이벤트
-export interface RecruitNewEvent extends BaseEvent {
-  addedJobs: Job[];
-  updatedJobs: Job[];
-  deletedIds: string[];
-}
+/**
+ * 새 공고 발견 이벤트
+ *
+ * @description JobDiffResult (공고 변경 사항)를 이벤트 페이로드로 감싸는 인터페이스
+ */
+export interface RecruitNewEvent extends BaseEvent, JobDiffResult {}
 
 // 사용자 공고 요청 이벤트
 export interface RecruitRequestedEvent extends BaseEvent {
@@ -122,15 +123,18 @@ export interface NotificationSentEvent extends BaseEvent {
 }
 
 /**
- * Error Domain 이벤트 페이로드
+ * System Error Domain 이벤트 페이로드
+ *
+ * @description 서버 내부에서 발생하는 시스템 에러를 처리
+ * Discord API 에러, 사용자 입력 에러 등과 구분됨
  */
 
 // 에러 심각도
-export type ErrorSeverity = "critical" | "warning";
+export type SystemErrorSeverity = "critical" | "warning";
 
-// 에러 이벤트
-export interface ErrorEvent extends BaseEvent {
-  severity: ErrorSeverity;
+// 시스템 에러 이벤트
+export interface SystemErrorEvent extends BaseEvent {
+  severity: SystemErrorSeverity;
   service: string;
   error: Error;
   context?: Record<string, any>;
@@ -174,9 +178,10 @@ export interface EventPayloadMap {
   [EventType.NOTIFICATION_SEND]: NotificationSendEvent;
   [EventType.NOTIFICATION_SENT]: NotificationSentEvent;
 
-  // Error Domain
-  [EventType.ERROR_CRITICAL]: ErrorEvent;
-  [EventType.ERROR_WARNING]: ErrorEvent;
+  // System Error Domain
+  [EventType.SYSTEM_ERROR_CRITICAL]: SystemErrorEvent;
+  [EventType.SYSTEM_ERROR_FAILURE]: SystemErrorEvent;
+  [EventType.SYSTEM_ERROR_WARNING]: SystemErrorEvent;
 
   // Admin Domain
   [EventType.ADMIN_BROADCAST_REQUEST]: AdminBroadcastRequestEvent;

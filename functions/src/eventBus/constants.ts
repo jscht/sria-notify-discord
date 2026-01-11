@@ -23,13 +23,18 @@ export const EVENT_BUS_CONFIG = {
 
 /**
  * 이벤트 도메인 상수
+ * 
+ * @description 주요 4개 도메인 (Recruit, Notification, SystemError, Admin)
+ * - Recruit: 채용 공고 크롤링 및 변경 감지
+ * - Notification: 사용자 알림 구독 및 발송
+ * - SystemError: 시스템 내부 에러 처리 (Discord 에러와 구분)
+ * - Admin: 관리자 명령 및 공지사항
  */
 export const EVENT_DOMAIN = {
   RECRUIT: 'recruit',
   NOTIFICATION: 'notification',
-  ERROR: 'error',
+  SYSTEM_ERROR: 'system_error',
   ADMIN: 'admin',
-  PROXY: 'proxy',
 } as const;
 
 /**
@@ -50,28 +55,11 @@ export const EVENT_ACTION = {
   SEND: 'send',
   SENT: 'sent',
 
-  // Error actions
+  // System Error actions (서버 내부 에러)
   CRITICAL: 'critical',
   WARNING: 'warning',
 
   // Admin actions
   BROADCAST_REQUEST: 'broadcast.request',
   BROADCAST_SENT: 'broadcast.sent',
-
-  // Proxy actions
-  UNAVAILABLE: 'unavailable',
-  REFRESH_STARTED: 'refresh.started',
-  REFRESH_COMPLETED: 'refresh.completed',
-  REFRESH_FAILED: 'refresh.failed',
-} as const;
-
-/**
- * 로그 레벨별 색상 코드
- */
-export const LOG_COLORS = {
-  INFO: '\x1b[36m',    // Cyan
-  SUCCESS: '\x1b[32m', // Green
-  WARNING: '\x1b[33m', // Yellow
-  ERROR: '\x1b[31m',   // Red
-  RESET: '\x1b[0m',    // Reset
 } as const;

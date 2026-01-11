@@ -6,7 +6,7 @@
  */
 
 import { eventBus } from '../EventBus';
-import { LOG_COLORS } from '../constants';
+import { eventLogger } from './eventLogger';
 
 /**
  * 핸들러 등록 상태 추적
@@ -35,15 +35,11 @@ let handlersRegistered = false;
 export function registerAllEventHandlers(): void {
   // 이미 등록된 경우 중복 등록 방지
   if (handlersRegistered) {
-    console.log(
-      `${LOG_COLORS.WARNING}[EventBus] Handlers already registered. Skipping...${LOG_COLORS.RESET}`
-    );
+    eventLogger.handlersAlreadyRegistered();
     return;
   }
 
-  console.log(
-    `${LOG_COLORS.INFO}[EventBus] Registering event handlers...${LOG_COLORS.RESET}`
-  );
+  eventLogger.custom('🔧 Registering event handlers...');
 
   // Phase 1.3: RecruitCacheService 핸들러 (TODO)
   // registerRecruitHandlers();
@@ -62,13 +58,12 @@ export function registerAllEventHandlers(): void {
 
   handlersRegistered = true;
 
-  const listenerCount = eventBus.listenerCount('recruit.new');
-  console.log(
-    `${LOG_COLORS.SUCCESS}[EventBus] All event handlers registered successfully${LOG_COLORS.RESET}`
-  );
-  console.log(
-    `${LOG_COLORS.INFO}[EventBus] Active listeners: ${listenerCount}${LOG_COLORS.RESET}`
-  );
+  // 전체 리스너 수 계산
+  const totalListeners = eventBus.eventNames().reduce((count, eventName) => {
+    return count + eventBus.listenerCount(eventName as any);
+  }, 0);
+
+  eventLogger.handlersRegistered(totalListeners);
 }
 
 /**
@@ -87,7 +82,5 @@ export function areHandlersRegistered(): boolean {
 export function resetHandlerRegistration(): void {
   handlersRegistered = false;
   eventBus.removeAllListeners();
-  console.log(
-    `${LOG_COLORS.INFO}[EventBus] Handler registration reset${LOG_COLORS.RESET}`
-  );
+  eventLogger.custom('🔄 Handler registration reset');
 }
