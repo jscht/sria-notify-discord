@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(cat /c/Users/user/Documents/GitHub/sria-notify-discord/TODO.md)",
-      "Bash(npx ts-node:*)"
-    ],
-    "defaultMode": "bypassPermissions"
-  }
-}
