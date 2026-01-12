@@ -1,6 +1,8 @@
 # 아키텍처 개요
 
 > 사람인 에이전트 Discord Bot - Event-Driven Architecture
+>
+> **최종 수정**: 2026-01-11
 
 ---
 
@@ -83,17 +85,30 @@ export class EventBus extends EventEmitter {
   static getInstance(): EventBus {
     if (!this.instance) {
       this.instance = new EventBus();
+      this.instance.setMaxListeners(100);
     }
     return this.instance;
+  }
+
+  // 타입 안전 메서드
+  emitEvent<T extends EventType>(event: T, payload: EventPayloadMap[T]): boolean {
+    return this.emit(event, payload);
+  }
+
+  onEvent<T extends EventType>(event: T, handler: EventHandler<T>): this {
+    return this.on(event, handler);
   }
 }
 ```
 
-**주요 이벤트 도메인**:
-- `recruit.*` - 공고 관련 이벤트
-- `notification.*` - 알림 관련 이벤트
-- `error.*` - 에러 관련 이벤트
-- `admin.*` - 관리자 기능 이벤트
+**이벤트 도메인**:
+- **Recruit**: 크롤링, 새 공고, 공고 요청
+- **Notification**: 구독, 알림 발송
+- **System**: 에러 처리 및 로깅
+- **Admin**: 관리자 기능
+- **Proxy**: 프록시 순환
+
+**참고**: [functions/src/eventBus/claude.md](./functions/src/eventBus/claude.md)
 
 #### Services (services/)
 
@@ -105,7 +120,7 @@ services/
 ├── recruitCacheService.ts     # 공고 캐싱 및 변경 감지
 ├── notificationService.ts     # 알림 발송 로직
 ├── errorReportService.ts      # 에러 리포팅
-└── aiService.ts               # AI 자연어 처리 (Phase 4)
+└── aiService.ts               # AI 자연어 처리
 ```
 
 #### Features (features/)
@@ -210,36 +225,14 @@ crawlers/
          └─ Discord DM 발송
 ```
 
-### 주요 이벤트 목록
+### 이벤트 목록
 
-#### Recruit Domain
-```typescript
-'recruit.crawl.started'     // 크롤링 시작
-'recruit.crawl.completed'   // 크롤링 완료
-'recruit.crawl.failed'      // 크롤링 실패
-'recruit.new'               // 새 공고 발견
-'recruit.requested'         // 사용자 공고 요청
-```
-
-#### Notification Domain
-```typescript
-'notification.subscribe'    // 알림 구독
-'notification.unsubscribe'  // 알림 구독 해제
-'notification.send'         // 알림 발송 시작
-'notification.sent'         // 알림 발송 완료
-```
-
-#### Error Domain
-```typescript
-'error.critical'            // 심각한 에러
-'error.warning'             // 경고
-```
-
-#### Admin Domain
-```typescript
-'admin.broadcast.request'   // 전체 공지 요청
-'admin.broadcast.sent'      // 전체 공지 완료
-```
+**도메인별 이벤트**:
+- **Recruit**: 크롤링 시작/완료/실패, 새 공고, 공고 요청
+- **Notification**: 구독/구독해제, 알림 발송 시작/완료
+- **System**: Critical/Failure/Warning 에러
+- **Admin**: 전체 공지 요청/완료
+- **Proxy**: 프록시 순환 성공/실패
 
 ---
 
@@ -317,7 +310,7 @@ users/{userId}/
         }
 ```
 
-### errors 컬렉션 (Phase 2.1)
+### errors 컬렉션
 ```
 errors/{errorId}/
 {
@@ -330,7 +323,7 @@ errors/{errorId}/
 }
 ```
 
-### broadcasts 컬렉션 (Phase 2.2)
+### broadcasts 컬렉션
 ```
 broadcasts/{broadcastId}/
 {
@@ -343,7 +336,7 @@ broadcasts/{broadcastId}/
 }
 ```
 
-### ai_nlp_cache 컬렉션 (Phase 4.2)
+### ai_nlp_cache 컬렉션
 ```
 ai_nlp_cache/{cacheId}/
 {
@@ -394,34 +387,25 @@ ProxyScheduler:
 
 ---
 
-## 📊 Phase별 구현 계획
-
-### Phase 1: 핵심 기능
-- EventBus 인프라
-- 스케줄러 이벤트 전환
-- 공고 캐싱 및 변경 감지
-- 알림 설정 시스템
-- 자동 알림 발송
-
-### Phase 2: 부가 기능
-- 에러 자동 리포팅
-- 관리자 전체 공지
-- AI 자연어 처리
-
-### Phase 3: 테스트 및 안정화
-- 테스트 프레임워크
-- 단위/통합 테스트
-- 성능 테스트
-
 ---
 
 ## 🔗 관련 문서
 
+### 프로젝트 문서
 - [README.md](./README.md) - 프로젝트 개요
-- [TODO.md](./functions/TODO.md) - 구현 작업 목록
+- [PROGRESS.md](./.claude/todo/PROGRESS.md) - 개발 진행 현황
+- [TODO.md](./.claude/todo/TODO.md) - Phase별 작업 목록
+- [phase-1-core.md](./.claude/todo/phase-1-core.md) - Phase 1 상세 계획
+
+### 기술 문서
+- [EventBus 시스템](./functions/src/eventBus/claude.md)
+- [SystemLogger 가이드](./functions/src/common/utils/__docs__/SYSTEM_LOGGER_GUIDE.md)
+- [SystemError 가이드](./functions/src/common/utils/__docs__/SYSTEM_ERROR_GUIDE.md)
+
+### 검토 문서
+- [REVIEW_PROCESS.md](./.claude/todo/review/REVIEW_PROCESS.md) - 검토 프로세스
+- [phase-1-1-review.md](./.claude/todo/review/phase-1-1-review.md) - Phase 1.1 검토
+
+### 외부 문서
 - [Firebase Functions Docs](https://firebase.google.com/docs/functions)
 - [Discord.js Guide](https://discordjs.guide/)
-
----
-
-*최종 수정: 2026-01-06*

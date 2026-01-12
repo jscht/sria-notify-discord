@@ -38,62 +38,39 @@
 - **개인화된 설정**: 지역별 필터링, 알림 모드 설정 (전체/선택)
 - **높은 안정성**: 3-tier 캐싱 전략 (Redis → Firestore → Crawling)
 - **확장 가능**: Event-Driven Architecture로 기능 추가 용이
-- **AI 지원** (Phase 4): 무료 AI 모델을 활용한 공고 요약
+- **AI 지원**: Hugging Face 무료 AI 모델 활용
 
 ---
 
 ## 주요 기능
 
-### Phase 1: 핵심 기능 ✅
+### 1. 공고 요청 (`/recruit-request`)
+- 즉시 채용 공고 조회
+- 3-tier 캐싱 전략 (Redis → Firestore → Crawling)
+- Discord 임베드 형식 제공
 
-#### 1. 공고 요청 (`/recruit-request`)
-```
-사용자가 원할 때 즉시 채용 공고 조회
-- 3-tier 캐싱으로 빠른 응답 (Redis → Firestore → Crawling)
-- Discord 임베드 형식으로 보기 좋게 표시
-```
-
-#### 2. 알림 설정 (`/alarm-subscribe`)
-```
-개인 맞춤형 알림 설정
+### 2. 알림 설정 (`/alarm-subscribe`)
+- 개인 맞춤형 알림 설정
 - 알림 모드: 전체 공고 / 특정 지역만
-- 지역 선택: 서울, 경기, 부산 등
-- 알림 ON/OFF 토글
-```
+- 지역 선택 및 알림 ON/OFF
 
-#### 3. 자동 알림 (4시간 주기)
-```
-새 공고 감지 및 알림
-- SHA-256 해시 비교로 정확한 변경 감지
-- 구독자 필터링 (지역, 모드)
-- Discord DM 발송
-```
+### 3. 자동 알림 (4시간 주기)
+- 새 공고 감지 및 알림
+- SHA-256 해시 기반 변경 감지
+- 구독자 필터링 및 DM 발송
 
-### Phase 2: 부가 기능 🚧
+### 4. 에러 자동 리포팅
+- 시스템 에러 자동 감지 및 관리자 알림
+- 에러 로그 저장
 
-#### 4. 에러 자동 전송
-```
-시스템 에러 발생 시 관리자에게 자동 알림
-- 에러 스택 트레이스 포함
-- Firestore 에러 로그 저장
-```
+### 5. 관리자 기능
+- 전체 사용자 공지 (`/admin-broadcast`)
+- 발송 진행률 및 통계 제공
 
-#### 5. 관리자 전체 공지
-```
-관리자 전용 전체 사용자 공지 기능
-- /admin-broadcast 명령어
-- 발송 진행률 실시간 표시
-- 발송 통계 리포트
-```
-
-#### 6. AI 자연어 처리 🤖
-```
-Hugging Face 무료 AI 모델을 활용한 자연어 명령 처리
-- 공고 요청: "서울에서 단기 알바 구해줘"
-- 알림 설정: "경기도 공고만 받을래"
-- Firestore 캐싱으로 API 호출 최소화 (7일 TTL)
-- Rate Limit 관리 (분당 100회)
-```
+### 6. AI 자연어 처리
+- Hugging Face 무료 모델 활용
+- 자연어 명령 처리 및 의도 분석
+- Firestore 캐싱으로 API 최적화
 
 ---
 
@@ -113,7 +90,7 @@ Hugging Face 무료 AI 모델을 활용한 자연어 명령 처리
 ### External APIs
 - **Discord**: discord.js 14.17
 - **Web Scraping**: Playwright 1.47
-- **AI** (Phase 4): Hugging Face Inference API
+- **AI**: Hugging Face Inference API
 
 ### DevOps
 - **Testing**: Vitest (Jest API compatible)
@@ -157,21 +134,18 @@ External Services
 **EventBus (Node.js EventEmitter)**
 
 ```typescript
-// 이벤트 발행
-eventBus.emit('recruit.new', { addedJobs, updatedJobs, deletedIds });
-
-// 이벤트 구독
-eventBus.on('recruit.new', async (data) => {
+// 타입 안전 이벤트 시스템
+eventBus.emitEvent('RECRUIT_NEW', { addedJobs, updatedJobs, deletedIds });
+eventBus.onEvent('RECRUIT_NEW', async (data) => {
   await notificationService.notifyNewRecruits(data);
 });
 ```
 
-**주요 이벤트 도메인**:
-- Recruit: `crawl.started`, `crawl.completed`, `recruit.new`
-- Notification: `notification.send`, `notification.sent`
-- Error: `error.critical`, `error.warning`
-- Admin: `admin.broadcast.request`, `admin.broadcast.sent`
-- AI (Phase 4): `ai.summarize.request`, `ai.summarize.completed`
+**이벤트 도메인**:
+- **Recruit**: 크롤링, 새 공고, 공고 요청
+- **Notification**: 구독, 알림 발송
+- **System**: 에러 처리 및 로깅
+- **Admin**: 관리자 기능
 
 ### Data Flow
 
@@ -269,7 +243,7 @@ ADMIN_USER_ID=your-discord-user-id
 REDIS_URL=redis://localhost:6379
 REDIS_PASSWORD=your-redis-password
 
-# Hugging Face (Phase 4)
+# Hugging Face
 HUGGINGFACE_API_KEY=your-api-key
 ```
 
@@ -323,7 +297,7 @@ npm run register:commands
 권한: ADMIN_USER_ID 환경 변수에 등록된 관리자만
 ```
 
-#### 자연어 명령 (Phase 2)
+#### 자연어 명령
 AI를 활용하여 자연어로 명령을 처리합니다.
 
 ```
@@ -371,6 +345,17 @@ firebase functions:config:get
 ---
 
 ## 문서
+
+### 프로젝트 문서
+- [개발 진행 현황](./.claude/todo/PROGRESS.md) - 현재 Phase 진행 상황
+- [TODO 관리](./.claude/todo/TODO.md) - Phase별 작업 목록
+- [Phase 1 상세 계획](./.claude/todo/phase-1-core.md)
+- [검토 프로세스](./.claude/todo/review/REVIEW_PROCESS.md)
+
+### 기술 문서
+- [EventBus 시스템](./functions/src/eventBus/claude.md)
+- [SystemLogger 가이드](./functions/src/common/utils/__docs__/SYSTEM_LOGGER_GUIDE.md)
+- [SystemError 가이드](./functions/src/common/utils/__docs__/SYSTEM_ERROR_GUIDE.md)
 
 ### API 문서
 - [Firebase Functions API](https://firebase.google.com/docs/functions)
