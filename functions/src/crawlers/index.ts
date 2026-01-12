@@ -11,6 +11,9 @@ export { initializeSchedulers, setupGracefulShutdown } from "./schedulers/utils"
 // 유틸리티
 export { getDelay, getRandomUserAgent } from "./utils";
 
+// 상수
+export { CrawlerStrategy, type CrawlerStrategyType } from "./constants";
+
 // 타입들
 export type { RecruitData, ProxyData } from "./types";
 export type { SchedulerStatus, SchedulerConfig } from "./schedulers";

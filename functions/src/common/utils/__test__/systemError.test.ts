@@ -13,6 +13,7 @@ import {
   normalizeError,
   allSettledWithErrors,
 } from "../errorHandler";
+import { CrawlerStrategy } from "@/crawlers";
 
 console.log("\n=== SystemError 테스트 시작 ===\n");
 
@@ -37,17 +38,18 @@ try {
 console.log("\n✓ 테스트 2: 정적 팩토리 메서드");
 try {
   const crawlerError = SystemError.crawlerFailed("크롤링 실패", {
+    strategy: CrawlerStrategy.RECRUIT,
     url: "https://example.com",
   });
   console.log(`  크롤러 에러: ${crawlerError.message}`);
   console.log(`  카테고리: ${crawlerError.category}`);
 
-  const dbError = SystemError.databaseError(
+  const firestoreError = SystemError.firestoreError(
     "Firestore 저장 실패",
     new Error("Network error")
   );
-  console.log(`  DB 에러: ${dbError.message}`);
-  console.log(`  원본 에러 존재: ${!!dbError.originalError}`);
+  console.log(`  Firestore 에러: ${firestoreError.message}`);
+  console.log(`  원본 에러 존재: ${!!firestoreError.originalError}`);
 
   const criticalError = SystemError.critical("시스템 전체 장애");
   console.log(`  치명적 에러: ${criticalError.message}`);
@@ -61,7 +63,7 @@ console.log("\n✓ 테스트 3: 에러 래핑");
 try {
   const originalError = new Error("원본 에러 메시지");
   const wrappedError = SystemError.wrap(originalError, "래핑된 에러", {
-    category: ErrorCategory.EXTERNAL_API,
+    category: ErrorCategory.REDIS,
   });
 
   console.log(`  래핑된 에러 메시지: ${wrappedError.message}`);
@@ -80,7 +82,7 @@ console.log("\n✓ 테스트 4: withErrorHandler");
         throw new Error("비동기 함수 에러");
       },
       {
-        category: ErrorCategory.EXTERNAL_API,
+        category: ErrorCategory.DISCORD_API,
         message: "API 호출 실패",
         emitEvent: false, // 테스트에서는 이벤트 발행 안 함
         fallback: () => console.log("  폴백 함수 실행됨"),
@@ -110,7 +112,7 @@ console.log("\n✓ 테스트 5: withRetry");
       {
         maxRetries: 3,
         retryDelay: 100,
-        category: ErrorCategory.EXTERNAL_API,
+        category: ErrorCategory.CRAWLER,
         message: "재시도 테스트",
         emitEvent: false,
       }
@@ -172,9 +174,9 @@ console.log("\n✓ 테스트 7: allSettledWithErrors");
 // 8. JSON 직렬화 테스트
 console.log("\n✓ 테스트 8: JSON 직렬화");
 try {
-  const error = SystemError.proxyError("프록시 불가", {
-    proxyCount: 0,
-    lastAttempt: new Date().toISOString(),
+  const error = SystemError.crawlerFailed("프록시 크롤링 실패", {
+    strategy: CrawlerStrategy.PROXY,
+    proxyUrl: "http://proxy.example.com",
   });
 
   const json = error.toJSON() as any;

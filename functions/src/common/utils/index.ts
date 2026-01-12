@@ -4,7 +4,7 @@
  */
 
 // Error Handling
-export { HttpError } from "./errors";
+export { HttpError } from "./httpError";
 export {
   SystemError,
   ErrorLevel,

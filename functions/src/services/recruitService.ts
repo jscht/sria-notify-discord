@@ -6,7 +6,7 @@ import { CityKo, CityEn } from "@/common/types";
 import type { RecruitData } from "@/crawlers/types";
 import { cityNameConverter } from "@/common/utils/cityName";
 import { getCityFilteredList } from "@/common/utils";
-import { HttpError } from "@/common/utils/errors";
+import { HttpError } from "@/common/utils/httpError";
 
 /**
  * 사용자 요청 처리 흐름:

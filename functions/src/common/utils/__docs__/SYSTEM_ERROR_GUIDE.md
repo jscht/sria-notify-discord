@@ -19,30 +19,42 @@
 ### 1. 팩토리 메서드 사용 (권장)
 
 ```typescript
-// 크롤러 에러
+import { CrawlerStrategy } from "@/crawlers";
+
+// 크롤러 에러 (타입 안전 컨텍스트)
 throw SystemError.crawlerFailed("사람인 크롤링 실패", {
+  strategy: CrawlerStrategy.RECRUIT,  // 필수: 크롤링 전략
   provider: "saramin",
   url: "https://www.saramin.co.kr",
+  statusCode: 503,
+  retryCount: 3,
+  timeout: 30000
+});
+
+// 프록시 크롤러 에러
+throw SystemError.crawlerFailed("프록시 크롤링 실패", {
+  strategy: CrawlerStrategy.PROXY,  // 필수: 프록시 전략
+  proxyUrl: "http://proxy.example.com:8080",
   statusCode: 503
 });
 
-// 데이터베이스 에러
+// Redis 캐시 에러
 try {
-  await firestore.collection("jobs").add(data);
+  await redisClient.get("jobs:cache");
 } catch (error) {
-  throw SystemError.databaseError("채용 공고 저장 실패", error as Error, {
-    collection: "jobs",
-    operation: "add"
+  throw SystemError.redisError("Redis 조회 실패", error as Error, {
+    operation: "get",
+    key: "jobs:cache"
   });
 }
 
-// 외부 API 에러
+// Firestore 데이터베이스 에러
 try {
-  const response = await fetch("https://api.example.com/data");
+  await firestore.collection("jobs").add(data);
 } catch (error) {
-  throw SystemError.externalApiError("API 호출 실패", error as Error, {
-    endpoint: "/data",
-    method: "GET"
+  throw SystemError.firestoreError("채용 공고 저장 실패", error as Error, {
+    collection: "jobs",
+    operation: "add"
   });
 }
 
@@ -56,11 +68,36 @@ try {
   });
 }
 
-// 프록시 에러 (CRITICAL)
-throw SystemError.proxyError("프록시 서버 전체 불가", {
-  availableProxies: 0,
-  totalProxies: 10
+// Hugging Face AI API 에러
+try {
+  const result = await hfClient.inference(model, input);
+} catch (error) {
+  throw SystemError.huggingFaceError("AI 모델 호출 실패", error as Error, {
+    model: "gpt2",
+    inputLength: input.length
+  });
+}
+
+// Firebase 배포 에러 (CRITICAL)
+throw SystemError.deploymentError("Functions 배포 실패", deployError, {
+  stage: "predeploy",
+  command: "npm run build"
 });
+
+// 네트워크 에러 (HttpError로 자동 변환)
+throw SystemError.networkError("서비스 일시 사용 불가", undefined, {
+  statusCode: 503,
+  url: "https://api.example.com"
+});
+throw SystemError.networkError("요청 타임아웃", timeoutError, {
+  statusCode: 408,
+  timeout: 30000
+});
+throw SystemError.networkError("게이트웨이 타임아웃", undefined, {
+  statusCode: 504
+});
+// statusCode가 없으면 500으로 처리
+throw SystemError.networkError("알 수 없는 네트워크 에러", networkError);
 
 // 검증 에러 (WARNING)
 throw SystemError.validationError("잘못된 입력 형식", {
@@ -91,7 +128,7 @@ try {
     error,
     "외부 라이브러리 호출 실패",
     {
-      category: ErrorCategory.EXTERNAL_API,
+      category: ErrorCategory.REDIS,
       level: ErrorLevel.FAILURE,
       context: { library: "axios", version: "1.0.0" }
     }
@@ -101,17 +138,46 @@ try {
 
 ### 3. 팩토리 메서드 목록
 
+#### Application Layer
+
 | 메서드 | 레벨 | 카테고리 | 복구 가능 |
 |--------|------|----------|-----------|
 | `SystemError.crawlerFailed()` | FAILURE | CRAWLER | ✅ |
-| `SystemError.databaseError()` | FAILURE | DATABASE | ❌ |
-| `SystemError.externalApiError()` | FAILURE | EXTERNAL_API | ✅ |
-| `SystemError.discordApiError()` | FAILURE | DISCORD_API | ✅ |
 | `SystemError.eventBusError()` | FAILURE | EVENT_BUS | ❌ |
-| `SystemError.proxyError()` | CRITICAL | PROXY | ❌ |
 | `SystemError.authError()` | FAILURE | AUTH | ❌ |
 | `SystemError.validationError()` | WARNING | VALIDATION | ✅ |
+
+#### Integration Layer - External Services
+
+| 메서드 | 레벨 | 카테고리 | 복구 가능 |
+|--------|------|----------|-----------|
+| `SystemError.redisError()` | FAILURE | REDIS | ✅ |
+| `SystemError.firestoreError()` | FAILURE | FIRESTORE | ❌ |
+| `SystemError.discordApiError()` | FAILURE | DISCORD_API | ✅ |
+| `SystemError.huggingFaceError()` | FAILURE | HUGGING_FACE | ✅ |
+
+#### Infrastructure Layer
+
+| 메서드 | 레벨 | 카테고리 | 복구 가능 |
+|--------|------|----------|-----------|
+| `SystemError.deploymentError()` | CRITICAL | FIREBASE_DEPLOYMENT | ❌ |
 | `SystemError.timeoutError()` | FAILURE | TIMEOUT | ✅ |
+
+#### 네트워크 에러
+
+네트워크 관련 에러는 **HttpError**를 사용하여 HTTP 상태 코드와 함께 처리합니다.
+
+```typescript
+// SystemError 대신 HttpError 사용
+throw new HttpError(503, "서비스 일시 사용 불가");
+throw new HttpError(408, "요청 타임아웃");
+throw new HttpError(504, "게이트웨이 타임아웃");
+```
+
+#### General
+
+| 메서드 | 레벨 | 카테고리 | 복구 가능 |
+|--------|------|----------|-----------|
 | `SystemError.critical()` | CRITICAL | UNKNOWN | ❌ |
 | `SystemError.warning()` | WARNING | UNKNOWN | ✅ |
 
@@ -285,8 +351,8 @@ eventBus.onEvent(EventType.SYSTEM_ERROR_FAILURE, async (payload) => {
   await logToMonitoring(error);
 
   // 필요시 개발자 알림 (덜 긴급)
-  if (error.category === ErrorCategory.DATABASE) {
-    await sendDevAlert(`❌ DB Error: ${error.message}`);
+  if (error.category === ErrorCategory.FIRESTORE) {
+    await sendDevAlert(`❌ Firestore Error: ${error.message}`);
   }
 });
 
@@ -395,7 +461,7 @@ async function saveJobs(jobs: Job[]): Promise<void> {
       await batch.commit();
     },
     {
-      category: ErrorCategory.DATABASE,
+      category: ErrorCategory.FIRESTORE,
       message: "채용 공고 저장 실패",
       level: ErrorLevel.FAILURE,
       context: {
@@ -492,7 +558,7 @@ app.get("/api/jobs/:id", async (req, res, next) => {
 try {
   await firestore.collection("jobs").add(data);
 } catch (error) {
-  throw SystemError.databaseError("DB 저장 실패", error as Error);
+  throw SystemError.firestoreError("Firestore 저장 실패", error as Error);
 }
 ```
 
@@ -502,10 +568,21 @@ try {
 |--------|-------|
 | `DebugLogger.error(msg, error)` + `throw error` | `throw SystemError.wrap(error, msg)` |
 | `throw new Error(msg)` | `throw SystemError.crawlerFailed(msg)` (카테고리별) |
-| `throw new HttpError(500, msg)` (시스템 에러) | `throw SystemError.databaseError(msg)` |
+| `throw new HttpError(500, msg)` (시스템 에러) | `throw SystemError.firestoreError(msg)` |
 | try-catch + 로깅 | `withErrorHandler()` |
 | while 재시도 로직 | `withRetry()` |
 | Promise.allSettled 수동 처리 | `allSettledWithErrors()` |
+
+### ErrorCategory 변경 사항
+
+| 이전 (Deprecated) | 새 카테고리 | 비고 |
+|------------------|------------|------|
+| `DATABASE` | `FIRESTORE` | Firestore 전용 |
+| `EXTERNAL_API` | Provider별 세분화 | `REDIS`, `HUGGING_FACE` 등 |
+| `PROXY` | `CRAWLER` + context | `{ strategy: 'proxy' }` |
+| `NETWORK` | `HttpError` 사용 | HTTP 상태 코드와 함께 처리 |
+| - | `FIREBASE_DEPLOYMENT` | 배포 에러 전용 (신규) |
+| - | `CrawlerErrorContext` | 크롤러 에러 타입 안전성 (신규) |
 
 ---
 

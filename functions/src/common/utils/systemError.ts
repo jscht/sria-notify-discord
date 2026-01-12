@@ -6,6 +6,8 @@
  */
 
 import { createLogger } from "./systemLogger";
+import type { CrawlerStrategyType } from "@/crawlers";
+import { HttpError } from "./httpError";
 
 const logger = createLogger("SystemError");
 
@@ -25,24 +27,32 @@ export enum ErrorLevel {
  * 에러 카테고리
  */
 export enum ErrorCategory {
+  // Application Layer
   /** 크롤러 관련 에러 */
   CRAWLER = "crawler",
-  /** 데이터베이스 관련 에러 */
-  DATABASE = "database",
-  /** 외부 API 관련 에러 */
-  EXTERNAL_API = "external_api",
-  /** Discord API 관련 에러 */
-  DISCORD_API = "discord_api",
   /** 이벤트 버스 관련 에러 */
   EVENT_BUS = "event_bus",
-  /** 프록시 관련 에러 */
-  PROXY = "proxy",
   /** 인증/권한 관련 에러 */
   AUTH = "auth",
   /** 검증 실패 */
   VALIDATION = "validation",
+
+  // Integration Layer - External Services
+  /** Redis 캐시 에러 */
+  REDIS = "redis",
+  /** Firestore 데이터베이스 에러 */
+  FIRESTORE = "firestore",
+  /** Discord API 에러 */
+  DISCORD_API = "discord_api",
+  /** Hugging Face AI API 에러 */
+  HUGGING_FACE = "hugging_face",
+
+  // Infrastructure Layer
+  /** Firebase 배포 관련 에러 */
+  FIREBASE_DEPLOYMENT = "firebase_deployment",
   /** 타임아웃 */
   TIMEOUT = "timeout",
+
   /** 알 수 없는 에러 */
   UNKNOWN = "unknown",
 }
@@ -52,6 +62,26 @@ export enum ErrorCategory {
  */
 export interface ErrorContext {
   [key: string]: any;
+}
+
+/**
+ * 크롤러 에러 컨텍스트
+ */
+export interface CrawlerErrorContext extends ErrorContext {
+  /** 크롤링 전략 (CrawlerStrategy 사용) */
+  strategy: CrawlerStrategyType;
+  /** 크롤링 제공자 (saramin, jobkorea 등) */
+  provider?: string;
+  /** 크롤링 URL */
+  url?: string;
+  /** HTTP 상태 코드 */
+  statusCode?: number;
+  /** 프록시 정보 */
+  proxyUrl?: string;
+  /** 재시도 횟수 */
+  retryCount?: number;
+  /** 타임아웃 시간 (ms) */
+  timeout?: number;
 }
 
 /**
@@ -80,7 +110,7 @@ interface SystemErrorOptions {
  * // 기본 사용
  * throw new SystemError("크롤링 실패", {
  *   category: ErrorCategory.CRAWLER,
- *   level: ErrorLevel.ERROR,
+ *   level: ErrorLevel.FAILURE,
  *   context: { url: "https://example.com" }
  * });
  *
@@ -89,14 +119,29 @@ interface SystemErrorOptions {
  *   await fetchData();
  * } catch (error) {
  *   throw SystemError.wrap(error, "데이터 페칭 실패", {
- *     category: ErrorCategory.EXTERNAL_API
+ *     category: ErrorCategory.REDIS
  *   });
  * }
  *
- * // 정적 팩토리 메서드 사용
- * throw SystemError.crawlerFailed("사람인 크롤링 실패", { provider: "saramin" });
- * throw SystemError.databaseError("Firestore 저장 실패", firestoreError);
- * throw SystemError.critical("프록시 서버 전체 불가");
+ * // 정적 팩토리 메서드 사용 (Provider별)
+ * import { CrawlerStrategy } from "@/crawlers";
+ *
+ * throw SystemError.crawlerFailed("사람인 크롤링 실패", {
+ *   strategy: CrawlerStrategy.RECRUIT,  // 필수
+ *   provider: "saramin",
+ *   url: "https://example.com",
+ *   statusCode: 503
+ * });
+ * throw SystemError.redisError("Redis 연결 실패", connectionError);
+ * throw SystemError.firestoreError("Firestore 저장 실패", firestoreError);
+ * throw SystemError.discordApiError("Discord 메시지 발송 실패", discordError);
+ * throw SystemError.huggingFaceError("AI 모델 호출 실패", apiError);
+ * throw SystemError.deploymentError("Functions 배포 실패", deployError, { stage: "predeploy" });
+ *
+ * // 네트워크 에러는 networkError()가 HttpError로 자동 변환
+ * throw SystemError.networkError("서비스 일시 사용 불가", undefined, { statusCode: 503 });
+ * throw SystemError.networkError("요청 타임아웃", timeoutError, { statusCode: 408 });
+ * throw SystemError.networkError("게이트웨이 타임아웃", undefined, { statusCode: 504 });
  * ```
  */
 export class SystemError extends Error {
@@ -189,7 +234,7 @@ export class SystemError extends Error {
   /**
    * 크롤러 에러 생성
    */
-  static crawlerFailed(message: string, context?: ErrorContext): SystemError {
+  static crawlerFailed(message: string, context?: CrawlerErrorContext): SystemError {
     return new SystemError(message, {
       level: ErrorLevel.FAILURE,
       category: ErrorCategory.CRAWLER,
@@ -199,28 +244,28 @@ export class SystemError extends Error {
   }
 
   /**
-   * 데이터베이스 에러 생성
+   * Redis 캐시 에러 생성
    */
-  static databaseError(message: string, error?: Error, context?: ErrorContext): SystemError {
+  static redisError(message: string, error?: Error, context?: ErrorContext): SystemError {
     return new SystemError(message, {
       level: ErrorLevel.FAILURE,
-      category: ErrorCategory.DATABASE,
+      category: ErrorCategory.REDIS,
       originalError: error,
       context,
-      recoverable: false,
+      recoverable: true,
     });
   }
 
   /**
-   * 외부 API 에러 생성
+   * Firestore 데이터베이스 에러 생성
    */
-  static externalApiError(message: string, error?: Error, context?: ErrorContext): SystemError {
+  static firestoreError(message: string, error?: Error, context?: ErrorContext): SystemError {
     return new SystemError(message, {
       level: ErrorLevel.FAILURE,
-      category: ErrorCategory.EXTERNAL_API,
+      category: ErrorCategory.FIRESTORE,
       originalError: error,
       context,
-      recoverable: true,
+      recoverable: false,
     });
   }
 
@@ -231,6 +276,19 @@ export class SystemError extends Error {
     return new SystemError(message, {
       level: ErrorLevel.FAILURE,
       category: ErrorCategory.DISCORD_API,
+      originalError: error,
+      context,
+      recoverable: true,
+    });
+  }
+
+  /**
+   * Hugging Face AI API 에러 생성
+   */
+  static huggingFaceError(message: string, error?: Error, context?: ErrorContext): SystemError {
+    return new SystemError(message, {
+      level: ErrorLevel.FAILURE,
+      category: ErrorCategory.HUGGING_FACE,
       originalError: error,
       context,
       recoverable: true,
@@ -251,15 +309,77 @@ export class SystemError extends Error {
   }
 
   /**
-   * 프록시 에러 생성
+   * Firebase 배포 에러 생성
    */
-  static proxyError(message: string, context?: ErrorContext): SystemError {
+  static deploymentError(message: string, error?: Error, context?: ErrorContext): SystemError {
     return new SystemError(message, {
       level: ErrorLevel.CRITICAL,
-      category: ErrorCategory.PROXY,
+      category: ErrorCategory.FIREBASE_DEPLOYMENT,
+      originalError: error,
       context,
       recoverable: false,
     });
+  }
+
+  /**
+   * 네트워크 에러 생성 (HttpError로 변환)
+   *
+   * HTTP 상태 코드를 기반으로 적절한 HttpError를 생성합니다.
+   * statusCode가 없거나 알 수 없는 경우 500으로 처리됩니다.
+   *
+   * @param message - 에러 메시지
+   * @param error - 원본 에러
+   * @param context - 에러 컨텍스트 (statusCode 포함)
+   * @returns HttpError 인스턴스
+   */
+  static networkError(
+    message: string,
+    error?: Error,
+    context?: ErrorContext & { statusCode?: number }
+  ): HttpError {
+    const statusCode = context?.statusCode;
+
+    // 알려진 HTTP 상태 코드에 대한 HttpError 생성
+    switch (statusCode) {
+      case 400:
+        return HttpError.BadRequest(message);
+      case 401:
+        return HttpError.Unauthorized(message);
+      case 403:
+        return HttpError.Forbidden(message);
+      case 404:
+        return HttpError.NotFound(message);
+      case 405:
+        return HttpError.MethodNotAllowed(message);
+      case 408:
+        return HttpError.RequestTimeout(message);
+      case 409:
+        return HttpError.Conflict(message);
+      case 422:
+        return HttpError.UnprocessableContent(message);
+      case 429:
+        return HttpError.TooManyRequests(message);
+      case 503:
+        return HttpError.ServiceUnavailable(message);
+      case 500:
+        return HttpError.InternalServerError(message);
+      default:
+        // 알 수 없는 상태 코드이거나 statusCode가 없는 경우
+        // 4xx 범위면 400, 5xx 범위면 500, 그 외는 500
+        if (statusCode && statusCode >= 400 && statusCode < 500) {
+          return new HttpError(statusCode, message);
+        } else if (statusCode && statusCode >= 500 && statusCode < 600) {
+          return new HttpError(statusCode, message);
+        } else {
+          // statusCode가 없거나 HTTP 범위 밖이면 500으로 처리
+          logger.warn(`⚠️ 알 수 없는 상태 코드: ${statusCode}, 500으로 처리`, {
+            statusCode,
+            message,
+            originalError: error?.message,
+          });
+          return HttpError.InternalServerError(message);
+        }
+    }
   }
 
   /**
