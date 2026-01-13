@@ -393,9 +393,9 @@ ProxyScheduler:
 
 ### 프로젝트 문서
 - [README.md](./README.md) - 프로젝트 개요
-- [PROGRESS.md](./.claude/todo/PROGRESS.md) - 개발 진행 현황
-- [TODO.md](./.claude/todo/TODO.md) - Phase별 작업 목록
-- [phase-1-core.md](./.claude/todo/phase-1-core.md) - Phase 1 상세 계획
+- [PROGRESS.md](./.claude/todos/PROGRESS.md) - 개발 진행 현황
+- [TODO.md](./.claude/todos/TODO.md) - Phase별 작업 목록
+- [phase-1-core.md](./.claude/todos/phase-1-core.md) - Phase 1 상세 계획
 
 ### 기술 문서
 - [EventBus 시스템](./functions/src/eventBus/claude.md)
@@ -403,8 +403,8 @@ ProxyScheduler:
 - [SystemError 가이드](./functions/src/common/utils/__docs__/SYSTEM_ERROR_GUIDE.md)
 
 ### 검토 문서
-- [REVIEW_PROCESS.md](./.claude/todo/review/REVIEW_PROCESS.md) - 검토 프로세스
-- [phase-1-1-review.md](./.claude/todo/review/phase-1-1-review.md) - Phase 1.1 검토
+- [REVIEW_PROCESS.md](./.claude/todos/review/REVIEW_PROCESS.md) - 검토 프로세스
+- [phase-1-1-review.md](./.claude/todos/review/phase-1-1-review.md) - Phase 1.1 검토
 
 ### 외부 문서
 - [Firebase Functions Docs](https://firebase.google.com/docs/functions)
