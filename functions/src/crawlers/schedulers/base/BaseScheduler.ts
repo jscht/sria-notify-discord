@@ -1,4 +1,11 @@
+import "@/common/utils/logger";
 import type { SchedulerConfig, SchedulerStatus, WorkResult } from "../types";
+import { eventBus, EventType } from "@/events/eventBus";
+import type {
+  RecruitCrawlStartedEvent,
+  RecruitCrawlCompletedEvent,
+  RecruitCrawlFailedEvent,
+} from "@/events/eventBus";
 
 /**
  * 모든 스케줄러의 추상 클래스
@@ -23,12 +30,12 @@ export abstract class BaseScheduler {
    */
   startWork(): void {
     if (this.isRunning) {
-      DebugLogger.server(`[${this.config.name}] ⚠️ Scheduler is already running.`);
+      globalLogger.info(`[${this.config.name}] ⚠️ Scheduler is already running.`);
       return;
     }
 
     this.isRunning = true;
-    DebugLogger.server(`[${this.config.name}] ✅ Scheduler started.`);
+    globalLogger.info(`[${this.config.name}] ✅ Scheduler started.`);
 
     this.scheduleNextWork().catch((error) => {
       this.handleError(error);
@@ -44,6 +51,16 @@ export abstract class BaseScheduler {
 
     const startTime = Date.now();
 
+    // STARTED 이벤트 발행
+    eventBus.emitEvent<RecruitCrawlStartedEvent>(
+      EventType.RECRUIT_CRAWL_STARTED,
+      {
+        timestamp: startTime,
+        source: "BaseScheduler",
+        schedulerName: this.config.name,
+      }
+    );
+
     try {
       const result = await this.performWork();
 
@@ -52,8 +69,34 @@ export abstract class BaseScheduler {
       this.workDurationMs = Date.now() - startTime;
       this.lastError = null;
 
+      // COMPLETED 이벤트 발행
+      eventBus.emitEvent<RecruitCrawlCompletedEvent>(
+        EventType.RECRUIT_CRAWL_COMPLETED,
+        {
+          timestamp: Date.now(),
+          source: "BaseScheduler",
+          schedulerName: this.config.name,
+          totalCount: result.totalCount ?? 0,
+          duration: this.workDurationMs,
+        }
+      );
+
       this.logWorkCompletion(result);
     } catch (error) {
+      const durationMs = Date.now() - startTime;
+
+      // FAILED 이벤트 발행
+      eventBus.emitEvent<RecruitCrawlFailedEvent>(
+        EventType.RECRUIT_CRAWL_FAILED,
+        {
+          timestamp: Date.now(),
+          source: "BaseScheduler",
+          schedulerName: this.config.name,
+          error: error as Error,
+          duration: durationMs,
+        }
+      );
+
       this.handleError(error as Error);
     }
 
@@ -85,7 +128,7 @@ export abstract class BaseScheduler {
     const duration = result.durationMs;
     const nextRunIn = this.getTimeUntilNextRun();
 
-    DebugLogger.server(
+    globalLogger.info(
       `[${this.config.name}] ✅ Work completed ` +
       `(${duration}ms) | Next run: ${nextRunIn}`
     );
@@ -96,7 +139,7 @@ export abstract class BaseScheduler {
    */
   private handleError(error: Error): void {
     this.lastError = error;
-    DebugLogger.error(
+    globalLogger.error(
       `[${this.config.name}] ❌ Work failed: ${error.message}`,
       error
     );
@@ -123,7 +166,7 @@ export abstract class BaseScheduler {
    */
   stopWork(): void {
     this.isRunning = false;
-    DebugLogger.server(`[${this.config.name}] ⏹️ Scheduler stopped.`);
+    globalLogger.info(`[${this.config.name}] ⏹️ Scheduler stopped.`);
   }
 
   /**
