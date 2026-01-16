@@ -1,3 +1,4 @@
+import "@/common/utils/logger";
 import { Firestore } from "firebase-admin/firestore";
 import { RecruitStore } from "../store";
 import { FirebaseCollection } from "../constants/collections";
@@ -10,8 +11,8 @@ export async function initRecruitCollection(db: Firestore, init: boolean = false
     await db.collection(FirebaseCollection.RECRUIT)
       .doc(recruitStore.getInitDoc())
       .set({});
-    DebugLogger.server("🛠️ recruit 컬렉션 초기화 완료");
+    globalLogger.info("🛠️ recruit 컬렉션 초기화 완료");
   } else {
-    DebugLogger.server("⏩ recruit 컬렉션은 이미 존재합니다. 초기화 생략");
+    globalLogger.info("⏩ recruit 컬렉션은 이미 존재합니다. 초기화 생략");
   }
 }

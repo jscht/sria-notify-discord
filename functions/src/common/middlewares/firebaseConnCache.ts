@@ -1,3 +1,4 @@
+import "@/common/utils/logger";
 /**
  * Firebase Connection Cache Middleware
  * 10분 간격 Firebase 연결 확인
@@ -20,7 +21,7 @@ export async function firebaseConnCache(
   const coolTime = 10 * 60 * 1000; // 10분
 
   if (fbLastCheckTime && (currentTime - fbLastCheckTime < coolTime)) {
-    DebugLogger.server("Using cached Firebase connection");
+    globalLogger.info("Using cached Firebase connection");
     return next();
   }
 
@@ -33,7 +34,7 @@ export async function firebaseConnCache(
     
     if (typeof firestoreReady === "string" && firestoreReady === conn.getConnectionCheckMessage()) {
       fbLastCheckTime = currentTime;
-      DebugLogger.provider("Firestore connection is alive.", "firebase");
+      createGlobalLogger('provider').debug("Firestore connection is alive.", "firebase");
       next();
     } else {
       next(new Error("Firestore connection check failed"));

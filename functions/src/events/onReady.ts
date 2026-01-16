@@ -5,6 +5,6 @@ export const onReady = (): EventHandler => ({
   event: Events.ClientReady,
   once: true,
   execute: (client: Client) => {
-    DebugLogger.provider(`Ready! Logged in as ${client.user?.tag}`, "discord");
+    createGlobalLogger('provider').debug(`Ready! Logged in as ${client.user?.tag}`, "discord");
   },
 });

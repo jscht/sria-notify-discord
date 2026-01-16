@@ -1,3 +1,4 @@
+import "@/common/utils/logger";
 import { SchedulerManager } from "../SchedulerManager";
 
 /**
@@ -5,7 +6,7 @@ import { SchedulerManager } from "../SchedulerManager";
  */
 export function setupGracefulShutdown(manager: SchedulerManager): void {
   const stopOnExit = () => {
-    DebugLogger.server("🛑 Shutting down schedulers...");
+    globalLogger.info("🛑 Shutting down schedulers...");
     manager.stopAll();
     process.exit(0);
   };

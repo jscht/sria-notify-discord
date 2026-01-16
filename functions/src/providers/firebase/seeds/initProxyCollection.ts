@@ -1,3 +1,4 @@
+import "@/common/utils/logger";
 import { Firestore } from "firebase-admin/firestore";
 import { ProxyStore } from "../store";
 import { FirebaseCollection } from "../constants/collections";
@@ -10,8 +11,8 @@ export async function initProxyCollection(db: Firestore, init: boolean = false) 
     await db.collection(FirebaseCollection.PROXY)
       .doc(proxyStore.getInitDoc())
       .set({});
-    DebugLogger.server("🛠️ proxy 컬렉션 초기화 완료");
+    globalLogger.info("🛠️ proxy 컬렉션 초기화 완료");
   } else {
-    DebugLogger.server("⏩ proxy 컬렉션은 이미 존재합니다. 초기화 생략");
+    globalLogger.info("⏩ proxy 컬렉션은 이미 존재합니다. 초기화 생략");
   }
 }

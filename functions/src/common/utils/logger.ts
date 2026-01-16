@@ -54,6 +54,9 @@ class Logger {
 
 /**
  * 전역 DebugLogger 등록 (레거시 호환성)
+ *
+ * @deprecated Phase 1.11 이후 globalLogger 사용으로 마이그레이션 완료
+ * 하위 호환성을 위해서만 유지합니다.
  */
 if (typeof global !== "undefined") {
   (global as any).DebugLogger = Logger;

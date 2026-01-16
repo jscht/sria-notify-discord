@@ -1,3 +1,4 @@
+import "@/common/utils/logger";
 import { BaseScheduler } from "./base/BaseScheduler";
 import { ProxyCrawler } from "@/crawlers/strategies";
 import type { SchedulerConfig, WorkResult } from "./types";
@@ -27,7 +28,7 @@ export class ProxyScheduler extends BaseScheduler {
     const startTime = new Date();
 
     try {
-      DebugLogger.server(`[${this.config.name}] 🔍 Proxy crawling started...`);
+      globalLogger.info(`[${this.config.name}] 🔍 Proxy crawling started...`);
 
       const proxyData = await this.proxyCrawler.crawl();
 
@@ -39,7 +40,7 @@ export class ProxyScheduler extends BaseScheduler {
 
       const message = `Collected ${proxyData?.length || 0} proxies`;
 
-      DebugLogger.server(`[${this.config.name}] ✅ ${message}`);
+      globalLogger.info(`[${this.config.name}] ✅ ${message}`);
 
       return {
         success: true,

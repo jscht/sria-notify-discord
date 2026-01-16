@@ -14,17 +14,17 @@ const rest = new REST({ version: '10' }).setToken(process.env.SARIAN_BOT_TOKEN!)
 
 (async () => {
   try {
-    DebugLogger.provider("🔁 명령어 등록 중...", "discord");
+    createGlobalLogger('provider').debug("🔁 명령어 등록 중...", "discord");
 
     await rest.put(
       Routes.applicationGuildCommands(process.env.SARIAN_APP_ID!, process.env.SARIAN_TEST_GUILD_ID!),
       { body: commands.map(cmd => cmd.toJSON()) },
     );
 
-    DebugLogger.provider("✅ 명령어 등록 완료!", "discord");
+    createGlobalLogger('provider').debug("✅ 명령어 등록 완료!", "discord");
   } catch (error) {
     if (error instanceof Error) {
-      DebugLogger.error("❌ 명령어 등록 실패:", error);
+      globalLogger.error("❌ 명령어 등록 실패:", error);
     }
   }
 })();

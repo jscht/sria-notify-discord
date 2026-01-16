@@ -1,3 +1,4 @@
+import "@/common/utils/logger";
 import { CommandInteraction } from "discord.js";
 import { RecruitService } from "../../../services";
 import { CRAWL_MODE } from "../../../constants/crawlMode";
@@ -36,7 +37,7 @@ export async function onRecruitRequest(interaction: CommandInteraction) {
     });
   } catch (error) {
     if (error instanceof Error) {
-      DebugLogger.error("onRecruitRequest Error:", error);
+      globalLogger.error("onRecruitRequest Error:", error);
     }
     await interaction.editReply("⚠️ 공고 요청 처리 중 오류가 발생했어요.");
   }

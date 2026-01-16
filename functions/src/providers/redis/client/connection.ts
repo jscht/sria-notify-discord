@@ -11,7 +11,7 @@ export async function redisConnection() {
     });
 
     client.on("ready", () => {
-      DebugLogger.server("redis connected.");
+      globalLogger.info("redis connected.");
     });
 
     await client.connect();
@@ -19,7 +19,7 @@ export async function redisConnection() {
     return client;
   } catch (error) {
     if (error instanceof Error) {
-      DebugLogger.error("Redis connection failed:", error);
+      globalLogger.error("Redis connection failed:", error);
     }
     return null;
   }

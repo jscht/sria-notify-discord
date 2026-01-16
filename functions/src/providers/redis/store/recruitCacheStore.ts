@@ -20,7 +20,7 @@ export class RecruitCacheStore {
     const key = this.getRecruitCacheKey();
     await this.client.hSet(key, id, JSON.stringify(data));
     await this.expire(expiration, key);
-    DebugLogger.request(`Saved data for ID: ${id}`);
+    globalLogger.info(`Saved data for ID: ${id}`);
   }
 
   async getAll(): Promise<RecruitData[] | null> {
@@ -50,7 +50,7 @@ export class RecruitCacheStore {
   async delete(id: string): Promise<void> {
     const key = this.getRecruitCacheKey();
     await this.client.hDel(key, id);
-    DebugLogger.request(`Deleted data for ID: ${id}`);
+    globalLogger.info(`Deleted data for ID: ${id}`);
   }
 
   async expire(expiration: number, key?: string): Promise<void> {

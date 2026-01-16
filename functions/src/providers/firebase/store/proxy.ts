@@ -1,3 +1,4 @@
+import "@/common/utils/logger";
 import { getFirestore } from "firebase-admin/firestore";
 import { ProxyDoc } from "../../../types/proxyData";
 import { FirebaseCollection } from "./../constants/collections";
@@ -41,6 +42,6 @@ export class ProxyStore {
     });
 
     await batch.commit();
-    DebugLogger.server("All proxies uploaded to Firestore successfully.");
+    globalLogger.info("All proxies uploaded to Firestore successfully.");
   }
 }

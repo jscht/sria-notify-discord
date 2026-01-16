@@ -1,3 +1,4 @@
+import "@/common/utils/logger";
 import { Page } from "playwright-core";
 import type { RecruitData } from "@/crawlers/types";
 
@@ -5,7 +6,7 @@ export async function extractRecruitData(page: Page): Promise<RecruitData[]> {
   const normalizeWhitespace = (text: string) => text?.replace(/\s+/g, " ").trim();
   const elements = page.locator(".recruit_list ul > li");
   const itemCount = await elements.count();
-  DebugLogger.server(`Found ${itemCount} list items.`);
+  globalLogger.info(`Found ${itemCount} list items.`);
 
   const promises = Array.from({ length: itemCount }, async (_, i) => {
     const item = elements.nth(i);

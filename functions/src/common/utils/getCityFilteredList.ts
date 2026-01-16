@@ -30,7 +30,7 @@ async function getRecruitSource(
       return dummyList as RecruitData[];
     } catch (error) {
       if (error instanceof Error) {
-        DebugLogger.error("Failed to load dummy data:", error);
+        globalLogger.error("Failed to load dummy data:", error);
       }
       return [];
     }

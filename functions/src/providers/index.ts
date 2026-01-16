@@ -11,7 +11,7 @@ export async function initializeProviders() {
       initRedis(),
       initDiscordBot(),
     ]);
-    DebugLogger.server("All providers initialized successfully.");
+    globalLogger.info("All providers initialized successfully.");
   } catch (error) {
     throw error;
   }

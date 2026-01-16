@@ -8,7 +8,7 @@ const expressApp = initExpress();
 const appServer = firebaseDeploy(expressApp);
 
 if (!appServer) {
-  DebugLogger.error("App server failed to start. Exiting express process.");
+  globalLogger.error("App server failed to start. Exiting express process.");
   process.exit(1);
 }
 

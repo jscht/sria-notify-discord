@@ -1,3 +1,4 @@
+import "@/common/utils/logger";
 import { RedisClientType } from "redis";
 import { RecruitCacheStore, RecruitHashStore, CrawlCacheStore } from "../store";
 import { redisKeyManager } from "../key";
@@ -24,7 +25,7 @@ export class RedisManager {
 
   static async initialize() {
     if (RedisManager.instance) {
-      DebugLogger.server("Redis instance already initialized.");
+      globalLogger.info("Redis instance already initialized.");
       return;
     }
 
@@ -35,7 +36,7 @@ export class RedisManager {
     }
 
     RedisManager.instance = new RedisManager(client);
-    DebugLogger.request("Redis initialized successfully.");
+    globalLogger.info("Redis initialized successfully.");
   }
 
   static getInstance() {
@@ -51,7 +52,7 @@ export class RedisManager {
       return { newCursor: cursor, foundKeys: keys };
     } catch (error) {
       if (error instanceof Error) {
-        DebugLogger.error(
+        globalLogger.error(
           `During SCAN with cursor "${cursorCount}" and pattern "${pattern}"\nmessage: `, error
         );
       }

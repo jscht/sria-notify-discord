@@ -1,3 +1,4 @@
+import "@/common/utils/logger";
 import { getFirestore } from "firebase-admin/firestore";
 import { FirebaseCollection } from "./../constants/collections";
 
@@ -26,7 +27,7 @@ export class ConnectionStore {
       const snapshot = await docRef.get();
 
       if (!snapshot.exists) {
-        DebugLogger.warn("No recruit list found in Firestore.");
+        globalLogger.warn("No recruit list found in Firestore.");
         return null;
       }
 

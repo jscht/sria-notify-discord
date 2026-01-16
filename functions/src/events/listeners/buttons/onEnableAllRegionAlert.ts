@@ -1,3 +1,4 @@
+import "@/common/utils/logger";
 import { ButtonInteraction, MessageFlags } from "discord.js";
 import { SubscribeCommand } from "../../../constants/alarmSubscribeCommand";
 import { AlertModeSelectAction } from "../../../constants/alertModeSelectAction";
@@ -55,7 +56,7 @@ export async function onEnableAllRegionAlert(interaction: ButtonInteraction) {
 
   } catch (error) {
     if (error instanceof Error) {
-      DebugLogger.error("Error enabling all region alert:", error);
+      globalLogger.error("Error enabling all region alert:", error);
     }
     await interaction.editReply("⚠️ 알림 설정 중 문제가 발생했어요.");
   }

@@ -19,8 +19,8 @@ export function initFirebaseApp() {
   if (getApps().length === 0) {
     initializeApp({ credential: cert(serviceAccount) });
     seedCollection();
-    DebugLogger.request("Firebase initialized successfully");
+    globalLogger.info("Firebase initialized successfully");
   } else {
-    DebugLogger.request("Firebase app already initialized");
+    globalLogger.info("Firebase app already initialized");
   }
 }

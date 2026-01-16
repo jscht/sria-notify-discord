@@ -11,5 +11,5 @@ export function initDiscordBot() {
   }
 
   client.login(process.env.SARIAN_BOT_TOKEN);
-  DebugLogger.provider("info: login success!", "discord");
+  createGlobalLogger('provider').debug("info: login success!", "discord");
 }

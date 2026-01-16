@@ -1,3 +1,4 @@
+import "@/common/utils/logger";
 import { BaseCrawler } from "../../base/BaseCrawler";
 import type { RecruitData } from "@/crawlers/types";
 import { 
@@ -55,13 +56,13 @@ export class SriaCrawler extends BaseCrawler {
 
       const recruitData: RecruitData[] = [];
       const totalPages = await getPaginationItemCount(page);
-      DebugLogger.server(`[SriaCrawler] Total pages: ${totalPages}`);
+      globalLogger.info(`[SriaCrawler] Total pages: ${totalPages}`);
 
       for (let currentPage = 1; currentPage <= totalPages; currentPage++) {
         const extractedData = await extractRecruitData(page);
 
         if (!extractedData || extractedData.length === 0) {
-          DebugLogger.warn("[SriaCrawler] No recruitment data found.");
+          globalLogger.warn("[SriaCrawler] No recruitment data found.");
           break;
         }
 
@@ -73,7 +74,7 @@ export class SriaCrawler extends BaseCrawler {
         if (currentPage < totalPages) {
           const { nextPageButton, hasNextPage } = await isNextPageAvailable(page);
           if (!hasNextPage) {
-            DebugLogger.server("[SriaCrawler] Next page does not exist.");
+            globalLogger.info("[SriaCrawler] Next page does not exist.");
             break;
           }
 
