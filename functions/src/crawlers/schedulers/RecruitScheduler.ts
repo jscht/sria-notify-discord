@@ -42,7 +42,8 @@ export class RecruitScheduler extends BaseScheduler {
       const endTime = new Date();
       const durationMs = endTime.getTime() - startTime.getTime();
 
-      const message = `Collected ${recruitData?.length || 0} recruitment data`;
+      const totalCount = recruitData?.length || 0;
+      const message = `Collected ${totalCount} recruitment data`;
 
       return {
         success: true,
@@ -50,7 +51,7 @@ export class RecruitScheduler extends BaseScheduler {
         endTime,
         durationMs,
         message,
-        totalCount: recruitData?.length || 0,
+        totalCount
       };
     } catch (error) {
       const endTime = new Date();
