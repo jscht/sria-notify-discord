@@ -71,3 +71,6 @@ node_modules/
 # Documentation files (except README.md)
 .claude/
 claude.md
+
+# unknown tmpclaude file
+tmpclaude-*
