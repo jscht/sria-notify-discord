@@ -3,6 +3,8 @@ import { RecruitCacheStore, RecruitHashStore } from "../providers/redis/store";
 import type { CityEn } from "@/common/types/city.d";
 import type { Job, HashedString, JobDiffResult, JobHashes } from "@/common/types/job.d";
 import type { RecruitData } from "@/crawlers/types";
+import { eventBus, EventType } from "@/events/eventBus";
+import type { RecruitNewEvent } from "@/events/eventBus";
 
 /**
  * 공고 리스트 갱신 흐름:
@@ -60,21 +62,30 @@ export class RecruitCacheService {
     switch (status) {
       case CacheUpdateStatus.NO_DATA:
         await this.saveAll(newJobs, newHashes, expiration);
-        DebugLogger.server("No data found. Data cached successfully and expiry of 6 hours.");
+        globalLogger.info("No data found. Data cached successfully and expiry of 6 hours.");
         break;
 
       case CacheUpdateStatus.CHANGED:
         const { addedJobs, updatedJobs, deletedIds } = diffJobs;
         await this.syncChanges(addedJobs, updatedJobs, deletedIds, newHashes, expiration);
-        DebugLogger.server(`
+        globalLogger.info(`
           Redis cache updated.\n
           added: ${addedJobs.length}, deleted: ${deletedIds.length}, updated: ${updatedJobs.length}
         `);
+
+        // 새 공고 발견 시 이벤트 발행
+        eventBus.emitEvent<RecruitNewEvent>(EventType.RECRUIT_NEW, {
+          timestamp: Date.now(),
+          source: "RecruitCacheService",
+          addedJobs: addedJobs.map((j) => j.value),
+          updatedJobs: updatedJobs.map((j) => j.value),
+          deletedIds,
+        });
         break;
 
       case CacheUpdateStatus.UNCHANGED:
         await this.extendExpiration(expiration);
-        DebugLogger.server("No changes. Expiration extended.");
+        globalLogger.info("No changes. Expiration extended.");
         break;
     }
   }
