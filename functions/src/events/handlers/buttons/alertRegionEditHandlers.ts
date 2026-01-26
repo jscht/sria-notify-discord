@@ -1,4 +1,4 @@
-import { fullActionId } from "../../fullActionId";
+import { fullActionId } from "@/features/alarmSubscribe/constants/fullActionId";
 import { onAlertRegionEdit } from "../../listeners/buttons/onAlertRegionEdit";
 
 export const alertRegionEditHandlers = {
