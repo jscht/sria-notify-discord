@@ -3,7 +3,7 @@
  * Discord 상호작용 ID의 유효성 검증
  */
 
-import { FullActionId, fullActionId } from "@/events/fullActionId";
+import { FullActionId, fullActionId } from "@/features/alarmSubscribe/constants/fullActionId";
 
 export function isValidFullActionId(id: unknown): id is FullActionId {
   // 1. 문자열 타입 및 길이 체크

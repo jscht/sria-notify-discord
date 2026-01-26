@@ -9,10 +9,10 @@ import { onPingPongCreate } from "./onPingPongCreate";
 import { onReady } from "./onReady";
 
 // EventBus 재export
-export { eventBus, EventBus } from "./eventBus/EventBus";
-export * from "./eventBus/types";
-export * from "./eventBus/constants";
-export { registerAllEventHandlers } from "./eventBus/utils/registerEventHandlers";
+export { eventBus, EventBus } from "./bus/EventBus";
+export * from "./bus/types";
+export * from "./bus/constants";
+export { registerAllEventHandlers } from "./bus/utils/registerEventHandlers";
 
 // Discord 이벤트 핸들러 export
 export const events = [

@@ -1,4 +1,4 @@
-import { fullActionId } from "../../fullActionId";
+import { fullActionId } from "@/features/alarmSubscribe/constants/fullActionId";
 import { onChangeCancel } from "../../listeners/buttons/onChangeCancel";
 import { onChangeConfirm } from "../../listeners/buttons/onChangeConfirm";
 

@@ -23,8 +23,6 @@
       "@/crawlers/*": ["src/crawlers/*"],
       "@/services/*": ["src/services/*"],
       "@/events/*": ["src/events/*"],
-      "@/events/eventBus": ["src/events/eventBus"],
-      "@/events/eventBus/*": ["src/events/eventBus/*"],
       "@/app/*": ["src/app/*"],
       "@/test/*": ["src/test/*"]
     },

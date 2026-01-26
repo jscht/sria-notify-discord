@@ -1,4 +1,4 @@
-import { fullActionId } from "../../fullActionId";
+import { fullActionId } from "@/features/alarmSubscribe/constants/fullActionId";
 import { onEnableAllRegionAlert } from "../../listeners/buttons/onEnableAllRegionAlert";
 import { onEnableSelectedRegionAlert } from "../../listeners/buttons/onEnableSelectedRegionAlert";
 

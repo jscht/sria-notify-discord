@@ -1,7 +1,7 @@
 import { Events, Message } from "discord.js";
-import { EventHandler } from "./eventHandler";
+import { DiscordEventHandler } from "./discordEventHandler";
 
-export const onPingPongCreate = (): EventHandler => ({
+export const onPingPongCreate = (): DiscordEventHandler => ({
   event: Events.MessageCreate,
   execute: (message: Message) => {
     if (message.content === "ping") {
