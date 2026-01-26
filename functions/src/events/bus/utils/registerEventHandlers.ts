@@ -27,7 +27,7 @@ let handlersRegistered = false;
  * @example
  * ```typescript
  * // app/index.ts에서 호출
- * import { registerAllEventHandlers } from '@/eventBus/utils/registerEventHandlers';
+ * import { registerAllEventHandlers } from '@/events';
  *
  * registerAllEventHandlers();
  * ```

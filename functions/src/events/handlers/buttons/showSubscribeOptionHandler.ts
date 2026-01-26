@@ -1,4 +1,4 @@
-import { fullActionId } from "../../fullActionId";
+import { fullActionId } from "@/features/alarmSubscribe/constants/fullActionId";
 import { onShowSubscribeEnable } from "../../listeners/buttons/onShowSubscribeEnable";
 import { onShowSubscribeManage } from "../../listeners/buttons/onShowSubscribeManage";
 

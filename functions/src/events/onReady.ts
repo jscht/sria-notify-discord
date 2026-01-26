@@ -1,7 +1,7 @@
 import { Events, Client } from "discord.js";
-import { EventHandler } from "./eventHandler";
+import { DiscordEventHandler } from "./discordEventHandler";
 
-export const onReady = (): EventHandler => ({
+export const onReady = (): DiscordEventHandler => ({
   event: Events.ClientReady,
   once: true,
   execute: (client: Client) => {

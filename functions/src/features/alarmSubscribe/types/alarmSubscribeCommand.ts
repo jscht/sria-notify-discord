@@ -1,7 +1,7 @@
-import { 
+import {
   fullActionId,
   RegionEditActionId
-} from "@/events/fullActionId";
+} from "../constants/fullActionId";
 import { AlertModeSelectAction } from "../constants";
 
 /** 구독 모드 타입 */
