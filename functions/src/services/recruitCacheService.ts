@@ -3,8 +3,8 @@ import { RecruitCacheStore, RecruitHashStore } from "../providers/redis/store";
 import type { CityEn } from "@/common/types/city.d";
 import type { Job, HashedString, JobDiffResult, JobHashes } from "@/common/types/job.d";
 import type { RecruitData } from "@/crawlers/types";
-import { eventBus, EventType } from "@/events/eventBus";
-import type { RecruitNewEvent } from "@/events/eventBus";
+import { eventBus, EventType } from "@/events/bus";
+import type { RecruitNewEvent } from "@/events/bus";
 
 /**
  * 공고 리스트 갱신 흐름:
@@ -74,13 +74,24 @@ export class RecruitCacheService {
         `);
 
         // 새 공고 발견 시 이벤트 발행
-        eventBus.emitEvent<RecruitNewEvent>(EventType.RECRUIT_NEW, {
-          timestamp: Date.now(),
-          source: "RecruitCacheService",
-          addedJobs: addedJobs.map((j) => j.value),
-          updatedJobs: updatedJobs.map((j) => j.value),
-          deletedIds,
-        });
+        // NOTE: Job[] 전체 전달 (id + value)
+        // - Phase 1.7의 구독자가 필요시 Job.id 사용 가능
+        // - 페이로드 최소화(value만 추출) vs 타입 정의 변경의 이펙트를 고려하여 Job[] 유지
+        try {
+          eventBus.emitEvent<RecruitNewEvent>(EventType.RECRUIT_NEW, {
+            timestamp: Date.now(),
+            source: "RecruitCacheService",
+            addedJobs,
+            updatedJobs,
+            deletedIds,
+          });
+        } catch (error) {
+          globalLogger.error("이벤트 발행 실패", error as Error, {
+            event: EventType.RECRUIT_NEW,
+            source: "RecruitCacheService",
+          });
+          // 캐시 업데이트는 이미 성공했으므로 계속 진행
+        }
         break;
 
       case CacheUpdateStatus.UNCHANGED:
@@ -100,6 +111,10 @@ export class RecruitCacheService {
     }, {});
   }
 
+/**
+   * RecruitData 배열을 Job 배열로 변환
+   * @description Job.id는 href에서 추출되어 createHashes()에서 사용됨
+   */
   private mapToJob(list: RecruitData[]): Job[] {
     const extractId = (href: string): string => href.replace("/jobs/", "");
 
