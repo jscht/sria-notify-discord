@@ -1,4 +1,4 @@
-import { fullActionId } from "../../fullActionId";
+import { fullActionId } from "@/features/alarmSubscribe/constants/fullActionId";
 import { subscribeAdd, SubscribeAddPayload } from "./subscribeAdd";
 import { subscribeRemove, SubscribeRemovePayload } from "./subscribeRemove";
 import { subscribeClear, SubscribeClearPayload } from "./subscribeClear";
