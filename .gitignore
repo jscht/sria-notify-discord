@@ -69,8 +69,10 @@ node_modules/
 .env
 
 # Documentation files (except README.md)
-.claude/
-claude.md
+# claude.md
+# .claude/
+.claude/settings.*
+.claude/commands/*
 
 # unknown tmpclaude file
 tmpclaude-*
