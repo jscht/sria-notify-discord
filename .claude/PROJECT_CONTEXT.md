@@ -81,7 +81,7 @@
 
 ## 🔄 Git Workflow
 
-### 브랜치 Flow
+### 핵심 브랜치 전략
 ```
 dev (개발) → stable (검수) → main (배포)
 ```
