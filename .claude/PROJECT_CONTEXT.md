@@ -81,7 +81,17 @@
 
 ## 🔄 Git Workflow
 
-### 브랜치 전략
+### 브랜치 Flow
+```
+dev (개발) → stable (검수) → main (배포)
+```
+- **단방향 flow**: `dev → stable → main` (역방향 pull 금지)
+- `stable`의 `.gitattributes`에서 Claude 관련 파일 merge 시 자동 제외
+- `dev`: 기능 개발 및 Claude 관련 문서 포함
+- `stable`: Claude 관련 파일 제외, 최종 검수
+- `main`: 프로덕션 배포 버전
+
+### Phase별 브랜치 전략
 - **Phase별 브랜치**: `feature/phase-X-name` (예: `feature/phase-1-event-bus`)
 - **이전 브랜치 유지**: 삭제하지 않음
 - **병합 대상**: dev 브랜치

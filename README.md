@@ -340,6 +340,23 @@ firebase functions:config:get
 
 ---
 
+## 브랜치 전략
+
+```
+dev (개발) → stable (검수) → main (배포)
+```
+
+| 브랜치 | 역할 | 설명 |
+|--------|------|------|
+| `dev` | 개발 | 기능 개발 및 Claude 관련 문서 포함 |
+| `stable` | 검수 | Claude 관련 파일 제외, 최종 검수 |
+| `main` | 배포 | 프로덕션 배포 버전 |
+
+- 단방향 flow: `dev → stable → main` (역방향 pull 금지)
+- `stable`의 `.gitattributes`에서 Claude 관련 파일 merge 시 자동 제외
+
+---
+
 ## 기여하기
 
 이 프로젝트는 개인 프로젝트로 현재 외부 기여를 받고 있지 않습니다.
