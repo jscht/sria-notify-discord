@@ -216,13 +216,12 @@ sria-notify-discord/
 ```bash
 # 저장소 클론
 git clone https://github.com/your-org/sria-notify-discord.git
-cd sria-notify-discord
+cd sria-notify-discord/functions
 
 # 개발 환경 설정
 git config merge.ours.driver true
 
 # 의존성 설치
-cd functions
 npm install
 
 # 환경 변수 설정
