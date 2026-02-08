@@ -21,15 +21,19 @@
 
 ### Phase 1.11: DebugLogger 마이그레이션
 
-**상태**: 대기 중
+**상태**: 진행 중
 **우선순위**: ⭐⭐⭐
 **의존성**: Phase 1.1 완료 ✅
 
 **작업 내용**:
-- DebugLogger를 SystemLogger로 마이그레이션
-- 기존 로깅 코드 업데이트
+- 프로덕션 코드 마이그레이션 완료 확인 (DebugLogger 사용처 0개)
+- LogSource 타입 정의 + 프리셋 로거 export (crawlerLogger, providerLogger)
+- `logger.ts` 삭제 및 레거시 전역 등록 제거
+- `global.d.ts`에서 DebugLogger 타입 선언 제거
+- 테스트 파일 DebugLogger 참조 정리
+- TypeScript 컴파일 검증
 
-**상세 계획**: [phase-1-core.md - Phase 1.11](./phase-1-core.md#phase-111-debuglogger-마이그레이션)
+**상세 계획**: [phase-1-core.md - Phase 1.11](./phase-1-core.md#Phase-1-11-DebugLogger-마이그레이션)
 
 ---
 
