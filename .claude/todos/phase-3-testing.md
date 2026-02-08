@@ -33,8 +33,14 @@
 
 - [ ] `package.json` scripts 추가
 
+- [ ] 기존 테스트 파일 마이그레이션
+  - [ ] `export function testXxx()` → `describe/it` 구조 변환
+  - [ ] `console.log("PASS/FAIL")` → `expect()` assertion 변환
+  - [ ] `if (require.main === module)` 직접 실행 코드 삭제
+
 **완료 기준**:
 - [ ] `npm test` 실행 가능
+- [ ] 기존 테스트 파일 Vitest 구조로 마이그레이션 완료
 
 ---
 

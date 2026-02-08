@@ -11,13 +11,14 @@
 import "@/common/utils/systemLogger";
 
 import { BaseScheduler } from "../base/BaseScheduler";
-import { eventBus, EventType } from "@/events/bus";
-import type {
+import {
+  eventBus,
+  EventType,
   RecruitCrawlStartedEvent,
   RecruitCrawlCompletedEvent,
   RecruitCrawlFailedEvent,
 } from "@/events/bus";
-import type { SchedulerConfig, WorkResult } from "../types";
+import { SchedulerConfig, WorkResult } from "../types";
 
 /**
  * Test scheduler for success case
@@ -72,10 +73,16 @@ class FailScheduler extends BaseScheduler {
 export async function testBaseSchedulerEvents(): Promise<void> {
   console.log("=== BaseScheduler Event Emit Test Start ===\n");
 
-  // Event received flags
-  let startedEvent: RecruitCrawlStartedEvent | null = null;
-  let completedEvent: RecruitCrawlCompletedEvent | null = null;
-  let failedEvent: RecruitCrawlFailedEvent | null = null;
+  // Event received storage
+  const events: {
+    started: RecruitCrawlStartedEvent | null;
+    completed: RecruitCrawlCompletedEvent | null;
+    failed: RecruitCrawlFailedEvent | null;
+  } = {
+    started: null,
+    completed: null,
+    failed: null,
+  };
 
   // 1. Register event listeners
   console.log("Test 1: Register event listeners");
@@ -84,7 +91,7 @@ export async function testBaseSchedulerEvents(): Promise<void> {
     EventType.RECRUIT_CRAWL_STARTED,
     (payload) => {
       console.log("  STARTED event received:", payload.schedulerName);
-      startedEvent = payload;
+      events.started = payload;
     }
   );
 
@@ -92,7 +99,7 @@ export async function testBaseSchedulerEvents(): Promise<void> {
     EventType.RECRUIT_CRAWL_COMPLETED,
     (payload) => {
       console.log("  COMPLETED event received:", payload.schedulerName);
-      completedEvent = payload;
+      events.completed = payload;
     }
   );
 
@@ -100,7 +107,7 @@ export async function testBaseSchedulerEvents(): Promise<void> {
     EventType.RECRUIT_CRAWL_FAILED,
     (payload) => {
       console.log("  FAILED event received:", payload.schedulerName);
-      failedEvent = payload;
+      events.failed = payload;
     }
   );
 
@@ -114,36 +121,26 @@ export async function testBaseSchedulerEvents(): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 200));
   successScheduler.stopWork();
 
-  if (startedEvent) {
-    const evt = startedEvent as RecruitCrawlStartedEvent;
-    if (evt.schedulerName === "SuccessScheduler") {
-      console.log("  PASS: STARTED event emitted");
-      console.log(`     - timestamp: ${evt.timestamp}`);
-      console.log(`     - schedulerName: ${evt.schedulerName}`);
-    } else {
-      console.log("  FAIL: STARTED event emit failed");
-    }
+  if (events.started && events.started.schedulerName === "SuccessScheduler") {
+    console.log("  PASS: STARTED event emitted");
+    console.log(`     - timestamp: ${events.started.timestamp}`);
+    console.log(`     - schedulerName: ${events.started.schedulerName}`);
   } else {
     console.log("  FAIL: STARTED event emit failed");
   }
 
-  if (completedEvent) {
-    const evt = completedEvent as RecruitCrawlCompletedEvent;
-    if (evt.schedulerName === "SuccessScheduler") {
-      console.log("  PASS: COMPLETED event emitted");
-      console.log(`     - totalCount: ${evt.totalCount}`);
-      console.log(`     - duration: ${evt.duration}ms`);
-    } else {
-      console.log("  FAIL: COMPLETED event emit failed");
-    }
+  if (events.completed && events.completed.schedulerName === "SuccessScheduler") {
+    console.log("  PASS: COMPLETED event emitted");
+    console.log(`     - totalCount: ${events.completed.totalCount}`);
+    console.log(`     - duration: ${events.completed.duration}ms`);
   } else {
     console.log("  FAIL: COMPLETED event emit failed");
   }
 
   // Payload structure validation (Test 4)
   console.log("\nTest 4: Payload structure validation");
-  if (completedEvent) {
-    const evt = completedEvent as RecruitCrawlCompletedEvent;
+  if (events.completed) {
+    const evt = events.completed;
     const hasValidStructure =
       typeof evt.timestamp === "number" &&
       typeof evt.schedulerName === "string" &&
@@ -159,38 +156,40 @@ export async function testBaseSchedulerEvents(): Promise<void> {
     console.log("  FAIL: COMPLETED event payload structure invalid (no event)");
   }
 
-  // Reset
-  startedEvent = null;
-  completedEvent = null;
-
   // 3. Fail scheduler test
   console.log("\nTest 3: Fail scheduler event emit");
+
+  // Reset for fail test
+  const failEvents: {
+    started: RecruitCrawlStartedEvent | null;
+    failed: RecruitCrawlFailedEvent | null;
+  } = { started: null, failed: null };
+
+  eventBus.onEvent<RecruitCrawlStartedEvent>(
+    EventType.RECRUIT_CRAWL_STARTED,
+    (payload) => { failEvents.started = payload; }
+  );
+  eventBus.onEvent<RecruitCrawlFailedEvent>(
+    EventType.RECRUIT_CRAWL_FAILED,
+    (payload) => { failEvents.failed = payload; }
+  );
+
   const failScheduler = new FailScheduler();
   failScheduler.startWork();
 
   await new Promise((resolve) => setTimeout(resolve, 200));
   failScheduler.stopWork();
 
-  if (startedEvent) {
-    const evt = startedEvent as RecruitCrawlStartedEvent;
-    if (evt.schedulerName === "FailScheduler") {
-      console.log("  PASS: STARTED event emitted");
-    } else {
-      console.log("  FAIL: STARTED event emit failed");
-    }
+  if (failEvents.started && failEvents.started.schedulerName === "FailScheduler") {
+    console.log("  PASS: STARTED event emitted");
   } else {
     console.log("  FAIL: STARTED event emit failed");
   }
 
-  if (failedEvent) {
-    const evt = failedEvent as RecruitCrawlFailedEvent;
-    if (evt.schedulerName === "FailScheduler") {
-      console.log("  PASS: FAILED event emitted");
-      console.log(`     - error: ${evt.error.message}`);
-      console.log(`     - duration: ${evt.duration}ms`);
-    } else {
-      console.log("  FAIL: FAILED event emit failed");
-    }
+  if (failEvents.failed && failEvents.failed.schedulerName === "FailScheduler") {
+    console.log("  PASS: FAILED event emitted");
+    console.log(`     - error: ${failEvents.failed.error.message}`);
+    console.log(`     - duration: ${failEvents.failed.duration}ms`);
   } else {
     console.log("  FAIL: FAILED event emit failed");
   }

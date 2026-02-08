@@ -5,6 +5,7 @@ import type {
   RecruitCrawlCompletedEvent,
   RecruitCrawlFailedEvent,
 } from "@/events/bus";
+import { systemLogger as globalLogger } from "@/common/utils/systemLogger";
 
 /**
  * 모든 스케줄러의 추상 클래스
