@@ -1,4 +1,3 @@
-import "@/common/utils/logger";
 import { BaseScheduler } from "./base/BaseScheduler";
 import { CRAWL_MODE } from "@/common/constants";
 import { RecruitService } from "@/services/recruitService";

@@ -11,12 +11,12 @@
 import "@/common/utils/systemLogger";
 
 import { BaseScheduler } from "../base/BaseScheduler";
-import { eventBus, EventType } from "@/events/eventBus";
+import { eventBus, EventType } from "@/events/bus";
 import type {
   RecruitCrawlStartedEvent,
   RecruitCrawlCompletedEvent,
   RecruitCrawlFailedEvent,
-} from "@/events/eventBus";
+} from "@/events/bus";
 import type { SchedulerConfig, WorkResult } from "../types";
 
 /**

@@ -71,7 +71,7 @@
 **참고 문서**: [REVIEW_PROCESS.md](./REVIEW_PROCESS.md)
 
 ### 코드 리뷰
-- [x] EventBus import 경로 확인 (`@/events/eventBus`) ✅
+- [x] EventBus import 경로 확인 (`@/events/bus`) ✅
 - [x] 이벤트 타입 일치 확인 ✅
 - [x] 이벤트 발행 시점 적절성 확인 ✅
   - STARTED: performWork() 호출 직전

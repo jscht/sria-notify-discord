@@ -1,11 +1,10 @@
-import "@/common/utils/logger";
 import type { SchedulerConfig, SchedulerStatus, WorkResult } from "../types";
-import { eventBus, EventType } from "@/events/eventBus";
+import { eventBus, EventType } from "@/events/bus";
 import type {
   RecruitCrawlStartedEvent,
   RecruitCrawlCompletedEvent,
   RecruitCrawlFailedEvent,
-} from "@/events/eventBus";
+} from "@/events/bus";
 
 /**
  * 모든 스케줄러의 추상 클래스
