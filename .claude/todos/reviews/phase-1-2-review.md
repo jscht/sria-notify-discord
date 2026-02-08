@@ -133,9 +133,9 @@ try {
 1. [x] TypeScript 컴파일 확인 ✅
 2. [x] 테스트 실행 확인 ✅
 3. [x] 사용자 피드백 확인 및 승인 ✅
-4. [ ] Git 커밋 및 PR 생성 (dev 브랜치)
-5. [ ] PROGRESS.md Phase 1.2 진행률 업데이트
-6. [ ] 다음 Phase 시작
+4. [x] Git 커밋 및 PR 생성 (PR #11 → dev) ✅
+5. [x] PROGRESS.md Phase 1.2 진행률 업데이트 ✅
+6. [x] 다음 Phase 시작 ✅
 
 ---
 
