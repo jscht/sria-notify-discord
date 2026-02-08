@@ -308,7 +308,7 @@
 **의존성**: Phase 1.1 완료 (SystemLogger 구축)
 
 - [ ] 마이그레이션 계획 수립
-  - [ ] DebugLogger 사용 파일 전체 목록 작성 (40개 파일)
+  - [ ] DebugLogger 사용 파일 전체 목록 작성
   - [ ] 우선순위 및 의존성 분석
   - [ ] 마이그레이션 가이드라인 문서 작성
 
@@ -332,7 +332,7 @@
   - [ ] 성능 영향 없는지 확인
 
 **완료 기준**:
-- [ ] 40개 파일 모두 globalLogger/createGlobalLogger로 전환
+- [ ] 프로젝트 내 파일 모두 globalLogger/createGlobalLogger로 전환
 - [ ] DebugLogger 전역 등록 제거
 - [ ] 모든 로그 정상 작동
 
