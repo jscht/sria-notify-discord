@@ -29,7 +29,9 @@ export default function errorHandler(
   res: Response,
   next: NextFunction
 ): void {
-  const { status = 500, message, name } = err;
+  const status = (err as ResponseHandler).status || 500;
+  const message = (err as ResponseHandler).message || err.message || "Internal Server Error";
+  const name = (err as ResponseHandler).name;
   const isDev = req.app.get("env") === "development";
   const timestamp = formatDate(new Date().toISOString());
 

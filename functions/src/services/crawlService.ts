@@ -1,10 +1,10 @@
-import { CRAWL_MODE } from "../constants/crawlMode";
+import { CRAWL_MODE } from "@/common/constants/crawlMode";
+import type { CityKo } from "@/common/types";
+import { getCityFilteredList } from "@/common/utils";
 import { SriaCrawler, ProxyCrawler } from "@/crawlers/strategies";
 import type { RecruitData, ProxyData } from "@/crawlers/types";
-import { RedisManager } from "../providers/redis/manager/redisManager";
-import { CrawlCacheStore } from "../providers/redis/store";
-import { CityKo } from "../types/city";
-import { getCityFilteredList } from "../utils/getCityFilteredList";
+import { RedisManager } from "@/providers/redis/manager/redisManager";
+import { CrawlCacheStore } from "@/providers/redis/store";
 
 export class CrawlService {
   private readonly crawl_cachestore: CrawlCacheStore;
@@ -24,6 +24,7 @@ export class CrawlService {
       scraped = await this.sriaCrawler.crawl();
     }
 
+    // 이벤트 전파 됐을 때 구독 유형(구독한 도시)에 맞춰 필터링된 데이터 반환 -> 다른 서비스 레이어에서 처리
     return await getCityFilteredList(CRAWL_MODE.DUMMY, city, scraped);
   }
 

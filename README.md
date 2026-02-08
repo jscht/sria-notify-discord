@@ -218,6 +218,9 @@ sria-notify-discord/
 git clone https://github.com/your-org/sria-notify-discord.git
 cd sria-notify-discord/functions
 
+# 개발 환경 설정
+git config merge.ours.driver true
+
 # 의존성 설치
 npm install
 
@@ -333,6 +336,23 @@ firebase functions:config:set \
 # 설정 확인
 firebase functions:config:get
 ```
+
+---
+
+## 브랜치 전략
+
+```
+dev (개발) → stable (검수) → main (배포)
+```
+
+| 브랜치 | 역할 | 설명 |
+|--------|------|------|
+| `dev` | 개발 | 기능 개발 및 Claude 관련 문서 포함 |
+| `stable` | 검수 | Claude 관련 파일 제외, 최종 검수 |
+| `main` | 배포 | 프로덕션 배포 버전 |
+
+- 단방향 flow: `dev → stable → main` (역방향 pull 금지)
+- `stable`의 `.gitattributes`에서 Claude 관련 파일 merge 시 자동 제외
 
 ---
 

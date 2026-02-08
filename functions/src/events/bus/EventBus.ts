@@ -10,10 +10,10 @@ import { eventLogger } from './utils/eventLogger';
  *
  * @example
  * ```typescript
- * import { eventBus, EventType } from '@/eventBus';
+ * import { eventBus, EventType } from '@/events';
  *
  * // 이벤트 발행
- * eventBus.emitEvent(EventType.RECRUIT_NEW, { 
+ * eventBus.emitEvent(EventType.RECRUIT_NEW, {
  *   timestamp: Date.now(),
  *   addedJobs: [],
  *   updatedJobs: [],

@@ -32,7 +32,7 @@ export class RecruitScheduler extends BaseScheduler {
     const startTime = new Date();
 
     try {
-      DebugLogger.server(
+      globalLogger.info(
         `[${this.config.name}] 🔍 Crawling started (Mode: ${this.mode})...`
       );
 
@@ -41,7 +41,8 @@ export class RecruitScheduler extends BaseScheduler {
       const endTime = new Date();
       const durationMs = endTime.getTime() - startTime.getTime();
 
-      const message = `Collected ${recruitData?.length || 0} recruitment data`;
+      const totalCount = recruitData?.length || 0;
+      const message = `Collected ${totalCount} recruitment data`;
 
       return {
         success: true,
@@ -49,6 +50,7 @@ export class RecruitScheduler extends BaseScheduler {
         endTime,
         durationMs,
         message,
+        totalCount
       };
     } catch (error) {
       const endTime = new Date();
@@ -70,7 +72,7 @@ export class RecruitScheduler extends BaseScheduler {
    */
   setMode(mode: CRAWL_MODE): void {
     this.mode = mode;
-    DebugLogger.server(`[${this.config.name}] Mode changed to: ${mode}`);
+    globalLogger.info(`[${this.config.name}] Mode changed to: ${mode}`);
   }
 
   /**

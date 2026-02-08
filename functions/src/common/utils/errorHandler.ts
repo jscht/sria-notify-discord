@@ -6,8 +6,8 @@
 
 import { SystemError, ErrorLevel, ErrorCategory } from "./systemError";
 import { createLogger } from "./systemLogger";
-import { eventBus } from "@/eventBus/EventBus";
-import { EventType } from "@/eventBus/types";
+import { eventBus } from "@/events/bus/EventBus";
+import { EventType } from "@/events/bus/types";
 
 const logger = createLogger("ErrorHandler");
 
