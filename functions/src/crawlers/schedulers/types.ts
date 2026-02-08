@@ -24,4 +24,5 @@ export interface WorkResult {
   durationMs: number;
   error?: Error;
   message: string;
+  totalCount?: number;
 }

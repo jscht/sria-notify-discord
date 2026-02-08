@@ -71,7 +71,7 @@
 **참고 문서**: [REVIEW_PROCESS.md](./REVIEW_PROCESS.md)
 
 ### 코드 리뷰
-- [x] EventBus import 경로 확인 (`@/events/eventBus`) ✅
+- [x] EventBus import 경로 확인 (`@/events/bus`) ✅
 - [x] 이벤트 타입 일치 확인 ✅
 - [x] 이벤트 발행 시점 적절성 확인 ✅
   - STARTED: performWork() 호출 직전
@@ -85,7 +85,7 @@
 - [x] 페이로드 구조 검증 (timestamp, schedulerName, totalCount, duration) ✅
 
 ### 타입 안전성
-- [ ] TypeScript 컴파일 확인 (pending)
+- [x] TypeScript 컴파일 확인 ✅
 - [x] 제네릭 타입 추론 확인 ✅
 
 ### 문서화
@@ -130,9 +130,9 @@ try {
 
 **참고 문서**: [PROJECT_CONTEXT.md - Git Workflow](../../PROJECT_CONTEXT.md#-git-workflow)
 
-1. [ ] TypeScript 컴파일 확인
-2. [ ] 테스트 실행 확인
-3. [ ] 사용자 피드백 확인 및 승인
+1. [x] TypeScript 컴파일 확인 ✅
+2. [x] 테스트 실행 확인 ✅
+3. [x] 사용자 피드백 확인 및 승인 ✅
 4. [ ] Git 커밋 및 PR 생성 (dev 브랜치)
 5. [ ] PROGRESS.md Phase 1.2 진행률 업데이트
 6. [ ] 다음 Phase 시작
