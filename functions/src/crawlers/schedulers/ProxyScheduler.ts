@@ -1,4 +1,4 @@
-import "@/common/utils/logger";
+import "@/common/utils/systemLogger";
 import { BaseScheduler } from "./base/BaseScheduler";
 import { ProxyCrawler } from "@/crawlers/strategies";
 import type { SchedulerConfig, WorkResult } from "./types";

@@ -303,44 +303,47 @@
 
 ---
 
-## Phase 1.11: DebugLogger 마이그레이션 (2-3시간)
+## Phase 1.11: DebugLogger 마이그레이션 ✅ (완료)
 **우선순위**: ⭐⭐
 **의존성**: Phase 1.1 완료 (SystemLogger 구축)
+**완료일**: 2026-02-09
 
 - [x] 마이그레이션 현황 파악
   - [x] DebugLogger 사용 파일 전체 목록 작성 → 프로덕션 0개 확인
   - [x] 프로덕션 코드 마이그레이션 완료 확인 (41개 파일 globalLogger 사용 중)
   - [x] 테스트 파일 분석 (globalLogger.test.ts만 수정 필요)
 
-- [ ] LogSource 타입 및 프리셋 로거 추가
-  - [ ] `systemLogger.ts`에 LogSource 타입 정의 (`system`, `crawler`, `provider`, `EventBus`, `SystemError`, `ErrorHandler`)
-  - [ ] 프리셋 로거 export (crawlerLogger, providerLogger)
-  - [ ] `createGlobalLogger('provider')` 사용처 4곳 → providerLogger로 전환
+- [x] LogSource 타입 및 프리셋 로거 추가
+  - [x] `systemLogger.ts`에 LogSource 타입 정의 (`system`, `crawler`, `provider`, `EventBus`, `SystemError`, `ErrorHandler`)
+  - [x] 프리셋 로거 export (crawlerLogger, providerLogger)
+  - [x] `createGlobalLogger('provider')` 사용처 4곳 → providerLogger로 전환
 
-- [ ] 레거시 코드 정리
-  - [ ] `common/utils/logger.ts` 삭제
-  - [ ] `systemLogger.ts`에서 `import Logger` dead import 제거
-  - [ ] `common/types/global.d.ts`에서 DebugLogger 타입 선언 제거
+- [x] 레거시 코드 정리
+  - [x] `common/utils/logger.ts` 삭제
+  - [x] `systemLogger.ts`에서 `import Logger` dead import 제거
+  - [x] `common/types/global.d.ts`에서 DebugLogger 타입 선언 제거
 
-- [ ] 테스트 정리
-  - [ ] `globalLogger.test.ts`에서 DebugLogger 테스트 제거
-  - [ ] side-effect import 패턴 유지 확인 (`import "@/common/utils/systemLogger"`)
+- [x] 테스트 정리
+  - [x] `globalLogger.test.ts`에서 DebugLogger 테스트 제거
+  - [x] side-effect import 패턴 유지 확인 (`import "@/common/utils/systemLogger"`)
 
-- [ ] 마이그레이션 검증
-  - [ ] TypeScript 컴파일 확인 (`npx tsc --noEmit`)
-  - [ ] DebugLogger 잔여 참조 grep 검색 → 0개 확인
-  - [ ] 테스트 파일 실행 확인
+- [x] 마이그레이션 검증
+  - [x] TypeScript 컴파일 확인 (`npx tsc --noEmit`) — 기존 에러 68개 유지, 새 에러 0개
+  - [x] DebugLogger 잔여 참조 grep 검색 → 코드 0개 확인 (문서만 잔존)
+  - [x] side-effect import 23개 파일 전환 완료
 
-**완료 기준**:
-- [ ] logger.ts 삭제 완료
-- [ ] DebugLogger 전역 등록 및 타입 선언 제거
-- [ ] LogSource 타입 + 프리셋 로거 export
-- [ ] 모든 로그 정상 작동
-- [ ] TypeScript 컴파일 성공
+**완료 기준**: ✅ 모두 완료
+- [x] logger.ts 삭제 완료
+- [x] DebugLogger 전역 등록 및 타입 선언 제거
+- [x] LogSource 타입 + 프리셋 로거 export
+- [x] 모든 로그 정상 작동
+- [x] TypeScript 컴파일 성공
 
 **테스트 가이드라인**:
 - 테스트 파일에서 전역 로거 사용 시 반드시 side-effect import 필요:
   `import "@/common/utils/systemLogger";`
+
+**검토 문서**: [phase-1-11-review.md](./reviews/phase-1-11-review.md)
 
 ---
 

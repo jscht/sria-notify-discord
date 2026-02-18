@@ -1,4 +1,4 @@
-import "@/common/utils/logger";
+import "@/common/utils/systemLogger";
 import { CRAWL_MODE } from "@/common/constants";
 import { RedisManager } from "../providers/redis/manager/redisManager";
 import { RecruitStore } from "../providers/firebase/store";

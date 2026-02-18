@@ -1,4 +1,4 @@
-import "@/common/utils/logger";
+import "@/common/utils/systemLogger";
 import { CommandInteraction } from "discord.js";
 import { RecruitService } from "../../../services";
 import { CRAWL_MODE } from "../../../constants/crawlMode";

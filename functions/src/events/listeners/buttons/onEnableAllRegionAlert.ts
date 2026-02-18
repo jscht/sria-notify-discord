@@ -1,4 +1,4 @@
-import "@/common/utils/logger";
+import "@/common/utils/systemLogger";
 import { ButtonInteraction, MessageFlags } from "discord.js";
 import { SubscribeCommand } from "../../../constants/alarmSubscribeCommand";
 import { AlertModeSelectAction } from "../../../constants/alertModeSelectAction";

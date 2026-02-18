@@ -1,4 +1,4 @@
-import "@/common/utils/logger";
+import "@/common/utils/systemLogger";
 import { Page } from "playwright-core";
 import { BaseCrawler } from "../base/BaseCrawler";
 import type { ProxyData } from "@/crawlers/types";

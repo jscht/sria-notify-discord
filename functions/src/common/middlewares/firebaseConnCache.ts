@@ -1,9 +1,9 @@
-import "@/common/utils/logger";
 /**
  * Firebase Connection Cache Middleware
  * 10분 간격 Firebase 연결 확인
  */
 
+import { providerLogger } from "@/common/utils/systemLogger";
 import type { Request, Response, NextFunction } from "express";
 
 let fbLastCheckTime: number | null = null;
@@ -34,7 +34,7 @@ export async function firebaseConnCache(
     
     if (typeof firestoreReady === "string" && firestoreReady === conn.getConnectionCheckMessage()) {
       fbLastCheckTime = currentTime;
-      createGlobalLogger('provider').debug("Firestore connection is alive.", "firebase");
+      providerLogger.debug("Firestore connection is alive.");
       next();
     } else {
       next(new Error("Firestore connection check failed"));

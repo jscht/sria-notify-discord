@@ -1,4 +1,4 @@
-import "@/common/utils/logger";
+import "@/common/utils/systemLogger";
 import { Browser, Cookie } from "playwright-core";
 
 const requiredCookies = ["XSRF-TOKEN", "dyms_career_session"];

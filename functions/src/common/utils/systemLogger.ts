@@ -2,11 +2,29 @@
  * System Logger
  *
  * 구조화된 로깅을 지원하는 시스템 로거
- * 기존 Logger를 감싸서 확장하며, 이벤트 시스템 등에서 사용
+ * 컬러 출력, 타임스탬프, 컨텍스트 객체, 자식 로거를 지원
  */
 
-import Logger from "./logger";
 import { formatDate } from "./formatDate";
+
+/**
+ * 로그 소스 타입
+ *
+ * createLogger()에 전달할 수 있는 소스 식별자
+ * - system: 시스템 전반 (기본값)
+ * - crawler: 크롤러 관련
+ * - provider: 외부 서비스 연동 (Discord, Firebase 등)
+ * - EventBus: 이벤트 버스 시스템
+ * - SystemError: 에러 처리 시스템
+ * - ErrorHandler: 에러 핸들러
+ */
+export type LogSource =
+  | "system"
+  | "crawler"
+  | "provider"
+  | "EventBus"
+  | "SystemError"
+  | "ErrorHandler";
 
 /**
  * 로그 레벨
@@ -59,7 +77,7 @@ const LogColors = {
 /**
  * SystemLogger 클래스
  *
- * 기존 Logger를 확장하여 구조화된 로깅 제공
+ * 구조화된 로깅을 제공하는 핵심 로거
  */
 export class SystemLogger {
   constructor(private readonly source: string) {}
@@ -229,7 +247,7 @@ export class SystemLogger {
 /**
  * 팩토리 함수
  */
-export function createLogger(source: string): SystemLogger {
+export function createLogger(source: LogSource): SystemLogger {
   return new SystemLogger(source);
 }
 
@@ -237,6 +255,12 @@ export function createLogger(source: string): SystemLogger {
  * 기본 시스템 로거 인스턴스
  */
 export const systemLogger = createLogger("system");
+
+/**
+ * 프리셋 로거
+ */
+export const crawlerLogger = createLogger("crawler");
+export const providerLogger = createLogger("provider");
 
 /**
  * 전역 로거 등록

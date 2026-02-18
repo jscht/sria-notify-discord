@@ -1,4 +1,4 @@
-import "@/common/utils/logger";
+import "@/common/utils/systemLogger";
 import { getFirestore } from "firebase-admin/firestore";
 import { ProxyDoc } from "../../../types/proxyData";
 import { FirebaseCollection } from "./../constants/collections";

@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config();
-import "@/common/utils/logger";
+import "@/common/utils/systemLogger";
 import { initExpress } from "./express";
 import { firebaseDeploy } from "@/providers/firebase";
 

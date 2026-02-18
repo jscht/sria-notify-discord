@@ -1,4 +1,4 @@
-import "@/common/utils/logger";
+import "@/common/utils/systemLogger";
 import { RecruitScheduler } from "./RecruitScheduler";
 import { ProxyScheduler } from "./ProxyScheduler";
 import { CRAWL_MODE } from "@/common/constants";

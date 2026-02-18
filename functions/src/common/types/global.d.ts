@@ -2,16 +2,9 @@
  * Global Type Definitions
  */
 
-import type Logger from "../utils/logger";
 import type { SystemLogger, createLogger } from "../utils/systemLogger";
 
 declare global {
-  /**
-   * 레거시 로거 (deprecated)
-   * @deprecated SystemLogger 사용을 권장합니다.
-   */
-  var DebugLogger: typeof Logger;
-
   /**
    * 전역 SystemLogger 인스턴스
    *

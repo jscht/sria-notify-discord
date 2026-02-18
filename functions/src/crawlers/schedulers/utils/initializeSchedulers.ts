@@ -1,4 +1,4 @@
-import "@/common/utils/logger";
+import "@/common/utils/systemLogger";
 import { SchedulerManager } from "../SchedulerManager";
 import { CRAWL_MODE } from "@/common/constants";
 

@@ -1,4 +1,4 @@
-import "@/common/utils/logger";
+import "@/common/utils/systemLogger";
 import { Router } from "express";
 import { CRAWL_MODE } from "../constants/crawlMode";
 import { RecruitService, CrawlService } from "../services";

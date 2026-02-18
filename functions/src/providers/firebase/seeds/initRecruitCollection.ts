@@ -1,4 +1,4 @@
-import "@/common/utils/logger";
+import "@/common/utils/systemLogger";
 import { Firestore } from "firebase-admin/firestore";
 import { RecruitStore } from "../store";
 import { FirebaseCollection } from "../constants/collections";

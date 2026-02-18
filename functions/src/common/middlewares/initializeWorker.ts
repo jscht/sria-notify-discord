@@ -1,4 +1,4 @@
-import "@/common/utils/logger";
+import "@/common/utils/systemLogger";
 /**
  * Initialize Worker Middleware
  * 애플리케이션 초기화 및 스케줄러 시작

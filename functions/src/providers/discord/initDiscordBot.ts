@@ -1,3 +1,4 @@
+import { providerLogger } from "@/common/utils/systemLogger";
 import { client } from "./client";
 import { events } from "../../events";
 
@@ -11,5 +12,5 @@ export function initDiscordBot() {
   }
 
   client.login(process.env.SARIAN_BOT_TOKEN);
-  createGlobalLogger('provider').debug("info: login success!", "discord");
+  providerLogger.debug("info: login success!");
 }

@@ -1,4 +1,4 @@
-import "@/common/utils/logger";
+import "@/common/utils/systemLogger";
 import { RedisClientType } from "redis";
 import { RecruitCacheStore, RecruitHashStore, CrawlCacheStore } from "../store";
 import { redisKeyManager } from "../key";

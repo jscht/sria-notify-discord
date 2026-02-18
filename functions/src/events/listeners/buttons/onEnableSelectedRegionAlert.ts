@@ -1,4 +1,4 @@
-import "@/common/utils/logger";
+import "@/common/utils/systemLogger";
 import { ButtonInteraction, MessageFlags } from "discord.js";
 import { isValidCityName } from "../../../utils/cityName";
 import { chooseEunNeun } from "../../../utils/koreanJosaUtils";

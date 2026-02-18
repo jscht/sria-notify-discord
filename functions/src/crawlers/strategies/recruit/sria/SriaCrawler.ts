@@ -1,4 +1,4 @@
-import "@/common/utils/logger";
+import "@/common/utils/systemLogger";
 import { BaseCrawler } from "../../base/BaseCrawler";
 import type { RecruitData } from "@/crawlers/types";
 import { 
