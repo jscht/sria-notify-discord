@@ -81,6 +81,24 @@ src/
 
 ---
 
+## 코드 컨벤션
+
+### Logging
+- `LogSource` 타입 제약: `system` | `crawler` | `provider` | `EventBus` | `SystemError` | `ErrorHandler`
+- 프리셋 로거 사용: `crawlerLogger`, `providerLogger` (from `@/common/utils/systemLogger`)
+- `createLogger(source: LogSource)` — 임의 문자열 불가
+
+### Error Handling
+- `SystemError` 팩토리 메서드 사용 (11개 제공)
+- `ErrorLevel`: WARNING, FAILURE, CRITICAL
+- EventBus 자동 발행 (`SYSTEM_ERROR_*` 이벤트)
+
+### EventBus
+- `eventBus.emitEvent<T>()` / `eventBus.onEvent<T>()` — 타입 안전 메서드
+- `EventType` enum 사용 (17개 이벤트 타입)
+
+---
+
 ## 개발 플로우
 
 1. **새 기능 추가 시**:
@@ -120,9 +138,9 @@ src/
 - [providers/claude.md](./providers/claude.md) - 외부 서비스 통합
 
 ### 작업 관리
-- [../../.claude/todos/TODO.md](../../.claude/todos/TODO.md) - Phase별 작업 목록
-- [../../.claude/todos/PROGRESS.md](../../.claude/todos/PROGRESS.md) - 진행 현황
-- [../../.claude/todos/phase-1-core.md](../../.claude/todos/phase-1-core.md) - Phase 1 상세
+- [../../.claude/todos/TODO.md](../../.claude/phases/PROGRESS.md) - Phase별 작업 목록
+- [../../.claude/todos/PROGRESS.md](../../.claude/phases/PROGRESS.md) - 진행 현황
+- [../../.claude/todos/phase-1-core.md](../../.claude/phases/phase-1-core.md) - Phase 1 상세
 
 ### 기술 문서
 - [common/utils/__docs__/SYSTEM_LOGGER_GUIDE.md](./common/utils/__docs__/SYSTEM_LOGGER_GUIDE.md) - SystemLogger

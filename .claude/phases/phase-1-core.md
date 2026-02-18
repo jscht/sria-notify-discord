@@ -55,7 +55,7 @@
 - [x] emitEvent/onEvent 메서드 정상 동작
 - [x] 타입 추론이 올바르게 작동
 
-**검토 문서**: [phase-1-1-review.md](./reviews/phase-1-1-review.md)
+**검토 문서**: [phase-1-1-review.md](../docs/reviews/phase-1-1-review.md)
 
 ---
 
@@ -101,7 +101,7 @@
 - [x] diffJobs() 결과가 이벤트로 발행됨
 - [x] 변경사항 없을 때는 이벤트 발행 안 함
 
-**검토 문서**: [phase-1-3-review.md](./reviews/phase-1-3-review.md)
+**검토 문서**: [phase-1-3-review.md](../docs/reviews/phase-1-3-review.md)
 
 ---
 
@@ -343,7 +343,7 @@
 - 테스트 파일에서 전역 로거 사용 시 반드시 side-effect import 필요:
   `import "@/common/utils/systemLogger";`
 
-**검토 문서**: [phase-1-11-review.md](./reviews/phase-1-11-review.md)
+**검토 문서**: [phase-1-11-review.md](../docs/reviews/phase-1-11-review.md)
 
 ---
 
@@ -390,7 +390,7 @@
 5. **파일 정리**
    - `functions/src/events/logHandler.ts` 제거 (미사용)
 
-**검토 문서**: [phase-1-12-review.md](./reviews/phase-1-12-review.md)
+**검토 문서**: [phase-1-12-review.md](../docs/reviews/phase-1-12-review.md)
 
 **완료 기준**: ✅ 모두 완료
 - [x] Events 레이어 구조 명확화 (bus, handlers, listeners)
@@ -403,5 +403,5 @@
 ---
 
 *최종 수정: 2026-01-31*
-*상위 문서: [TODO.md](./TODO.md)*
+*상위 문서: [TODO.md](./PROGRESS.md)*
 *상태: Phase 1.1, 1.3, 1.12 완료 / Phase 1.2 진행 중 / Phase 1.4 대기*

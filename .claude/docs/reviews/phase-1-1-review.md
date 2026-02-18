@@ -13,8 +13,8 @@
 - 구조화된 JSON 로깅
 - 성능 측정 기능 (startTimer)
 - Child Logger 지원
-- **보고서**: [logging-system-improvement-report.md](./logging-system-improvement-report.md)
-- **가이드**: [SYSTEM_LOGGER_GUIDE.md](../../../functions/src/common/utils/__docs__/SYSTEM_LOGGER_GUIDE.md)
+- **보고서**: [logging-system-improvement-report.md](../reports/logging-system-improvement-report.md)
+- **가이드**: [SYSTEM_LOGGER_GUIDE.md](../../../../functions/src/common/utils/__docs__/SYSTEM_LOGGER_GUIDE.md)
 
 ### Error System 개선 ✅
 - SystemError 클래스 구현 (ErrorLevel: WARNING, FAILURE, CRITICAL)
@@ -22,8 +22,8 @@
 - 11개 팩토리 메서드
 - 에러 처리 유틸리티 (withErrorHandler, withRetry, allSettledWithErrors, errorBoundary)
 - EventBus 자동 통합
-- **보고서**: [error-system-improvement-report.md](./error-system-improvement-report.md)
-- **가이드**: [SYSTEM_ERROR_GUIDE.md](../../../functions/src/common/utils/__docs__/SYSTEM_ERROR_GUIDE.md)
+- **보고서**: [error-system-improvement-report.md](../reports/error-system-improvement-report.md)
+- **가이드**: [SYSTEM_ERROR_GUIDE.md](../../../../functions/src/common/utils/__docs__/SYSTEM_ERROR_GUIDE.md)
 
 ### EventBus 타입 정의 개선 ✅
 - System Error 이벤트 타입 추가:
@@ -112,7 +112,7 @@ functions/src/eventBus/
 
 ## 🔍 검토 사항
 
-**참고 문서**: [REVIEW_PROCESS.md](./REVIEW_PROCESS.md)
+**참고 문서**: [REVIEW_PROCESS.md](../../rules/review-process.md)
 
 ### 코드 리뷰
 - [x] EventBus.ts의 Singleton 패턴 구현 확인 ✅
@@ -172,11 +172,11 @@ functions/src/eventBus/
 - [x] 각 파일의 JSDoc 주석 확인 ✅
   - EventBus.ts, types.ts, systemLogger.ts, systemError.ts 모두 상세한 JSDoc 포함
 - [x] 개선 보고서 2개 확인 ✅
-  - [x] [logging-system-improvement-report.md](./logging-system-improvement-report.md) (211줄)
-  - [x] [error-system-improvement-report.md](./error-system-improvement-report.md) (306줄)
+  - [x] [logging-system-improvement-report.md](../reports/logging-system-improvement-report.md) (211줄)
+  - [x] [error-system-improvement-report.md](../reports/error-system-improvement-report.md) (306줄)
 - [x] 사용 가이드 2개 확인 ✅
-  - [x] [SYSTEM_LOGGER_GUIDE.md](../../../functions/src/common/utils/__docs__/SYSTEM_LOGGER_GUIDE.md)
-  - [x] [SYSTEM_ERROR_GUIDE.md](../../../functions/src/common/utils/__docs__/SYSTEM_ERROR_GUIDE.md)
+  - [x] [SYSTEM_LOGGER_GUIDE.md](../../../../functions/src/common/utils/__docs__/SYSTEM_LOGGER_GUIDE.md)
+  - [x] [SYSTEM_ERROR_GUIDE.md](../../../../functions/src/common/utils/__docs__/SYSTEM_ERROR_GUIDE.md)
 
 ---
 
@@ -203,7 +203,7 @@ functions/src/eventBus/
 
 ## 📋 다음 단계
 
-**참고 문서**: [PROJECT_CONTEXT.md - Git Workflow](../../PROJECT_CONTEXT.md#-git-workflow)
+**참고 문서**: [PROJECT_CONTEXT.md - Git Workflow](../../rules/git-workflow.md)
 
 1. [x] 사용자 피드백 확인 및 승인 ✅
 2. [x] Git 커밋 및 PR 생성 (dev 브랜치) ✅

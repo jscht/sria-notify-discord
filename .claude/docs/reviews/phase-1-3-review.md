@@ -54,7 +54,7 @@
 
 ## 🔍 검토 사항
 
-**참고 문서**: [REVIEW_PROCESS.md](./REVIEW_PROCESS.md)
+**참고 문서**: [REVIEW_PROCESS.md](../../rules/review-process.md)
 
 ### 코드 리뷰
 - [x] EventBus 이벤트 발행 로직 ✅
@@ -144,7 +144,7 @@ try {
 
 ## 📋 다음 단계
 
-**참고 문서**: [PROJECT_CONTEXT.md - Git Workflow](../../PROJECT_CONTEXT.md#-git-workflow)
+**참고 문서**: [PROJECT_CONTEXT.md - Git Workflow](../../rules/git-workflow.md)
 
 1. [x] 사용자 피드백 확인 및 승인 ✅
 2. [x] 필요 시 수정 반영 ✅

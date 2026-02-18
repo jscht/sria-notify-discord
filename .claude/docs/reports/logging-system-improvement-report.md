@@ -188,7 +188,7 @@ declare global {
 
 ## 사용 가이드
 
-자세한 사용법은 **[SystemLogger 사용 가이드](../../../functions/src/common/utils/__docs__/SYSTEM_LOGGER_GUIDE.md)** 참조
+자세한 사용법은 **[SystemLogger 사용 가이드](../../../../functions/src/common/utils/__docs__/SYSTEM_LOGGER_GUIDE.md)** 참조
 
 ---
 

@@ -48,7 +48,7 @@
 - ✅ BaseScheduler.test.ts 테스트 작성
 - ✅ PR 생성 및 머지 (PR #11 → dev)
 
-**검토 문서**: [phase-1-2-review.md](./reviews/phase-1-2-review.md)
+**검토 문서**: [phase-1-2-review.md](../docs/reviews/phase-1-2-review.md)
 
 ### Phase 1.3: RecruitCacheService 이벤트 통합 ✅ (2026-01-31 완료)
 
@@ -59,7 +59,7 @@
 - ✅ Git 커밋 (Commit: 2c4e924)
 - ✅ PR 생성 및 머지 (PR #8 → dev)
 
-**검토 문서**: [phase-1-3-review.md](./reviews/phase-1-3-review.md)
+**검토 문서**: [phase-1-3-review.md](../docs/reviews/phase-1-3-review.md)
 
 ### Phase 1.12: Events 아키텍처 통합 및 레이어 정리 ✅ (2026-01-27 완료)
 
@@ -70,7 +70,7 @@
 - ✅ Import 경로 11개 파일 업데이트
 - ✅ Git 커밋 및 PR #7 머지 (Commit: 4d4b8bd)
 
-**검토 문서**: [phase-1-12-review.md](./reviews/phase-1-12-review.md)
+**검토 문서**: [phase-1-12-review.md](../docs/reviews/phase-1-12-review.md)
 
 ### Phase 1.1: EventBus 인프라 구축 ✅ (2026-01-11 완료)
 
@@ -81,7 +81,35 @@
 - ✅ registerEventHandlers.ts 핸들러 등록 유틸
 - ✅ 테스트 작성 및 검증
 
-**검토 문서**: [phase-1-1-review.md](./reviews/phase-1-1-review.md)
+**검토 문서**: [phase-1-1-review.md](../docs/reviews/phase-1-1-review.md)
+
+---
+
+## 📋 Phase별 작업 목록
+
+### Phase 1: 핵심 기능 구현 — [phase-1-core.md](./phase-1-core.md)
+- Phase 1.1: EventBus 인프라 구축 ✅
+- Phase 1.2: 스케줄러 이벤트 발행 전환 ✅
+- Phase 1.3: RecruitCacheService 이벤트 통합 ✅
+- Phase 1.12: Events 아키텍처 통합 ✅
+- Phase 1.11: DebugLogger 마이그레이션 🔍
+- Phase 1.4: 알림 설정 저장소 구현 ⏱️
+- Phase 1.5: 알림 설정 UI 완성 ⏱️
+- Phase 1.6: 공고 요청 기능 개선 ⏱️
+- Phase 1.7: 자동 알림 시스템 구현 ⏱️
+- Phase 1.8: Discord DM 발송 유틸리티 ⏱️
+- Phase 1.9: 스케줄러 재활성화 및 통합 ⏱️
+- Phase 1.10: Proxy 통합 및 크롤러 우회 설정 ⏱️
+
+### Phase 2: 부가 기능 — [phase-2-additional.md](./phase-2-additional.md)
+- Phase 2.1: 에러 자동 전송 ⏱️
+- Phase 2.2: 관리자 전체 공지 ⏱️
+
+### Phase 3: 테스트 및 안정화 — [phase-3-testing.md](./phase-3-testing.md)
+- Phase 3.1~3.5 ⏱️
+
+### Phase 4: AI 자연어 처리 — [phase-4-ai.md](./phase-4-ai.md)
+- Phase 4.1~4.6 ⏱️
 
 ---
 
