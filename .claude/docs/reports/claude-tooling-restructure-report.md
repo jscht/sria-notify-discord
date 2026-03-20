@@ -14,9 +14,9 @@
 .claude/                              .claude/
 ├── PROJECT_CONTEXT.md  ❌ 삭제       ├── CLAUDE.md           ✅ 자동 로드
 ├── commands/                         ├── skills/
-│   └── create-pr.md    ❌ 삭제       │   ├── review.md       ✅ /review
-├── rules/              (비어있음)     │   ├── phase-status.md ✅ /phase-status
-├── settings.local.json               │   └── claude-md-audit.md ✅ /claude-md-audit
+│   └── create-pr.md    ❌ 삭제       │   ├── code-review/    ✅ /code-review
+├── rules/              (비어있음)     │   ├── phase-status/   ✅ /phase-status
+├── settings.local.json               │   └── claude-md-audit/ ✅ /claude-md-audit
 └── todos/              ❌ 삭제       ├── rules/
     ├── PROGRESS.md                   │   ├── git-workflow.md ✅ 전역 규칙
     ├── TODO.md                       │   └── review-process.md ✅ 전역 규칙
@@ -48,7 +48,7 @@
 ### 3. commands/ → skills/ 마이그레이션
 - **문제**: `commands/`는 레거시 디렉토리, frontmatter 미지원
 - **해결**: `skills/` 디렉토리로 전환 (상위 호환)
-- **추가 skills**: `/review`, `/phase-status`, `/claude-md-audit`
+- **추가 skills**: `/code-review`, `/phase-status`, `/claude-md-audit`
 - **삭제**: `create-pr.md` → `rules/git-workflow.md`에 PR 절차 통합
 
 ### 4. rules/ 활용
@@ -75,9 +75,9 @@
 | `.claude/CLAUDE.md` | 프로젝트 메모리 (자동 로드) |
 | `.claude/rules/git-workflow.md` | Git/PR 규칙 |
 | `.claude/rules/review-process.md` | 검토 프로세스 |
-| `.claude/skills/review.md` | /review 커맨드 |
-| `.claude/skills/phase-status.md` | /phase-status 커맨드 |
-| `.claude/skills/claude-md-audit.md` | /claude-md-audit 커맨드 |
+| `.claude/skills/code-review/SKILL.md` | /code-review 커맨드 |
+| `.claude/skills/phase-status/SKILL.md` | /phase-status 커맨드 |
+| `.claude/skills/claude-md-audit/SKILL.md` | /claude-md-audit 커맨드 |
 | `.claude/phases/` | Phase 문서 디렉토리 |
 | `.claude/docs/` | 기록 보관 디렉토리 |
 
@@ -113,4 +113,4 @@
 - **구조 단순화**: depth 3→2 감소 (`.claude/todos/reviews/` → `.claude/docs/reviews/`)
 - **중복 제거**: TODO.md + PROGRESS.md → PROGRESS.md 단일 진입점
 - **도메인 패턴 문서화**: LogSource, SystemError, EventBus 컨벤션 명시
-- **워크플로우 자동화**: 3개 skill 추가 (/review, /phase-status, /claude-md-audit)
+- **워크플로우 자동화**: 3개 skill 추가 (/code-review, /phase-status, /claude-md-audit)

@@ -15,7 +15,7 @@ dev (개발) → stable (검수) → main (배포)
 ## Commit 규칙
 
 ```
-<type>: Phase X.Y - <작업명>
+<type>(<scope>): Phase X.Y - <description>
 
 <주요 변경사항 요약>
 
@@ -31,6 +31,8 @@ Ref: PROGRESS.md Phase X.Y
 ```
 
 **Type**: feat | fix | refactor | test | docs | chore
+
+**Scope**: component name or feature area
 
 **금지 사항**:
 - 🚫 "🤖 Generated with Claude Code" 사용 금지

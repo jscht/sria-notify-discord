@@ -1,30 +1,34 @@
-# SRIA Notify Discord
+# Overview
 
-사람인 에이전트 단기알바 채용공고 알림 Discord Bot
+- @README.md
+
+## 핵심 원칙
+
+### 1. 자동화 우선
+Claude automatically applies PDCA methodology on task requests.
+Slash commands are shortcuts for users who want to explicitly trigger specific steps.
+
+### 2. 단일 진실 공급원 (SoT) 우선순위
+1순위: Codebase (actual working code)
+2순위: CLAUDE.md / .claude/rules/ docs
+3순위: .claude/phases/ 설계 docs
+
+### 3. 추측 금지 (No Guessing)
+- Unknown → Check documentation
+- Not in docs → Ask user
+- Never guess
 
 ## 기술 스택
 
-- **Runtime**: Node.js 18 + TypeScript 5.1
-- **Platform**: Firebase Functions (asia-northeast3)
-- **Framework**: Express 4.21 + discord.js 14.17
-- **DB/Cache**: Firestore + Redis (3-tier 캐싱)
-- **Scraping**: Playwright 1.47
-- **Architecture**: Event-Driven (EventBus 패턴)
+- @.claude/docs/tech-stack.md
 
-## 빌드 & 실행
+## 빌드, 배포, 실행
 
-```bash
-cd functions
-npm run build          # TypeScript 컴파일
-npm run build:watch    # Watch 모드
-npm run serve          # 빌드 + 에뮬레이터
-npm run dev            # Watch + 에뮬레이터 (개발)
-npm run lint           # ESLint
-```
+- @.claude/docs/build-deploy.md
 
 ## 프로젝트 구조
 
-- @ARCHITECTURE.md
+- @.claude/docs/ARCHITECTURE.md
 
 ## 작업 관리
 
@@ -32,4 +36,16 @@ npm run lint           # ESLint
 
 ## 언어
 
-- 코드 주석, 커밋 메시지, 문서: 한국어
+- 코드 주석, 커밋 메시지, 문서: 한국어, 영어
+
+## 코딩 컨벤션
+
+- @.claude/docs/coding-conventions.md
+
+## PDCA 자동 동작
+
+- @.claude/rules/pdca-workflow.md
+
+## 문서 구조 규칙
+
+- @.claude/rules/document-structure.md

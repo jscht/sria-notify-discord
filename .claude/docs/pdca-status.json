@@ -1,0 +1,63 @@
+{
+  "overview": {
+    "total": 85,
+    "completed": 16,
+    "phases": {
+      "phase-1": { "completed": 16, "total": 41, "progress": "39.0%" },
+      "phase-2": { "completed": 0, "total": 12, "progress": "0%" },
+      "phase-3": { "completed": 0, "total": 15, "progress": "0%" },
+      "phase-4": { "completed": 0, "total": 17, "progress": "0%" }
+    }
+  },
+  "priority": [
+    { "feature": "phase-1-11-debuglogger-migration", "priority": "P0", "status": "in-progress" },
+    { "feature": "phase-1-4-notification-store", "priority": "P0", "status": "waiting", "dependencies": ["phase-1-1-eventbus-infrastructure"] },
+    { "feature": "phase-1-5-notification-settings-ui", "priority": "P0", "status": "waiting", "dependencies": ["phase-1-4-notification-store"] }
+  ],
+  "tasks": {
+    "phase-1": [
+      { "features": "phase-1-1-eventbus-infrastructure", "status": "completed", "matchRate": null, "documents": {} },
+      { "features": "phase-1-2-scheduler-event-publishing", "status": "completed", "matchRate": null, "documents": {} },
+      { "features": "phase-1-3-recruitcacheservice-event-integration", "status": "completed", "matchRate": null, "documents": {} },
+      { "features": "phase-1-12-events-architecture-restructure", "status": "completed", "matchRate": null, "documents": {} },
+      { "features": "phase-1-11-debuglogger-migration", "status": "in-progress", "matchRate": null, "documents": {} },
+      { "features": "phase-1-4-notification-store", "status": "waiting", "matchRate": null, "documents": {} },
+      { "features": "phase-1-5-notification-settings-ui", "status": "waiting", "matchRate": null, "documents": {} },
+      { "features": "phase-1-6-recruit-request-enhancement", "status": "waiting", "matchRate": null, "documents": {} },
+      { "features": "phase-1-7-auto-notification-system", "status": "waiting", "matchRate": null, "documents": {} },
+      { "features": "phase-1-8-discord-dm-utility", "status": "waiting", "matchRate": null, "documents": {} },
+      { "features": "phase-1-9-scheduler-reactivation", "status": "waiting", "matchRate": null, "documents": {} },
+      { "features": "phase-1-10-proxy-integration", "status": "waiting", "matchRate": null, "documents": {} }
+    ],
+    "phase-2": [
+      { "features": "phase-2-1-auto-error-reporting", "status": "waiting", "matchRate": null, "documents": {} },
+      { "features": "phase-2-2-admin-broadcast", "status": "waiting", "matchRate": null, "documents": {} }
+    ],
+    "phase-3": [
+      { "features": "phase-3-1-test-framework-setup", "status": "waiting", "matchRate": null, "documents": {} },
+      { "features": "phase-3-2-unit-tests", "status": "waiting", "matchRate": null, "documents": {} },
+      { "features": "phase-3-3-integration-tests", "status": "waiting", "matchRate": null, "documents": {} },
+      { "features": "phase-3-4-performance-tests", "status": "waiting", "matchRate": null, "documents": {} },
+      { "features": "phase-3-5-documentation", "status": "waiting", "matchRate": null, "documents": {} }
+    ],
+    "phase-4": [
+      { "features": "phase-4-1-ai-provider-setup", "status": "waiting", "matchRate": null, "documents": {} },
+      { "features": "phase-4-2-ai-nlp-cache", "status": "waiting", "matchRate": null, "documents": {} },
+      { "features": "phase-4-3-ai-nlp-service", "status": "waiting", "matchRate": null, "documents": {} },
+      { "features": "phase-4-4-discord-nlp-integration", "status": "waiting", "matchRate": null, "documents": {} },
+      { "features": "phase-4-5-rate-limit-management", "status": "waiting", "matchRate": null, "documents": {} },
+      { "features": "phase-4-6-ai-test-and-optimization", "status": "waiting", "matchRate": null, "documents": {} }
+    ]
+  },
+  "features": {
+    "phase-1-4-notification-store": {
+      "description": "알림 설정 저장소 구현",
+      "phase": "plan",
+      "matchRate": null,
+      "iterationCount": 0,
+      "dependencies": ["phase-1-1"],
+      "startedAt": null,
+      "documents": {}
+    }
+  }
+}
