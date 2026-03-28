@@ -1,8 +1,8 @@
 {
-  "feature": "phase-1-11-debuglogger-migration",
-  "phase": "do",
+  "feature": null,
+  "phase": null,
   "matchRate": null,
-  "startedAt": "2026-03-10T00:00:00.000Z",
+  "startedAt": null,
   "completedAt": null,
-  "description": "DebugLogger를 SystemLogger로 마이그레이션"
+  "description": null
 }

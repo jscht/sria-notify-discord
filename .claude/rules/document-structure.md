@@ -6,7 +6,7 @@
 
 ## .claude/phases/ — 진행 중 작업 (Active Work)
 - Active phase planning documents
-- Track overall status via PROGRESS.md
+- Track overall status via pdca-status.json
 
 ## docs/reviews/ — 검토 기록 (Review History)
 - Completed review documents per phase

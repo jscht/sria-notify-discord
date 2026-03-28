@@ -32,7 +32,7 @@ Slash commands are shortcuts for users who want to explicitly trigger specific s
 
 ## 작업 관리
 
-- @.claude/phases/PROGRESS.md
+- @.claude/docs/pdca-status.json
 
 ## 언어
 

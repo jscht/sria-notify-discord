@@ -27,7 +27,7 @@ dev (개발) → stable (검수) → main (배포)
 - ✅ 효과 1
 - ✅ 효과 2
 
-Ref: PROGRESS.md Phase X.Y
+Ref: pdca-status.json Phase X.Y
 ```
 
 **Type**: feat | fix | refactor | test | docs | chore

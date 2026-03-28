@@ -60,19 +60,19 @@ allowed-tools:
 ### plan [X.Y] — Plan Phase
 
 1. `.claude/phases/phase-{{X}}-core.md` 시드 읽기
-2. `.claude/templates/plan.template.md` 구조로 `docs/01-plan/phases/phase-{{X}}-{{Y}}.plan.md` 생성
+2. `.claude/templates/plan.template.md` 구조로 `docs/phase-{{X}}-{{Y}}/01-plan.md` 생성
 3. pdca-memory.json 업데이트: `phase = "plan"`
 4. pdca-status.json features에 항목 생성
 
-**출력 파일**: `docs/01-plan/phases/phase-{{X}}-{{Y}}.plan.md`
+**출력 파일**: `docs/phase-{{X}}-{{Y}}/01-plan.md`
 
 ### design [X.Y] — Design Phase
 
 1. Plan 문서 존재 확인 (없으면 plan 먼저 실행 안내)
-2. `.claude/templates/design.template.md` 구조로 `docs/02-design/phases/phase-{{X}}-{{Y}}.design.md` 생성
+2. `.claude/templates/design.template.md` 구조로 `docs/phase-{{X}}-{{Y}}/02-design.md` 생성
 3. pdca-memory.json 업데이트: `phase = "design"`
 
-**출력 파일**: `docs/02-design/phases/phase-{{X}}-{{Y}}.design.md`
+**출력 파일**: `docs/phase-{{X}}-{{Y}}/02-design.md`
 
 ### do [X.Y] — Do Phase
 
@@ -86,12 +86,12 @@ allowed-tools:
 
 1. 구현 코드 존재 확인
 2. Design 문서와 실제 코드를 비교 (설계 §번호 기반)
-3. `.claude/templates/analysis.template.md` 구조로 `docs/03-analysis/phases/phase-{{X}}-{{Y}}.analysis.md` 생성
+3. `.claude/templates/analysis.template.md` 구조로 `docs/phase-{{X}}-{{Y}}/03-analysis.md` 생성
 4. 매치율 산출: `(완전일치 + 부분일치 × 0.5) / 전체항목 × 100`
 5. pdca-memory.json 업데이트: `phase = "check"`, `matchRate`
 6. pdca-status.json tasks/features 업데이트
 
-**출력 파일**: `docs/03-analysis/phases/phase-{{X}}-{{Y}}.analysis.md`
+**출력 파일**: `docs/phase-{{X}}-{{Y}}/03-analysis.md`
 
 ### iterate [X.Y] — Act Phase
 
@@ -107,31 +107,39 @@ allowed-tools:
 
 1. matchRate ≥ 90% 확인 (미만이면 경고)
 2. plan, design, analysis 문서 전체 읽기
-3. `.claude/templates/report.template.md` 구조로 `docs/04-report/phases/phase-{{X}}-{{Y}}.report.md` 생성
+3. `.claude/templates/report.template.md` 구조로 `docs/phase-{{X}}-{{Y}}/04-report.md` 생성
 4. **피드백 → 승인 대기 → 수정** 프로세스 적용 (review-process.md 규칙 준수)
 5. pdca-memory.json 업데이트: `phase = "completed"`, `completedAt`
 
 > ⚠️ 피드백 수신 시 즉시 반영하지 않음. 수정 계획 제시 → 사용자 승인 → 진행.
 
-**출력 파일**: `docs/04-report/phases/phase-{{X}}-{{Y}}.report.md`
+**출력 파일**: `docs/phase-{{X}}-{{Y}}/04-report.md`
 
 ### archive [X.Y] — Archive Phase
 
 1. Report 완료 확인 (phase = "completed")
-2. 4개 문서를 `docs/archive/` 로 이동:
-   - `docs/01-plan/phases/phase-{{X}}-{{Y}}.plan.md`
-   - `docs/02-design/phases/phase-{{X}}-{{Y}}.design.md`
-   - `docs/03-analysis/phases/phase-{{X}}-{{Y}}.analysis.md`
-   - `docs/04-report/phases/phase-{{X}}-{{Y}}.report.md`
-3. 원본 삭제
-4. pdca-memory.json 업데이트: `phase = "archived"`
-5. pdca-status.json tasks/features 업데이트
+2. `docs/phase-{{X}}-{{Y}}/` 폴더째 `docs/archive/phase-{{X}}-{{Y}}/` 로 이동
+3. pdca-memory.json 업데이트: `phase = "archived"`
+4. pdca-status.json tasks/features 업데이트 (documents 경로를 archive 경로로 갱신)
+
+**이동 결과**:
+```
+docs/archive/phase-{{X}}-{{Y}}/
+  ├── 01-plan.md
+  ├── 02-design.md
+  ├── 03-analysis.md
+  └── 04-report.md
+```
 
 ### cleanup — Cleanup Phase
 
 1. pdca-status.json에서 archived 상태인 features 확인
-2. 해당 항목 삭제
-3. overview 수치 갱신
+2. 해당 features 항목의 이력을 tasks 배열로 이동:
+   - tasks 해당 항목에 `description`, `startedAt`, `completedAt` 필드 추가
+   - 기존 `documents`, `matchRate`, `phase` 유지
+3. features에서 해당 항목 완전 삭제
+4. pdca-memory.json 전부 null 초기화
+5. overview 수치 갱신
 
 ### status — Status Check
 
@@ -152,10 +160,10 @@ Phase 2: 0/12 (0%)
 Phase 3: 0/15 (0%)
 Phase 4: 0/17 (0%)
 ─────────────────────────────
-우선순위 작업:
-1. [P0] phase-1-11-debuglogger-migration (in-progress)
-2. [P0] phase-1-4-notification-store (waiting)
-3. [P0] phase-1-5-notification-settings-ui (waiting)
+우선순위 작업 (의존성 충족 + P0 우선):
+1. [P0] phase-1-4-notification-store
+2. [P0] phase-1-8-discord-dm-utility
+3. [P1] phase-1-11-debuglogger-migration
 ```
 
 ### next — Next Phase Guide
@@ -166,8 +174,12 @@ Phase 4: 0/17 (0%)
 2. `phase`가 completed/archived가 **아닌** 경우 (사이클 진행 중):
    - memory만으로 다음 PDCA 단계 안내
 3. `phase`가 completed/archived이거나 memory가 비어있는 경우:
-   - pdca-status.json의 priority 배열 읽기
-   - 우선순위 + 의존성 기반으로 다음 feature 추천
+   - pdca-status.json의 priority, dependencies, tasks 읽기
+   - 다음 feature 선택 로직:
+     1. **의존성 충족**: dependencies에서 선행 feature가 모두 completed/archived인지 확인
+     2. **우선순위**: 충족된 feature 중 priority P0 → P1 → P2 순서
+     3. **배열 순서**: 같은 등급 내 배열 순서 (= core 문서 순서)
+     4. **제외**: phase가 null이 아닌 feature는 후보에서 제외 (이미 사이클 진입/완료)
 
 **Phase 가이드**:
 | 현재 | 다음 | 안내 |
@@ -178,7 +190,7 @@ Phase 4: 0/17 (0%)
 | check (< 90%) | iterate | `/pdca iterate X.Y` |
 | check (≥ 90%) | report | `/pdca report X.Y` |
 | completed | archive | `/pdca archive X.Y` |
-| archived/없음 | plan | priority 기반 다음 feature 추천 |
+| archived/없음 | plan | priority + dependencies 기반 다음 feature 추천 |
 
 ---
 
@@ -224,7 +236,7 @@ Phase 4: 0/17 (0%)
 
 - **매 액션**: pdca-memory.json만 업데이트 (~50 토큰)
 - **status 동기화**: 특정 시점에만 pdca-status.json 업데이트
-- **overview 재계산**: 동기화 시점에 tasks 배열에서 `status === "completed"` 카운트하여 재집계
+- **overview 재계산**: 동기화 시점에 tasks 배열에서 `phase !== null` (사이클 완료: completed/archived) 카운트하여 재집계
 
 ### 동기화 시점
 
@@ -232,10 +244,11 @@ Phase 4: 0/17 (0%)
 |------|-----------|
 | `status` 실행 | overview 재계산 (tasks 기반) |
 | `next` (사이클 완료 시) | overview 재계산 + priority 참조 |
-| `report` 실행 | tasks status + features 업데이트 |
-| `archive` 실행 | tasks status + features 업데이트 |
+| `report` 실행 | tasks phase + features 업데이트 |
+| `archive` 실행 | tasks phase + features 업데이트 |
 | `plan` 실행 (신규 feature) | features 항목 생성 + 이전 feature flush |
-| `cleanup` 실행 | features 삭제 + overview 재계산 |
+| `cleanup` 실행 | features 삭제 + tasks에 이력 추가 + memory 초기화 + overview 재계산 |
+| 작업 전환 (PDCA 외) | memory → tasks flush + memory null 초기화 |
 
 ### 쓰기 순서
 
@@ -272,6 +285,18 @@ plan → design → do → check → iterate(반복) → report → archive → 
 1. 현재 memory의 feature 상태를 pdca-status.json에 flush
 2. memory를 새 feature로 덮어쓰기
 
+### 작업 중단 규칙
+
+| 상황 | tasks flush | memory 처리 |
+|------|-------------|-------------|
+| 일시 중단 (resume 예정) | 불필요 | 유지 |
+| 타 작업 전환 (PDCA 외 작업) | 현재 상태 flush | null 초기화 |
+| feature 전환 (`/pdca plan X.Y`) | 기존 전환 규칙 적용 | 새 feature로 덮어쓰기 |
+
+- **일시 중단**: memory 유지, flush 불필요
+- **타 작업 전환**: memory → tasks flush 후 memory 전부 null 초기화
+- **feature 전환**: 위 전환 규칙 적용
+
 ### 상태 변경 요약
 
 | 액션 | pdca-memory.json | pdca-status.json |
@@ -283,7 +308,7 @@ plan → design → do → check → iterate(반복) → report → archive → 
 | iterate | matchRate 갱신 | (지연) |
 | report | phase="completed", completedAt | 동기화: tasks + features 업데이트 |
 | archive | phase="archived" | 동기화: tasks + features 업데이트 |
-| cleanup | (초기화) | 동기화: features 삭제, overview 재계산 |
+| cleanup | 전부 null | 동기화: features 삭제, tasks에 이력(description/startedAt/completedAt) 추가, overview 재계산 |
 | status | (변경 없음) | 동기화: overview 재계산 |
 | next | (변경 없음) | 조건부 동기화: 사이클 완료 시 overview 재계산 |
 
@@ -293,8 +318,8 @@ plan → design → do → check → iterate(반복) → report → archive → 
 
 | 액션 | 템플릿 | 결과 파일 |
 |------|--------|----------|
-| plan | `.claude/templates/plan.template.md` | `docs/01-plan/phases/phase-X-Y.plan.md` |
-| design | `.claude/templates/design.template.md` | `docs/02-design/phases/phase-X-Y.design.md` |
+| plan | `.claude/templates/plan.template.md` | `docs/phase-X-Y/01-plan.md` |
+| design | `.claude/templates/design.template.md` | `docs/phase-X-Y/02-design.md` |
 | do | `.claude/templates/do-guide.template.md` | (출력만) |
-| analyze | `.claude/templates/analysis.template.md` | `docs/03-analysis/phases/phase-X-Y.analysis.md` |
-| report | `.claude/templates/report.template.md` | `docs/04-report/phases/phase-X-Y.report.md` |
+| analyze | `.claude/templates/analysis.template.md` | `docs/phase-X-Y/03-analysis.md` |
+| report | `.claude/templates/report.template.md` | `docs/phase-X-Y/04-report.md` |

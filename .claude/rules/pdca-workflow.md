@@ -1,7 +1,7 @@
 # PDCA 자동 동작
 
 ## 신규 기능 요청 시 (New Feature Request)
-1. PROGRESS.md에서 해당 Phase 계획 확인 / Check phase plan in PROGRESS.md
+1. pdca-status.json에서 해당 Phase 계획 확인 / Check phase plan in pdca-status.json
 2. 기존 패턴 탐색 후 재사용 가능한 구현 우선 적용 / Search existing patterns first
 3. 구현 완료 후 review 문서 작성 제안 / Suggest creating review doc after implementation
 
