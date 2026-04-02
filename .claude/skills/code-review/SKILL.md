@@ -2,7 +2,7 @@
 name: code-review
 description: |
   현재 진행 중인 Phase의 리뷰를 시작하고 검토 문서를 생성합니다.
-  PROGRESS.md에서 현재 Phase를 자동 감지하여 .claude/docs/reviews/ 경로에 리뷰 문서를 작성하고,
+  PROGRESS.md에서 현재 Phase를 자동 감지하여 docs/reviews/ 경로에 리뷰 문서를 작성하고,
   Phase 상태를 🔄 진행 중 → 🔍 검토 중으로 전환합니다.
 
   다음 상황에서 반드시 사용하세요:
@@ -41,7 +41,7 @@ allowed-tools:
 
 ### 3단계: 리뷰 문서 생성
 
-`.claude/docs/reviews/phase-X-Y-review.md` 파일을 생성한다.
+`docs/reviews/phase-X-Y-review.md` 파일을 생성한다.
 이미 존재하면 덮어쓰지 않고 사용자에게 알린다.
 
 아래 템플릿을 사용한다:
