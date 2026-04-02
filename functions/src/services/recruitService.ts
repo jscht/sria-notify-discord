@@ -1,3 +1,4 @@
+import "@/common/utils/systemLogger";
 import { CRAWL_MODE } from "@/common/constants";
 import { RedisManager } from "../providers/redis/manager/redisManager";
 import { RecruitStore } from "../providers/firebase/store";
@@ -40,9 +41,9 @@ export class RecruitService {
       }
     } catch (err) {
       if (err instanceof Error) {
-        DebugLogger.error("get redis cache error:", err);
+        globalLogger.error("get redis cache error:", err);
       }
-      DebugLogger.warn("Redis 장애 발생, Firestore로 fallback.");
+      globalLogger.warn("Redis 장애 발생, Firestore로 fallback.");
     }
 
     // Step 2: Firestore
@@ -51,12 +52,12 @@ export class RecruitService {
       if (firestoreData) {
         // 캐시 백업 시도
         this.cacheService.setRecruitList(firestoreData).catch(() => {
-          DebugLogger.warn("캐시 저장 실패");
+          globalLogger.warn("캐시 저장 실패");
         });
         return getCityFilteredList(mode, convertedCity, firestoreData);
       }
     } catch (err) {
-      DebugLogger.warn("Firestore 장애 발생, 크롤링으로 fallback.");
+      globalLogger.warn("Firestore 장애 발생, 크롤링으로 fallback.");
     }
 
     // Step 3: 크롤링 요청 제한 확인 (redis, firestore 둘 다 장애 시 / 10분 제한)
@@ -71,7 +72,7 @@ export class RecruitService {
       return null;
     }
 
-    DebugLogger.server("Returning recruit list from crawler.");
+    globalLogger.info("Returning recruit list from crawler.");
     return getCityFilteredList(mode, convertedCity, crawled);
   }
 
@@ -79,16 +80,16 @@ export class RecruitService {
     const list = await this.crawler.sriagent(mode, city);
 
     if (!Array.isArray(list) || list.length === 0) {
-      DebugLogger.warn("Invalid or empty result.");
+      globalLogger.warn("Invalid or empty result.");
       return null;
     }
 
     await Promise.all([
       this.firestore.saveRecruitList(list).catch(() => {
-        DebugLogger.warn("Firestore 저장 실패");
+        globalLogger.warn("Firestore 저장 실패");
       }),
       this.cacheService.setRecruitList(list).catch(() => {
-        DebugLogger.warn("Redis 저장 실패");
+        globalLogger.warn("Redis 저장 실패");
       })
     ]);
 

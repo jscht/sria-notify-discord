@@ -1,3 +1,4 @@
+import "@/common/utils/systemLogger";
 import { ButtonInteraction, MessageFlags } from "discord.js";
 import { isValidCityName } from "../../../utils/cityName";
 import { chooseEunNeun } from "../../../utils/koreanJosaUtils";
@@ -80,7 +81,7 @@ export async function onEnableSelectedRegionAlert(interaction: ButtonInteraction
 
   } catch (error) {
     if (error instanceof Error) {
-      DebugLogger.error("Error selectedRegionMode fetching notification:", error);
+      globalLogger.error("Error selectedRegionMode fetching notification:", error);
     }
     await interaction.followUp({
       content: "⚠️ 공고 알림을 설정하는 데 실패했어요."

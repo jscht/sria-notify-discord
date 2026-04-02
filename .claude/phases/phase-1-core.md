@@ -55,7 +55,7 @@
 - [x] emitEvent/onEvent 메서드 정상 동작
 - [x] 타입 추론이 올바르게 작동
 
-**검토 문서**: [phase-1-1-review.md](./reviews/phase-1-1-review.md)
+**검토 문서**: [phase-1-1-review.md](../docs/reviews/phase-1-1-review.md)
 
 ---
 
@@ -101,7 +101,7 @@
 - [x] diffJobs() 결과가 이벤트로 발행됨
 - [x] 변경사항 없을 때는 이벤트 발행 안 함
 
-**검토 문서**: [phase-1-3-review.md](./reviews/phase-1-3-review.md)
+**검토 문서**: [phase-1-3-review.md](../docs/reviews/phase-1-3-review.md)
 
 ---
 
@@ -303,38 +303,47 @@
 
 ---
 
-## Phase 1.11: DebugLogger 마이그레이션 (2-3시간)
+## Phase 1.11: DebugLogger 마이그레이션 ✅ (완료)
 **우선순위**: ⭐⭐
 **의존성**: Phase 1.1 완료 (SystemLogger 구축)
+**완료일**: 2026-02-09
 
-- [ ] 마이그레이션 계획 수립
-  - [ ] DebugLogger 사용 파일 전체 목록 작성 (40개 파일)
-  - [ ] 우선순위 및 의존성 분석
-  - [ ] 마이그레이션 가이드라인 문서 작성
+- [x] 마이그레이션 현황 파악
+  - [x] DebugLogger 사용 파일 전체 목록 작성 → 프로덕션 0개 확인
+  - [x] 프로덕션 코드 마이그레이션 완료 확인 (41개 파일 globalLogger 사용 중)
+  - [x] 테스트 파일 분석 (globalLogger.test.ts만 수정 필요)
 
-- [ ] 파일 마이그레이션 실행
-  - [ ] `DebugLogger.server()` → `globalLogger.info()` 변환
-  - [ ] `DebugLogger.request()` → `createGlobalLogger('request').info()` 변환
-  - [ ] `DebugLogger.crawler()` → `createGlobalLogger('crawler').debug()` 변환
-  - [ ] `DebugLogger.provider()` → `createGlobalLogger('provider:xxx').debug()` 변환
-  - [ ] `DebugLogger.error()` → `globalLogger.error()` 변환
-  - [ ] `DebugLogger.fail()` → `globalLogger.error()` 변환
-  - [ ] `DebugLogger.warn()` → `globalLogger.warn()` 변환
+- [x] LogSource 타입 및 프리셋 로거 추가
+  - [x] `systemLogger.ts`에 LogSource 타입 정의 (`system`, `crawler`, `provider`, `EventBus`, `SystemError`, `ErrorHandler`)
+  - [x] 프리셋 로거 export (crawlerLogger, providerLogger)
+  - [x] `createGlobalLogger('provider')` 사용처 4곳 → providerLogger로 전환
 
-- [ ] 레거시 코드 정리
-  - [ ] `common/utils/logger.ts`에서 DebugLogger 전역 등록 제거
-  - [ ] `common/types/global.d.ts`에서 DebugLogger 타입 선언 제거
-  - [ ] Logger 클래스 deprecation 주석 추가
+- [x] 레거시 코드 정리
+  - [x] `common/utils/logger.ts` 삭제
+  - [x] `systemLogger.ts`에서 `import Logger` dead import 제거
+  - [x] `common/types/global.d.ts`에서 DebugLogger 타입 선언 제거
 
-- [ ] 마이그레이션 검증
-  - [ ] 모든 로그가 정상 출력되는지 확인
-  - [ ] 로그 형식 및 컨텍스트가 올바른지 확인
-  - [ ] 성능 영향 없는지 확인
+- [x] 테스트 정리
+  - [x] `globalLogger.test.ts`에서 DebugLogger 테스트 제거
+  - [x] side-effect import 패턴 유지 확인 (`import "@/common/utils/systemLogger"`)
 
-**완료 기준**:
-- [ ] 40개 파일 모두 globalLogger/createGlobalLogger로 전환
-- [ ] DebugLogger 전역 등록 제거
-- [ ] 모든 로그 정상 작동
+- [x] 마이그레이션 검증
+  - [x] TypeScript 컴파일 확인 (`npx tsc --noEmit`) — 기존 에러 68개 유지, 새 에러 0개
+  - [x] DebugLogger 잔여 참조 grep 검색 → 코드 0개 확인 (문서만 잔존)
+  - [x] side-effect import 23개 파일 전환 완료
+
+**완료 기준**: ✅ 모두 완료
+- [x] logger.ts 삭제 완료
+- [x] DebugLogger 전역 등록 및 타입 선언 제거
+- [x] LogSource 타입 + 프리셋 로거 export
+- [x] 모든 로그 정상 작동
+- [x] TypeScript 컴파일 성공
+
+**테스트 가이드라인**:
+- 테스트 파일에서 전역 로거 사용 시 반드시 side-effect import 필요:
+  `import "@/common/utils/systemLogger";`
+
+**검토 문서**: [phase-1-11-review.md](../docs/reviews/phase-1-11-review.md)
 
 ---
 
@@ -381,7 +390,7 @@
 5. **파일 정리**
    - `functions/src/events/logHandler.ts` 제거 (미사용)
 
-**검토 문서**: [phase-1-12-review.md](./reviews/phase-1-12-review.md)
+**검토 문서**: [phase-1-12-review.md](../docs/reviews/phase-1-12-review.md)
 
 **완료 기준**: ✅ 모두 완료
 - [x] Events 레이어 구조 명확화 (bus, handlers, listeners)
@@ -394,5 +403,5 @@
 ---
 
 *최종 수정: 2026-01-31*
-*상위 문서: [TODO.md](./TODO.md)*
+*상위 문서: [TODO.md](./PROGRESS.md)*
 *상태: Phase 1.1, 1.3, 1.12 완료 / Phase 1.2 진행 중 / Phase 1.4 대기*

@@ -203,7 +203,7 @@ throw SystemError.proxyError("프록시 불가", { count: 0 });
 
 ## 사용 가이드
 
-자세한 사용법은 **[SystemError 사용 가이드](../../../functions/src/common/utils/__docs__/SYSTEM_ERROR_GUIDE.md)** 참조
+자세한 사용법은 **[SystemError 사용 가이드](../../../../functions/src/common/utils/__docs__/SYSTEM_ERROR_GUIDE.md)** 참조
 
 ---
 

@@ -1,3 +1,4 @@
+import "@/common/utils/systemLogger";
 import { Browser, Cookie } from "playwright-core";
 
 const requiredCookies = ["XSRF-TOKEN", "dyms_career_session"];
@@ -30,7 +31,7 @@ export async function getCookie(browser: Browser) {
       return;
     }
 
-    DebugLogger.server("Found all required cookies");
+    globalLogger.info("Found all required cookies");
     return foundCookies;
   } catch (error) {
     throw error;

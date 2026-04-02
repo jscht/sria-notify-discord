@@ -1,3 +1,4 @@
+import "@/common/utils/systemLogger";
 import { Firestore } from "firebase-admin/firestore";
 import { ConnectionStore } from "../store";
 import { FirebaseCollection } from "../constants/collections";
@@ -10,8 +11,8 @@ export async function initConnectionCollection(db: Firestore, init: boolean = fa
     await db.collection(FirebaseCollection.CONNECTION)
       .doc(connStore.getConnectionCheckDoc())
       .set({ conn: connStore.getConnectionCheckMessage() });
-    DebugLogger.server("🛠️ connection 컬렉션 초기화 완료");
+    globalLogger.info("🛠️ connection 컬렉션 초기화 완료");
   } else {
-    DebugLogger.server("⏩ connection 컬렉션은 이미 존재합니다. 초기화 생략");
+    globalLogger.info("⏩ connection 컬렉션은 이미 존재합니다. 초기화 생략");
   }
 }

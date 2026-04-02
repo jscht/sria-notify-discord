@@ -1,3 +1,4 @@
+import "@/common/utils/systemLogger";
 import { getFirestore } from "firebase-admin/firestore";
 import { initProxyCollection } from "./initProxyCollection";
 import { initConnectionCollection } from "./initConnectionCollection";
@@ -13,10 +14,10 @@ export async function seedCollection(init: boolean = false) {
       initRecruitCollection(db, init),
     ]);
 
-    DebugLogger.server("✅ 초기화 작업 완료!");
+    globalLogger.info("✅ 초기화 작업 완료!");
   } catch (error) {
     if (error instanceof Error) {
-      DebugLogger.error("❌ 초기화 실패:", error);
+      globalLogger.error("❌ 초기화 실패:", error);
     }
     process.exit(1);
   }

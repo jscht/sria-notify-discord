@@ -77,7 +77,7 @@
 
 ## 🔍 검토 사항
 
-**참고 문서**: [REVIEW_PROCESS.md](./REVIEW_PROCESS.md)
+**참고 문서**: [REVIEW_PROCESS.md](../../rules/review-process.md)
 
 ### 아키텍처 리뷰
 - [x] 폴더 구조 통일의 논리성 ✅
@@ -360,7 +360,7 @@ grep -r "@/events/bus" functions/src/ --include="*.ts"
 
 ## 📋 다음 단계
 
-**참고 문서**: [PROJECT_CONTEXT.md - Git Workflow](../../PROJECT_CONTEXT.md#-git-workflow)
+**참고 문서**: [PROJECT_CONTEXT.md - Git Workflow](../../rules/git-workflow.md)
 
 1. [x] 사용자 피드백 확인 및 승인 ✅
 2. [x] 구조적 책임 분리 검증 (위의 검증 명령 실행) ✅

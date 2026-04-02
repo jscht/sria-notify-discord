@@ -1,3 +1,4 @@
+import "@/common/utils/systemLogger";
 import { getFirestore } from "firebase-admin/firestore";
 import type { RecruitData } from "@/crawlers/types";
 import { FirebaseCollection } from "./../constants/collections";
@@ -25,14 +26,14 @@ export class RecruitStore {
     const snapshot = await docRef.get();
 
     if (!snapshot.exists) {
-      DebugLogger.warn("No recruit list found in Firestore.");
+      globalLogger.warn("No recruit list found in Firestore.");
       return null;
     }
 
     const data = snapshot.data() as Partial<RecruitListDoc> | undefined;
 
     if (!data?.recruitList || !Array.isArray(data.recruitList)) {
-      DebugLogger.warn("Recruit list is missing or invalid in Firestore document.");
+      globalLogger.warn("Recruit list is missing or invalid in Firestore document.");
       return null;
     }
 
@@ -42,6 +43,6 @@ export class RecruitStore {
   async saveRecruitList(data: RecruitData[]): Promise<void> {
     const docRef = this.getRecruitCollectionRef().doc(RecruitStore.INIT_DOC_ID);
     await docRef.set({ recruitList: data });
-    DebugLogger.server("Recruit list saved to Firestore successfully.");
+    globalLogger.info("Recruit list saved to Firestore successfully.");
   }
 }

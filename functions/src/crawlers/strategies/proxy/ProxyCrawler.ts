@@ -1,3 +1,4 @@
+import "@/common/utils/systemLogger";
 import { Page } from "playwright-core";
 import { BaseCrawler } from "../base/BaseCrawler";
 import type { ProxyData } from "@/crawlers/types";
@@ -37,12 +38,12 @@ export class ProxyCrawler extends BaseCrawler {
 
       const proxyData = await this.extractProxyList(page);
 
-      DebugLogger.server(`[ProxyCrawler] Collected ${proxyData.length} proxies.`);
+      globalLogger.info(`[ProxyCrawler] Collected ${proxyData.length} proxies.`);
 
       await context.close();
       return proxyData;
     } catch (error) {
-      DebugLogger.error("[ProxyCrawler] Crawling failed", error as Error);
+      globalLogger.error("[ProxyCrawler] Crawling failed", error as Error);
       throw error;
     } finally {
       await browser.close();

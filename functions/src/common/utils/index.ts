@@ -21,8 +21,7 @@ export {
 } from "./errorHandler";
 
 // Logging
-export { default as Logger } from "./logger";
-export { SystemLogger, createLogger, systemLogger, LogLevel, type LogContext } from "./systemLogger";
+export { SystemLogger, createLogger, systemLogger, LogLevel, type LogContext, type LogSource, crawlerLogger, providerLogger } from "./systemLogger";
 
 // Date & Time
 export { formatDate } from "./formatDate";

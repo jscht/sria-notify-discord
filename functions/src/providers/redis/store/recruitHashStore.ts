@@ -16,7 +16,7 @@ export class RecruitHashStore {
     const key = this.getRecruitHashKey();
     await this.client.hSet(key, id, hash);
     await this.expire(expiration, key);
-    DebugLogger.request(`Saved hash for ID: ${id}`);
+    globalLogger.info(`Saved hash for ID: ${id}`);
   }
 
   async getAll(): Promise<Record<string, string> | null> {
@@ -34,7 +34,7 @@ export class RecruitHashStore {
   async delete(id: string) {
     const key = this.getRecruitHashKey();
     await this.client.hDel(key, id);
-    DebugLogger.request(`Deleted hash for ID: ${id}`);
+    globalLogger.info(`Deleted hash for ID: ${id}`);
   }
 
   async expire(expiration: number, key?: string) {

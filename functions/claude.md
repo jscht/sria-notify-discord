@@ -103,8 +103,7 @@ functions/
 - [src/events/eventBus/claude.md](./src/events/eventBus/claude.md) - EventBus 시스템 (Phase 1.1, 1.12 완료)
 
 ### 작업 관리
-- [../.claude/todos/TODO.md](../.claude/todos/TODO.md) - Phase별 작업 목록
-- [../.claude/todos/PROGRESS.md](../.claude/todos/PROGRESS.md) - 진행 현황
+- [../.claude/phases/PROGRESS.md](../.claude/phases/PROGRESS.md) - 진행 현황
 
 ---
 

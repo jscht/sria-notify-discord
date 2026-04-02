@@ -68,7 +68,7 @@
 
 ## 🔍 검토 사항
 
-**참고 문서**: [REVIEW_PROCESS.md](./REVIEW_PROCESS.md)
+**참고 문서**: [REVIEW_PROCESS.md](../../rules/review-process.md)
 
 ### 코드 리뷰
 - [x] EventBus import 경로 확인 (`@/events/bus`) ✅
@@ -128,7 +128,7 @@ try {
 
 ## 📋 다음 단계
 
-**참고 문서**: [PROJECT_CONTEXT.md - Git Workflow](../../PROJECT_CONTEXT.md#-git-workflow)
+**참고 문서**: [PROJECT_CONTEXT.md - Git Workflow](../../rules/git-workflow.md)
 
 1. [x] TypeScript 컴파일 확인 ✅
 2. [x] 테스트 실행 확인 ✅

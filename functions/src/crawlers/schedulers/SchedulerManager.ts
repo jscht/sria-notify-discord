@@ -1,3 +1,4 @@
+import "@/common/utils/systemLogger";
 import { RecruitScheduler } from "./RecruitScheduler";
 import { ProxyScheduler } from "./ProxyScheduler";
 import { CRAWL_MODE } from "@/common/constants";
@@ -82,7 +83,7 @@ export class SchedulerManager {
       scheduler.stopWork();
     });
 
-    DebugLogger.server("All schedulers stopped.");
+    globalLogger.info("All schedulers stopped.");
   }
 
   /**

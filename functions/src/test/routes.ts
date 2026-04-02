@@ -1,3 +1,4 @@
+import "@/common/utils/systemLogger";
 import { Router } from "express";
 import { CRAWL_MODE } from "../constants/crawlMode";
 import { RecruitService, CrawlService } from "../services";
@@ -17,7 +18,7 @@ testRouter.get("/recruit", async (req, res, next) => {
     const recruitList = await recruitService.getRecruitList(CRAWL_MODE.DUMMY, city as string | undefined);
 
     const logMessage = `${!city ? "전체" : city} 지역 공고 정상 반환`;
-    DebugLogger.server(logMessage);
+    globalLogger.info(logMessage);
 
     res.status(200).json({ message: logMessage, result: recruitList });
   } catch (error) {
@@ -30,7 +31,7 @@ testRouter.get("/redis-stores", async (req, res) => {
   const pattern = SERVICE_NAME.RECRUIT + "*";
 
   const keys: string[] = await scanKeys(pattern);
-  DebugLogger.request(`🚀 ~ testRouter.get ~ found keys: ${keys.length}`);
+  globalLogger.info(`🚀 ~ testRouter.get ~ found keys: ${keys.length}`);
   
   const redisValues: Record<string, any> = {};
   const recruit_cacheStore = RedisManager.getInstance().store.recruit;
@@ -40,7 +41,7 @@ testRouter.get("/redis-stores", async (req, res) => {
       redisValues[key] = await recruit_cacheStore.getDataByKeyFromCache(key);
     } catch (error) {
       if (error instanceof Error) {
-        DebugLogger.error(`Error fetching key "${key}" from Redis:`, error);
+        globalLogger.error(`Error fetching key "${key}" from Redis:`, error);
       }
       redisValues[key] = null; // 에러 발생 시 null로 저장
     }
@@ -69,7 +70,7 @@ testRouter.get("/firestore-proxy", async (req, res) => {
 testRouter.get("/playwright-scraper", async (req, res) => {
   const mode = req.query.mode || "dummy";
   const scrapMode = mode === "crawl" ? CRAWL_MODE.CRAWL : CRAWL_MODE.DUMMY;
-  DebugLogger.server(`route /playwright-scraper with mode: ${scrapMode}`);
+  globalLogger.info(`route /playwright-scraper with mode: ${scrapMode}`);
 
   const crawlService = new CrawlService();
   const crawlData = await crawlService.sriagent(scrapMode);

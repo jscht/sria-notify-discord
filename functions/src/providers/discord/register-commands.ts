@@ -1,4 +1,4 @@
-import "../../utils/logger"
+import { providerLogger, systemLogger } from "@/common/utils/systemLogger";
 import { config } from "dotenv";
 import { REST, Routes } from "discord.js";
 import { commands } from "./builder/commands";
@@ -14,17 +14,17 @@ const rest = new REST({ version: '10' }).setToken(process.env.SARIAN_BOT_TOKEN!)
 
 (async () => {
   try {
-    DebugLogger.provider("🔁 명령어 등록 중...", "discord");
+    providerLogger.debug("🔁 명령어 등록 중...");
 
     await rest.put(
       Routes.applicationGuildCommands(process.env.SARIAN_APP_ID!, process.env.SARIAN_TEST_GUILD_ID!),
       { body: commands.map(cmd => cmd.toJSON()) },
     );
 
-    DebugLogger.provider("✅ 명령어 등록 완료!", "discord");
+    providerLogger.debug("✅ 명령어 등록 완료!");
   } catch (error) {
     if (error instanceof Error) {
-      DebugLogger.error("❌ 명령어 등록 실패:", error);
+      systemLogger.error("❌ 명령어 등록 실패:", error);
     }
   }
 })();

@@ -1,8 +1,6 @@
-# 사람인 에이전트 단기알바 채용공고 알림 봇
+# SRIAN
 
 > 사람인 에이전트 단기알바 채용 공고 알림 Discord Bot
->
-> Firebase Functions 기반 Event-Driven Architecture
 
 [![Firebase](https://img.shields.io/badge/Firebase-Functions-orange?logo=firebase)](https://firebase.google.com/)
 [![Discord.js](https://img.shields.io/badge/Discord.js-v14-blue?logo=discord)](https://discord.js.org/)
@@ -30,7 +28,7 @@
 
 ## 개요
 
-사람인 에이전트 단기알바 채용공고 알림 봇은 사람인 에이전트 웹사이트의 단기알바 채용 공고를 Discord를 통해 사용자에게 실시간으로 알림을 제공하는 서비스입니다.
+사람인 에이전트 단기알바 채용공고 알림 봇은 사람인 에이전트 웹사이트의 단기알바 채용 공고를 Discord Bot을 통해 사용자에게 알림을 제공하는 서비스입니다.
 
 ### 핵심 가치
 

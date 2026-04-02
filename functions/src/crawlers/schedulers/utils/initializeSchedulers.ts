@@ -1,3 +1,4 @@
+import "@/common/utils/systemLogger";
 import { SchedulerManager } from "../SchedulerManager";
 import { CRAWL_MODE } from "@/common/constants";
 
@@ -29,7 +30,7 @@ export function initializeSchedulers(
     config?.proxyInterval || 6 * 60 * 60 * 1000
   );
 
-  DebugLogger.server("✅ All schedulers initialized");
+  globalLogger.info("✅ All schedulers initialized");
 
   return manager;
 }

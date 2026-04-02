@@ -1,0 +1,8 @@
+{
+  "feature": "phase-1-11-debuglogger-migration",
+  "phase": "archived",
+  "matchRate": 94.4,
+  "startedAt": "2026-03-29",
+  "completedAt": "2026-03-29",
+  "description": "DebugLogger → SystemLogger 마이그레이션"
+}
