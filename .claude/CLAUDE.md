@@ -42,6 +42,10 @@ Slash commands are shortcuts for users who want to explicitly trigger specific s
 
 - @.claude/docs/coding-conventions.md
 
+## 에이전트 시스템
+
+- @.claude/agents/README.md
+
 ## PDCA 자동 동작
 
 - @.claude/rules/pdca-workflow.md
