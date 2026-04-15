@@ -1,7 +1,5 @@
 # Overview
 
-- @README.md
-
 ## 핵심 원칙
 
 ### 1. 자동화 우선
@@ -22,34 +20,18 @@ Slash commands are shortcuts for users who want to explicitly trigger specific s
 
 - @.claude/docs/tech-stack.md
 
-## 빌드, 배포, 실행
+## 코딩 컨벤션
 
-- @.claude/docs/build-deploy.md
-
-## 프로젝트 구조
-
-- @.claude/docs/ARCHITECTURE.md
-
-## 작업 관리
-
-- @.claude/docs/pdca-status.json
+- @.claude/docs/coding-conventions.md
 
 ## 언어
 
 - 코드 주석, 커밋 메시지, 문서: 한국어, 영어
 
-## 코딩 컨벤션
+## 참조 문서 (필요 시 읽기)
 
-- @.claude/docs/coding-conventions.md
-
-## 에이전트 시스템
-
-- @.claude/agents/README.md
-
-## PDCA 자동 동작
-
-- @.claude/rules/pdca-workflow.md
-
-## 문서 구조 규칙
-
-- @.claude/rules/document-structure.md
+- README.md — 프로젝트 개요
+- .claude/docs/ARCHITECTURE.md — 시스템 아키텍처, 계층 구조, 데이터 흐름
+- .claude/docs/build-deploy.md — 빌드, 배포, 실행 명령어
+- .claude/docs/pdca-status.json — Phase별 PDCA 상태
+- .claude/agents/README.md — 에이전트 계층, 협업, 출력 포맷

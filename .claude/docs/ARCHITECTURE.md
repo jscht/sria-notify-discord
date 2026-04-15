@@ -1,54 +1,31 @@
 # 아키텍처 개요
 
 > 사람인 에이전트 Discord Bot - Event-Driven Architecture
->
-> **최종 수정**: 2026-01-11
 
 ---
 
-## 📐 시스템 아키텍처
+## 시스템 아키텍처
 
 ### High-Level Overview
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                   Firebase Functions                        │
-│                  (asia-northeast3)                          │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
-│  │   HTTP       │  │   Discord    │  │  Schedulers  │     │
-│  │   Express    │  │   Events     │  │  4h / 6h     │     │
-│  └──────────────┘  └──────────────┘  └──────────────┘     │
-│         │                 │                  │              │
-│         └─────────────────┴──────────────────┘              │
-│                          │                                  │
-│         ┌────────────────┴────────────────┐                │
-│         │        EventBus (Core)          │                │
-│         │    Node.js EventEmitter         │                │
-│         └────────────────┬────────────────┘                │
-│                          │                                  │
-│    ┌─────────────────────┼─────────────────────┐           │
-│    │                     │                     │           │
-│    ▼                     ▼                     ▼           │
-│ ┌────────┐         ┌──────────┐         ┌─────────┐       │
-│ │Services│         │ Features │         │Providers│       │
-│ └────────┘         └──────────┘         └─────────┘       │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-                          │
-        ┌─────────────────┼─────────────────┐
-        │                 │                 │
-        ▼                 ▼                 ▼
-   ┌────────┐      ┌──────────┐      ┌──────────┐
-   │Discord │      │Firestore │      │  Redis   │
-   │  API   │      │          │      │          │
-   └────────┘      └──────────┘      └──────────┘
+```mermaid
+graph TD
+    subgraph Firebase Functions - asia-northeast3
+        HTTP[HTTP Express] --> EventBus[EventBus Core - Node.js EventEmitter]
+        Discord[Discord Events] --> EventBus
+        Schedulers[Schedulers 4h/6h] --> EventBus
+        EventBus --> Services
+        EventBus --> Features
+        EventBus --> Providers
+    end
+    Services --> DiscordAPI[Discord API]
+    Services --> Firestore
+    Services --> Redis
 ```
 
 ---
 
-## 🏗️ 계층 구조 (Layered Architecture)
+## 계층 구조 (Layered Architecture)
 
 ### 1. Presentation Layer (events/)
 
@@ -75,31 +52,7 @@ events/
 
 #### EventBus (eventBus/)
 
-**역할**: 비즈니스 이벤트의 중앙 허브
-
-```typescript
-// Singleton Pattern
-export class EventBus extends EventEmitter {
-  private static instance: EventBus;
-
-  static getInstance(): EventBus {
-    if (!this.instance) {
-      this.instance = new EventBus();
-      this.instance.setMaxListeners(100);
-    }
-    return this.instance;
-  }
-
-  // 타입 안전 메서드
-  emitEvent<T extends EventType>(event: T, payload: EventPayloadMap[T]): boolean {
-    return this.emit(event, payload);
-  }
-
-  onEvent<T extends EventType>(event: T, handler: EventHandler<T>): this {
-    return this.on(event, handler);
-  }
-}
-```
+**역할**: 비즈니스 이벤트의 중앙 허브 (Singleton, Node.js EventEmitter 기반)
 
 **이벤트 도메인**:
 - **Recruit**: 크롤링, 새 공고, 공고 요청
@@ -107,8 +60,6 @@ export class EventBus extends EventEmitter {
 - **System**: 에러 처리 및 로깅
 - **Admin**: 관리자 기능
 - **Proxy**: 프록시 순환
-
-**참고**: [functions/src/eventBus/claude.md](./functions/src/eventBus/claude.md)
 
 #### Services (services/)
 
@@ -192,37 +143,21 @@ crawlers/
 
 ---
 
-## 🔄 Event-Driven Architecture
+## Event-Driven Architecture
 
 ### 이벤트 흐름
 
-```
-[Trigger]
-   │
-   ├─ Discord Command (/recruit-request)
-   ├─ Discord Interaction (버튼 클릭)
-   └─ Scheduler (4시간 주기)
-   │
-   ▼
-[Presentation Layer]
-   events/interactionCreate/commandHandler.ts
-   │
-   ▼
-[Application Layer]
-   features/recruitRequest/handlers/commandHandler.ts
-   │
-   ├─ services/recruitService.getRecruitList()
-   │  │
-   │  └─ Redis → Firestore → Crawling (3-tier)
-   │
-   └─ eventBus.emit('recruit.requested', data)
-
-[Event Subscribers]
-   └─ services/notificationService (recruit.new 구독)
-      │
-      └─ providers/discord/utils/dmSender
-         │
-         └─ Discord DM 발송
+```mermaid
+graph TD
+    T1[Discord Command] --> PL[Presentation Layer - commandHandler.ts]
+    T2[Discord Interaction] --> PL
+    T3[Scheduler 4시간] --> PL
+    PL --> AL[Application Layer - recruitRequest handler]
+    AL --> RS[recruitService.getRecruitList]
+    RS --> Cache[Redis → Firestore → Crawling 3-tier]
+    AL --> EB[eventBus.emit recruit.requested]
+    EB --> NS[notificationService]
+    NS --> DM[Discord DM 발송]
 ```
 
 ### 이벤트 목록
@@ -236,176 +171,31 @@ crawlers/
 
 ---
 
-## 🗄️ 데이터 흐름
+## 데이터 흐름
 
 ### 3-Tier Caching Strategy
 
-```
-User Request
-    │
-    ▼
-┌─────────────────┐
-│  Redis Cache    │ ← 1st: 5분 TTL
-│  (In-Memory)    │
-└─────────────────┘
-    │ (Cache Miss)
-    ▼
-┌─────────────────┐
-│ Firestore Cache │ ← 2nd: 30분 TTL
-│  (Document DB)  │
-└─────────────────┘
-    │ (Cache Miss)
-    ▼
-┌─────────────────┐
-│  Web Crawling   │ ← 3rd: Playwright
-│  (Playwright)   │
-└─────────────────┘
+```mermaid
+graph TD
+    Req[User Request] -->|1st - 5분 TTL| Redis[Redis Cache]
+    Redis -->|Cache Miss| FS[Firestore Cache - 30분 TTL]
+    FS -->|Cache Miss| Crawl[Web Crawling - Playwright]
 ```
 
-### 공고 변경 감지 (SHA-256)
+### 공고 변경 감지
 
-```typescript
-// recruitCacheService.ts
-export class RecruitCacheService {
-  async setRecruitList(recruits: Job[]): Promise<CacheStatus> {
-    const currentHash = this.calculateHash(recruits);
-    const previousHash = await this.getPreviousHash();
+SHA-256 해시 비교로 공고 목록 변경 감지 후 이벤트 발행
 
-    if (currentHash === previousHash) {
-      return 'UNCHANGED';
-    }
+### Firestore 컬렉션
 
-    const { addedJobs, updatedJobs, deletedIds } = this.diffJobs(
-      previousRecruits,
-      recruits
-    );
-
-    // 이벤트 발행
-    eventBus.emit('recruit.new', {
-      addedJobs,
-      updatedJobs,
-      deletedIds
-    });
-
-    return 'CHANGED';
-  }
-}
-```
+- **users/{userId}/notifications/settings** — 알림 설정 (지역, 모드)
+- **errors/{errorId}** — 에러 로그
+- **broadcasts/{broadcastId}** — 공지 이력
+- **ai_nlp_cache/{cacheId}** — AI 의도 분석 캐시 (7일 TTL)
 
 ---
 
-## 🔐 Firestore 스키마
+## 관련 문서
 
-### users 컬렉션
-```
-users/{userId}/
-└── notifications/
-    └── settings/
-        {
-          enabled: boolean,
-          alertMode: 'ALL' | 'SELECTED',
-          regions: string[],
-          createdAt: Timestamp,
-          updatedAt: Timestamp
-        }
-```
-
-### errors 컬렉션
-```
-errors/{errorId}/
-{
-  type: string,
-  message: string,
-  stack: string,
-  service: string,
-  createdAt: Timestamp,
-  resolved: boolean
-}
-```
-
-### broadcasts 컬렉션
-```
-broadcasts/{broadcastId}/
-{
-  content: string,
-  author: string,
-  targetCount: number,
-  successCount: number,
-  failureCount: number,
-  createdAt: Timestamp
-}
-```
-
-### ai_nlp_cache 컬렉션
-```
-ai_nlp_cache/{cacheId}/
-{
-  message: string,
-  intent: {
-    action: 'recruit' | 'subscribe' | 'unsubscribe',
-    region?: string,
-    regions?: string[]
-  },
-  createdAt: Timestamp,
-  expiresAt: Timestamp  // 7일 TTL
-}
-```
-
----
-
-## 🚀 배포 아키텍처
-
-### Firebase Functions 구성
-
-```yaml
-functions:
-  - name: app
-    runtime: nodejs18
-    region: asia-northeast3
-    memory: 512MB
-    timeout: 540s
-
-    triggers:
-      - http  # Express 앱
-
-    environment:
-      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
-      REDIS_URL: ${REDIS_URL}
-      HUGGINGFACE_API_KEY: ${HUGGINGFACE_API_KEY}
-```
-
-### 스케줄러 설정
-
-```typescript
-// Cloud Scheduler (Cron)
-RecruitScheduler:
-  schedule: "0 */4 * * *"  // 4시간마다
-
-ProxyScheduler:
-  schedule: "0 */6 * * *"  // 6시간마다
-```
-
----
-
----
-
-## 🔗 관련 문서
-
-### 프로젝트 문서
-- [README.md](./README.md) - 프로젝트 개요
-- [PROGRESS.md](./.claude/todos/PROGRESS.md) - 개발 진행 현황
-- [TODO.md](./.claude/todos/TODO.md) - Phase별 작업 목록
-- [phase-1-core.md](./.claude/todos/phase-1-core.md) - Phase 1 상세 계획
-
-### 기술 문서
-- [EventBus 시스템](./functions/src/eventBus/claude.md)
 - [SystemLogger 가이드](./functions/src/common/utils/__docs__/SYSTEM_LOGGER_GUIDE.md)
 - [SystemError 가이드](./functions/src/common/utils/__docs__/SYSTEM_ERROR_GUIDE.md)
-
-### 검토 문서
-- [REVIEW_PROCESS.md](./.claude/todos/review/REVIEW_PROCESS.md) - 검토 프로세스
-- [phase-1-1-review.md](./.claude/todos/review/phase-1-1-review.md) - Phase 1.1 검토
-
-### 외부 문서
-- [Firebase Functions Docs](https://firebase.google.com/docs/functions)
-- [Discord.js Guide](https://discordjs.guide/)
