@@ -92,18 +92,5 @@
       { "features": "phase-4-6-ai-test-and-optimization", "phase": null, "matchRate": null, "documents": {} }
     ]
   },
-  "features": {
-    "phase-1-6-recruit-request-enhancement": {
-      "phase": "archived",
-      "startedAt": "2026-04-30",
-      "completedAt": "2026-04-30",
-      "matchRate": 100.0,
-      "documents": {
-        "plan": "docs/archive/phase-1-6/01-plan.md",
-        "design": "docs/archive/phase-1-6/02-design.md",
-        "analysis": "docs/archive/phase-1-6/03-analysis.md",
-        "report": "docs/archive/phase-1-6/04-report.md"
-      }
-    }
-  }
+  "features": {}
 }
