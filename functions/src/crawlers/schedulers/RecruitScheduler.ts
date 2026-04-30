@@ -36,7 +36,7 @@ export class RecruitScheduler extends BaseScheduler {
         `[${this.config.name}] 🔍 Crawling started (Mode: ${this.mode})...`
       );
 
-      const recruitData = await this.recruitService.getRecruitList(this.mode);
+      const { data: recruitData } = await this.recruitService.getRecruitList(this.mode);
 
       const endTime = new Date();
       const durationMs = endTime.getTime() - startTime.getTime();

@@ -15,7 +15,7 @@ testRouter.get("/recruit", async (req, res, next) => {
     const { city } = req.query;
 
     const recruitService = new RecruitService();
-    const recruitList = await recruitService.getRecruitList(CRAWL_MODE.DUMMY, city as string | undefined);
+    const { data: recruitList } = await recruitService.getRecruitList(CRAWL_MODE.DUMMY, city as string | undefined);
 
     const logMessage = `${!city ? "전체" : city} 지역 공고 정상 반환`;
     globalLogger.info(logMessage);
