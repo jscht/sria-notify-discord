@@ -15,8 +15,15 @@
 - `pdca-memory.json` — 현재 작업 포인터
 - `ARCHITECTURE.md`, `coding-conventions.md`, `tech-stack.md`, `build-deploy.md`
 
+### .claude/agents/ — 에이전트 정의
+- 12개 에이전트 파일 (YAML frontmatter + 마크다운)
+- `README.md` — 에이전트 인덱스 (계층, 협업, MCP, 출력 포맷)
+- bkit 경량 적응 8개 + 커스텀 4개
+
 ### .claude/templates/ — PDCA 문서 템플릿
-### .claude/skills/ — 스킬 정의
+### .claude/skills/ — 스킬 정의 (2개)
+- `pdca` — PDCA 전체 사이클 관리 (analyze에서 Gap Detector + Code Analyzer 호출, report에서 Report Generator 호출)
+- `claude-md-audit` — CLAUDE.md 감사
 
 ## docs/ — 프로젝트 구현 기록물
 

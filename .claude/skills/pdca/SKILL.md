@@ -85,11 +85,16 @@ allowed-tools:
 ### analyze [X.Y] — Check Phase
 
 1. 구현 코드 존재 확인
-2. Design 문서와 실제 코드를 비교 (설계 §번호 기반)
-3. `.claude/templates/analysis.template.md` 구조로 `docs/phase-{{X}}-{{Y}}/03-analysis.md` 생성
-4. 매치율 산출: `(완전일치 + 부분일치 × 0.5) / 전체항목 × 100`
-5. pdca-memory.json 업데이트: `phase = "check"`, `matchRate`
-6. pdca-status.json tasks/features 업데이트
+2. **Gap Detector 에이전트 호출** → 설계 ↔ 구현 갭 분석 (Structural/Functional/Contract)
+3. **Code Analyzer 에이전트 호출** → 코드 품질/보안/DRY 분석
+4. 두 결과를 `.claude/templates/analysis.template.md` 구조로 통합하여 `docs/phase-{{X}}-{{Y}}/03-analysis.md` 생성
+   - §1~§3: Gap Detector 결과 (3차원 갭 테이블 + 매치율)
+   - §4~§5: Code Analyzer 결과 (이슈 목록 + 컨벤션 준수)
+5. 매치율 산출: `Structural × 0.2 + Functional × 0.4 + Contract × 0.4`
+   - 호환 모드: 기존 데이터(matchRate)는 그대로 유지, 새 분석부터 새 공식 적용
+6. pdca-memory.json 업데이트: `phase = "check"`, `matchRate`
+7. pdca-status.json tasks/features 업데이트
+8. matchRate < 90% 또는 🔴 Critical 이슈 존재 시 → 이슈 알림 출력 (D 포맷)
 
 **출력 파일**: `docs/phase-{{X}}-{{Y}}/03-analysis.md`
 
@@ -106,8 +111,8 @@ allowed-tools:
 ### report [X.Y] — Completion Report
 
 1. matchRate ≥ 90% 확인 (미만이면 경고)
-2. plan, design, analysis 문서 전체 읽기
-3. `.claude/templates/report.template.md` 구조로 `docs/phase-{{X}}-{{Y}}/04-report.md` 생성
+2. **Report Generator 에이전트 호출** → plan, design, analysis 문서를 종합한 보고서 초안 수신
+3. report.template.md 포맷으로 검증 후 `docs/phase-{{X}}-{{Y}}/04-report.md` 생성
 4. **피드백 → 승인 대기 → 수정** 프로세스 적용 (review-process.md 규칙 준수)
 5. pdca-memory.json 업데이트: `phase = "completed"`, `completedAt`
 
@@ -144,26 +149,46 @@ docs/archive/phase-{{X}}-{{Y}}/
 ### status — Status Check
 
 1. pdca-status.json 읽기
-2. 전체 현황 출력:
-   - overview (Phase별 진행률)
-   - priority (우선순위 작업)
-   - 현재 진행 중인 feature
+2. pdca-memory.json 읽기 (현재 작업 포인터)
+3. 전체 현황 출력 (A: 대시보드 포맷):
 
-**출력 예시**:
+**출력 포맷**:
 ```
-PDCA 전체 현황
-─────────────────────────────
-전체 진행률: 16/85 (18.8%)
+📊 프로젝트 현황
+━━━━━━━━━━━━━━━━━━━━━━━
+전체: XX/YY (ZZ%)
+Phase 1: XX% │ Phase 2: XX% │ Phase 3: XX% │ Phase 4: XX%
+━━━━━━━━━━━━━━━━━━━━━━━
+🔄 현재: Phase X.Y - [작업명]
+   PDCA 단계: [plan/design/do/check/iterate]
+   매치율: XX% (check 이후만)
 
-Phase 1: 16/41 (39.0%)
-Phase 2: 0/12 (0%)
-Phase 3: 0/15 (0%)
-Phase 4: 0/17 (0%)
-─────────────────────────────
+⏭️ 다음: Phase X.Y - [작업명]
+   조건: [의존성 또는 선행 조건]
+
+⚠️ 블로커 (있을 때만)
+   - [의존성 미충족 / 장기 정체 등]
+
+📋 최근 완료 (최대 3건)
+   ✅ Phase X.Y - [작업명] (YYYY-MM-DD)
+━━━━━━━━━━━━━━━━━━━━━━━
 우선순위 작업 (의존성 충족 + P0 우선):
-1. [P0] phase-1-4-notification-store
-2. [P0] phase-1-8-discord-dm-utility
-3. [P1] phase-1-11-debuglogger-migration
+1. [P0] phase-X-Y-name
+2. [P1] phase-X-Y-name
+```
+
+**블로커 감지 기준**:
+- 현재 Phase의 dependencies에서 선행 feature가 미완료
+- 검토 중(check) 상태가 7일 이상 지속
+- iterate 5회 도달 후 매치율 < 90%
+
+**이슈 감지 시**: 이슈 알림 (D 포맷)으로 추가 출력
+
+```
+⚠️ 이슈 알림
+| # | 유형 | 심각도 | 내용 | 관련 Phase | 조치 |
+|---|------|--------|------|-----------|------|
+| 1 | 블로커 | 🔴 | ... | X.Y | ... |
 ```
 
 ### next — Next Phase Guide

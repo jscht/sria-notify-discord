@@ -5,7 +5,8 @@
 **상태 전환**: 🔄 진행 중 → 🔍 검토 중 → 피드백 → ✅ 완료 → Git Commit & PR
 
 ### 1단계: 구현 완료 → 검토 요청
-- `docs/reviews/phase-X-Y-review.md` 문서 작성
+- `/pdca report X.Y` 실행 → Report Generator 에이전트가 보고서 초안 생성
+- `docs/phase-X-Y/04-report.md` 문서 생성
 - 상태 업데이트: 🔄 → 🔍
 
 ### 2단계: 피드백 처리 (⚠️ 자동 반영 금지)
