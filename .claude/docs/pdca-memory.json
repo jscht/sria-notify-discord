@@ -1,8 +1,8 @@
 {
-  "feature": null,
-  "phase": null,
-  "matchRate": null,
-  "startedAt": null,
-  "completedAt": null,
-  "description": null
+  "feature": "phase-1-6-recruit-request-enhancement",
+  "phase": "archived",
+  "matchRate": 100.0,
+  "startedAt": "2026-04-30",
+  "completedAt": "2026-04-30",
+  "description": "공고 요청 기능 개선 — EventBus 이벤트 발행 추가 (RECRUIT_REQUESTED / RECRUIT_REQUEST_COMPLETED)"
 }

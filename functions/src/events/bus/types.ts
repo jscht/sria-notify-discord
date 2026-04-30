@@ -6,6 +6,8 @@
 
 import type { Job, JobDiffResult } from "@/common/types/job.d";
 import type { CityEn } from "@/common/types/city.d";
+import type { CRAWL_MODE } from "@/common/constants";
+import type { RecruitData } from "@/crawlers/types";
 
 /**
  * 이벤트 타입 열거형
@@ -17,6 +19,7 @@ export enum EventType {
   RECRUIT_CRAWL_FAILED = "recruit:crawl:failed",
   RECRUIT_NEW = "recruit:new",
   RECRUIT_REQUESTED = "recruit:requested",
+  RECRUIT_REQUEST_COMPLETED = "recruit:request:completed",
 
   // Notification Domain
   NOTIFICATION_SUBSCRIBE = "notification:subscribe",
@@ -72,11 +75,23 @@ export interface RecruitCrawlFailedEvent extends BaseEvent {
  */
 export interface RecruitNewEvent extends BaseEvent, JobDiffResult {}
 
-// 사용자 공고 요청 이벤트
+// 사용자 공고 요청 시작 이벤트
 export interface RecruitRequestedEvent extends BaseEvent {
   userId: string;
   region?: CityEn;
-  jobs: Job[];
+  mode: CRAWL_MODE;
+}
+
+export type RecruitTier = "redis" | "firestore" | "crawler" | "empty" | "error";
+
+// 사용자 공고 요청 완료 이벤트
+export interface RecruitRequestCompletedEvent extends BaseEvent {
+  userId: string;
+  region?: CityEn;
+  mode: CRAWL_MODE;
+  jobs: RecruitData[];
+  tier: RecruitTier;
+  durationMs: number;
 }
 
 /**
@@ -171,6 +186,7 @@ export interface EventPayloadMap {
   [EventType.RECRUIT_CRAWL_FAILED]: RecruitCrawlFailedEvent;
   [EventType.RECRUIT_NEW]: RecruitNewEvent;
   [EventType.RECRUIT_REQUESTED]: RecruitRequestedEvent;
+  [EventType.RECRUIT_REQUEST_COMPLETED]: RecruitRequestCompletedEvent;
 
   // Notification Domain
   [EventType.NOTIFICATION_SUBSCRIBE]: NotificationSubscribeEvent;

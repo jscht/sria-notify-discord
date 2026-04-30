@@ -66,7 +66,7 @@
       { "features": "phase-1-11-debuglogger-migration", "phase": "archived", "matchRate": 94.4, "description": "DebugLogger → SystemLogger 마이그레이션", "startedAt": "2026-01-16", "completedAt": "2026-03-29", "documents": { "plan": "docs/archive/phase-1-11/01-plan.md", "design": "docs/archive/phase-1-11/02-design.md", "analysis": "docs/archive/phase-1-11/03-analysis.md", "report": "docs/archive/phase-1-11/04-report.md" } },
       { "features": "phase-1-4-notification-store", "phase": null, "matchRate": null, "documents": {} },
       { "features": "phase-1-5-notification-settings-ui", "phase": null, "matchRate": null, "documents": {} },
-      { "features": "phase-1-6-recruit-request-enhancement", "phase": null, "matchRate": null, "documents": {} },
+      { "features": "phase-1-6-recruit-request-enhancement", "phase": "archived", "matchRate": 100.0, "documents": { "plan": "docs/archive/phase-1-6/01-plan.md", "design": "docs/archive/phase-1-6/02-design.md", "analysis": "docs/archive/phase-1-6/03-analysis.md", "report": "docs/archive/phase-1-6/04-report.md" } },
       { "features": "phase-1-7-auto-notification-system", "phase": null, "matchRate": null, "documents": {} },
       { "features": "phase-1-8-discord-dm-utility", "phase": null, "matchRate": null, "documents": {} },
       { "features": "phase-1-9-scheduler-reactivation", "phase": null, "matchRate": null, "documents": {} },
@@ -92,5 +92,18 @@
       { "features": "phase-4-6-ai-test-and-optimization", "phase": null, "matchRate": null, "documents": {} }
     ]
   },
-  "features": {}
+  "features": {
+    "phase-1-6-recruit-request-enhancement": {
+      "phase": "archived",
+      "startedAt": "2026-04-30",
+      "completedAt": "2026-04-30",
+      "matchRate": 100.0,
+      "documents": {
+        "plan": "docs/archive/phase-1-6/01-plan.md",
+        "design": "docs/archive/phase-1-6/02-design.md",
+        "analysis": "docs/archive/phase-1-6/03-analysis.md",
+        "report": "docs/archive/phase-1-6/04-report.md"
+      }
+    }
+  }
 }

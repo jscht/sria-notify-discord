@@ -5,6 +5,7 @@ import { RecruitStore } from "../providers/firebase/store";
 import { RecruitCacheService, CrawlService } from "../services";
 import { CityKo, CityEn } from "@/common/types";
 import type { RecruitData } from "@/crawlers/types";
+import type { RecruitTier } from "@/events/bus";
 import { cityNameConverter } from "@/common/utils/cityName";
 import { getCityFilteredList } from "@/common/utils";
 import { HttpError } from "@/common/utils/httpError";
@@ -30,14 +31,18 @@ export class RecruitService {
     this.crawler = new CrawlService();
   }
 
-  async getRecruitList(mode: CRAWL_MODE, city?: string): Promise<RecruitData[] | null> {
+  async getRecruitList(
+    mode: CRAWL_MODE,
+    city?: string
+  ): Promise<{ data: RecruitData[] | null; tier: Exclude<RecruitTier, "error">; durationMs: number }> {
+    const startedAt = Date.now();
     const convertedCity = this.convertCityByMode(mode, city);
 
     // Step 1: Redis Cache
     try {
       const cached = await this.cacheService.getRecruitList(convertedCity as CityEn);
       if (cached) {
-        return getCityFilteredList(mode, convertedCity, cached);
+        return { data: await getCityFilteredList(mode, convertedCity, cached), tier: "redis", durationMs: Date.now() - startedAt };
       }
     } catch (err) {
       if (err instanceof Error) {
@@ -54,7 +59,7 @@ export class RecruitService {
         this.cacheService.setRecruitList(firestoreData).catch(() => {
           globalLogger.warn("캐시 저장 실패");
         });
-        return getCityFilteredList(mode, convertedCity, firestoreData);
+        return { data: await getCityFilteredList(mode, convertedCity, firestoreData), tier: "firestore", durationMs: Date.now() - startedAt };
       }
     } catch (err) {
       globalLogger.warn("Firestore 장애 발생, 크롤링으로 fallback.");
@@ -69,11 +74,11 @@ export class RecruitService {
     // Step 4: 크롤링 실행
     const crawled = await this.collectAndSaveRecruits(mode, convertedCity as CityKo);
     if (!crawled) {
-      return null;
+      return { data: null, tier: "empty", durationMs: Date.now() - startedAt };
     }
 
     globalLogger.info("Returning recruit list from crawler.");
-    return getCityFilteredList(mode, convertedCity, crawled);
+    return { data: await getCityFilteredList(mode, convertedCity, crawled), tier: "crawler", durationMs: Date.now() - startedAt };
   }
 
   private async collectAndSaveRecruits(mode: CRAWL_MODE, city?: CityKo): Promise<RecruitData[] | null> {
