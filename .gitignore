@@ -76,3 +76,9 @@ node_modules/
 
 # unknown tmpclaude file
 tmpclaude-*
+
+# user notepad
+user-memo.md
+
+# Daily TODO tracker (Claude Code)
+.claude/docs/todo.md
