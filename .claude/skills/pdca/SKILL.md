@@ -59,10 +59,13 @@ allowed-tools:
 
 ### plan [X.Y] — Plan Phase
 
-1. `.claude/phases/phase-{{X}}-core.md` 시드 읽기
-2. `.claude/templates/plan.template.md` 구조로 `docs/phase-{{X}}-{{Y}}/01-plan.md` 생성
-3. pdca-memory.json 업데이트: `phase = "plan"`
-4. pdca-status.json features에 항목 생성
+1. `.claude/phases/phase-{{X}}-core.md` 시드 읽기 + X.Y feature 이름 확인
+2. 브랜치 생성/체크아웃 (`.claude/rules/git-workflow.md` 브랜치 네이밍 규칙 준수)
+   - 이미 존재하면: checkout, 없으면: dev 기반으로 신규 생성
+   - 실패 시 plan 중단 + 수동 생성 안내
+3. `.claude/templates/plan.template.md` 구조로 `docs/phase-{{X}}-{{Y}}/01-plan.md` 생성
+4. pdca-memory.json 업데이트: `phase = "plan"`
+5. pdca-status.json features에 항목 생성
 
 **출력 파일**: `docs/phase-{{X}}-{{Y}}/01-plan.md`
 
@@ -277,6 +280,10 @@ Phase 1: XX% │ Phase 2: XX% │ Phase 3: XX% │ Phase 4: XX%
 
 ### 쓰기 순서
 
+0. **Plan 모드 검사**: Plan 모드 활성 시 진행할 액션을 한 줄 알린 뒤 `ExitPlanMode` 호출,
+   승인 시 1번부터 진행. 거절 시 쓰기 생략하고 분석 결과만 출력.
+   메시지 형식: `PDCA <action> X.Y 쓰기 단계로 진입합니다. 승인 후 파일을 작성합니다.`
+   (`<action>` ∈ `plan` / `design` / `analyze` / `report`)
 1. 작업 수행 (문서 생성/수정)
 2. pdca-status.json 업데이트 (동기화 시점인 경우만)
 3. pdca-memory.json 업데이트 (항상 마지막)

@@ -8,7 +8,15 @@ dev (개발) → stable (검수) → main (배포)
 
 - **단방향 flow**: dev → stable → main (역방향 pull 금지)
 - `stable`의 `.gitattributes`에서 Claude 관련 파일 merge 시 자동 제외
-- Phase별 브랜치: `feature/phase-X-name` 또는 `refactor/phase-X.Y-description`
+- 브랜치 네이밍 규칙: `{type}/phase-X.Y-{name}` (타입 목록은 아래 참조)
+
+  | 타입 | 용도 |
+  |------|------|
+  | `feature` | 신규 기능 |
+  | `fix` | 버그 수정 |
+  | `hotfix` | 프로덕션 긴급 수정 |
+  | `refactor` | 리팩토링 (기능 변경 없음) |
+  | `chore` | 빌드·설정·의존성 유지보수 |
 - 이전 브랜치 유지 (삭제 금지)
 - 병합 대상: dev 브랜치
 
@@ -30,7 +38,16 @@ dev (개발) → stable (검수) → main (배포)
 Ref: pdca-status.json Phase X.Y
 ```
 
-**Type**: feat | fix | refactor | test | docs | chore
+**커밋 타입 목록**:
+
+| 타입 | 용도 |
+|------|------|
+| `feat` | 신규 기능 |
+| `fix` | 버그 수정 |
+| `refactor` | 리팩토링 (기능 변경 없음) |
+| `test` | 테스트 추가·수정 |
+| `docs` | 문서 작업 |
+| `chore` | 빌드·설정·의존성 유지보수 |
 
 **Scope**: component name or feature area
 
@@ -53,7 +70,10 @@ Ref: pdca-status.json Phase X.Y
    ```
 
 **PR 규칙**:
-- base: dev (필수)
-- 제목: `Phase X.Y: 작업명`
-- 본문 포함: Summary, 주요 변경사항, 기술적 개선사항, 테스트 상태, Breaking Changes
-- **제외**: 변경 통계 (파일 수, 라인 수), Co-Authored-By 태그
+
+| 항목 | 규칙 |
+|------|------|
+| base | `dev` (필수) |
+| 제목 | `Phase X.Y: 작업명` |
+| 본문 포함 | Summary, 주요 변경사항, 기술적 개선사항, 테스트 상태, Breaking Changes |
+| 제외 | 변경 통계 (파일 수, 라인 수), Co-Authored-By 태그 |
