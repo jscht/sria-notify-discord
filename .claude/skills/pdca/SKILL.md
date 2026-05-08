@@ -67,23 +67,17 @@ allowed-tools:
 4. pdca-memory.json 업데이트: `phase = "plan"`
 5. pdca-status.json features에 항목 생성
 
-**출력 파일**: `docs/phase-{{X}}-{{Y}}/01-plan.md`
-
 ### design [X.Y] — Design Phase
 
 1. Plan 문서 존재 확인 (없으면 plan 먼저 실행 안내)
 2. `.claude/templates/design.template.md` 구조로 `docs/phase-{{X}}-{{Y}}/02-design.md` 생성
 3. pdca-memory.json 업데이트: `phase = "design"`
 
-**출력 파일**: `docs/phase-{{X}}-{{Y}}/02-design.md`
-
 ### do [X.Y] — Do Phase
 
 1. Design 문서 존재 확인 (필수)
 2. `.claude/templates/do-guide.template.md` 기반으로 구현 가이드 **출력만** (파일 생성 없음)
 3. pdca-memory.json 업데이트: `phase = "do"`
-
-**출력만**: 파일 생성 없음
 
 ### analyze [X.Y] — Check Phase
 
@@ -94,12 +88,9 @@ allowed-tools:
    - §1~§3: Gap Detector 결과 (3차원 갭 테이블 + 매치율)
    - §4~§5: Code Analyzer 결과 (이슈 목록 + 컨벤션 준수)
 5. 매치율 산출: `Structural × 0.2 + Functional × 0.4 + Contract × 0.4`
-   - 호환 모드: 기존 데이터(matchRate)는 그대로 유지, 새 분석부터 새 공식 적용
 6. pdca-memory.json 업데이트: `phase = "check"`, `matchRate`
 7. pdca-status.json tasks/features 업데이트
 8. matchRate < 90% 또는 🔴 Critical 이슈 존재 시 → 이슈 알림 출력 (D 포맷)
-
-**출력 파일**: `docs/phase-{{X}}-{{Y}}/03-analysis.md`
 
 ### iterate [X.Y] — Act Phase
 
@@ -108,8 +99,6 @@ allowed-tools:
 3. 수정 후 자동 재분석 (analyze 재실행)
 4. 최대 5회 반복, matchRate ≥ 90% 도달 시 중단
 5. pdca-memory.json 업데이트: `matchRate`, pdca-status.json features `iterationCount++`
-
-**반복 제한**: 최대 5회
 
 ### report [X.Y] — Completion Report
 
@@ -120,8 +109,6 @@ allowed-tools:
 5. pdca-memory.json 업데이트: `phase = "completed"`, `completedAt`
 
 > ⚠️ 피드백 수신 시 즉시 반영하지 않음. 수정 계획 제시 → 사용자 승인 → 진행.
-
-**출력 파일**: `docs/phase-{{X}}-{{Y}}/04-report.md`
 
 ### archive [X.Y] — Archive Phase
 
@@ -232,28 +219,25 @@ Phase 1: XX% │ Phase 2: XX% │ Phase 3: XX% │ Phase 4: XX%
     │  plan.md (읽기) + design.template → design.md (생성)
     ▼
 /pdca do X.Y
-    │  design.md (읽기) + do-guide.template → 출력
+    │  design.md (읽기) + do-guide.template → 구현 가이드 출력
     ▼
   [구현 작업]
     ▼
 /pdca analyze X.Y
     │  design.md + 코드 (읽기) + analysis.template → analysis.md (생성)
-    │  matchRate 산출
     ▼
-  ┌── matchRate < 90% ──────────────┐
-  │  /pdca iterate X.Y               │
-  │  자동 수정 → 재분석 (최대 5회)    │
-  └── matchRate ≥ 90% ◄─────────────┘
-    ▼
+  matchRate < 90%? ──► /pdca iterate X.Y (자동 수정 → 재분석, 최대 5회)
+       │                                         │
+       ≥ 90%                              재분석 ┘
+       ▼
 /pdca report X.Y
-    │  전체 문서 (읽기) + report.template → report.md (생성)
+    │  docs/phase-X-Y/ (읽기) + report.template → report.md (생성)
     │  피드백 → 승인 대기 → 수정
     ▼
 /pdca archive X.Y
-    │  문서 이동 + 원본 삭제
+    │  docs/phase-X-Y/ → docs/archive/phase-X-Y/
     ▼
 /pdca cleanup
-    아카이브된 항목 정리
 ```
 
 ---
@@ -266,18 +250,6 @@ Phase 1: XX% │ Phase 2: XX% │ Phase 3: XX% │ Phase 4: XX%
 - **status 동기화**: 특정 시점에만 pdca-status.json 업데이트
 - **overview 재계산**: 동기화 시점에 tasks 배열에서 `phase !== null` (사이클 완료: completed/archived) 카운트하여 재집계
 
-### 동기화 시점
-
-| 시점 | 동기화 대상 |
-|------|-----------|
-| `status` 실행 | overview 재계산 (tasks 기반) |
-| `next` (사이클 완료 시) | overview 재계산 + priority 참조 |
-| `report` 실행 | tasks phase + features 업데이트 |
-| `archive` 실행 | tasks phase + features 업데이트 |
-| `plan` 실행 (신규 feature) | features 항목 생성 + 이전 feature flush |
-| `cleanup` 실행 | features 삭제 + tasks에 이력 추가 + memory 초기화 + overview 재계산 |
-| 작업 전환 (PDCA 외) | memory → tasks flush + memory null 초기화 |
-
 ### 쓰기 순서
 
 0. **Plan 모드 검사**: Plan 모드 활성 시 진행할 액션을 한 줄 알린 뒤 `ExitPlanMode` 호출,
@@ -285,7 +257,7 @@ Phase 1: XX% │ Phase 2: XX% │ Phase 3: XX% │ Phase 4: XX%
    메시지 형식: `PDCA <action> X.Y 쓰기 단계로 진입합니다. 승인 후 파일을 작성합니다.`
    (`<action>` ∈ `plan` / `design` / `analyze` / `report`)
 1. 작업 수행 (문서 생성/수정)
-2. pdca-status.json 업데이트 (동기화 시점인 경우만)
+2. pdca-status.json 업데이트 (상태 변경 요약에서 해당 액션이 "동기화:"인 경우만)
 3. pdca-memory.json 업데이트 (항상 마지막)
 
 > status 먼저 → memory 마지막. status 쓰기 실패 시 memory가 이전 상태를 유지하여 재시도 가능.
@@ -321,19 +293,15 @@ plan → design → do → check → iterate(반복) → report → archive → 
 
 | 상황 | tasks flush | memory 처리 |
 |------|-------------|-------------|
-| 일시 중단 (resume 예정) | 불필요 | 유지 |
+| 일시 중단 | 불필요 | 유지 |
 | 타 작업 전환 (PDCA 외 작업) | 현재 상태 flush | null 초기화 |
 | feature 전환 (`/pdca plan X.Y`) | 기존 전환 규칙 적용 | 새 feature로 덮어쓰기 |
-
-- **일시 중단**: memory 유지, flush 불필요
-- **타 작업 전환**: memory → tasks flush 후 memory 전부 null 초기화
-- **feature 전환**: 위 전환 규칙 적용
 
 ### 상태 변경 요약
 
 | 액션 | pdca-memory.json | pdca-status.json |
 |------|-----------------|-----------------|
-| plan | feature, phase="plan", startedAt | 동기화: features 항목 생성 |
+| plan | feature, phase="plan", startedAt | 동기화: features 항목 생성 + 이전 feature flush |
 | design | phase="design" | (지연) |
 | do | phase="do" | (지연) |
 | analyze | phase="check", matchRate | (지연) |
@@ -343,6 +311,7 @@ plan → design → do → check → iterate(반복) → report → archive → 
 | cleanup | 전부 null | 동기화: features 삭제, tasks에 이력(description/startedAt/completedAt) 추가, overview 재계산 |
 | status | (변경 없음) | 동기화: overview 재계산 |
 | next | (변경 없음) | 조건부 동기화: 사이클 완료 시 overview 재계산 |
+| 작업 전환 (PDCA 외) | 현재 상태 flush 후 null 초기화 | memory → tasks flush |
 
 ---
 
