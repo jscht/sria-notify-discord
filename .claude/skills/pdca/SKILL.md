@@ -37,6 +37,7 @@ allowed-tools:
 |------|------|----------|
 | `.claude/docs/pdca-memory.json` | 현재 작업 포인터 (~50 토큰) | next, 사이클 내 모든 액션 |
 | `.claude/docs/pdca-status.json` | 전체 상태 DB + 대시보드 | status, 사이클 완료 후 next |
+| `.claude/docs/suspended.json` | 타 작업 전환 시 임시 스냅샷 (memory + feature) | 작업 복귀 시 next |
 
 ## 액션
 
@@ -136,6 +137,8 @@ docs/archive/phase-{{X}}-{{Y}}/
 4. pdca-memory.json 전부 null 초기화
 5. overview 수치 갱신
 
+> 완료 후 `/pdca next` 호출 시 다음 feature 추천.
+
 ### status — Status Check
 
 1. pdca-status.json 읽기
@@ -186,116 +189,67 @@ Phase 1: XX% │ Phase 2: XX% │ Phase 3: XX% │ Phase 4: XX%
 **분기 로직**:
 
 1. pdca-memory.json 읽기
-2. `phase`가 completed/archived가 **아닌** 경우 (사이클 진행 중):
-   - memory만으로 다음 PDCA 단계 안내
-3. `phase`가 completed/archived이거나 memory가 비어있는 경우:
+   - (a) suspended.json 존재 시:
+     - `memory` 키 → pdca-memory.json으로 재삽입
+     - `feature` 키 → pdca-status.json features 항목으로 재삽입
+     - 파일 삭제 → 2번으로 진행
+2. `phase`가 있는 경우 (plan ~ archived):
+   - 사이클 흐름 테이블에서 다음 명령 안내
+3. memory가 비어있는 경우 (없음):
    - pdca-status.json의 priority, dependencies, tasks 읽기
-   - 다음 feature 선택 로직:
+   - 다음 feature 선택 로직 → `/pdca plan X.Y` 안내:
      1. **의존성 충족**: dependencies에서 선행 feature가 모두 completed/archived인지 확인
      2. **우선순위**: 충족된 feature 중 priority P0 → P1 → P2 순서
      3. **배열 순서**: 같은 등급 내 배열 순서 (= core 문서 순서)
      4. **제외**: phase가 null이 아닌 feature는 후보에서 제외 (이미 사이클 진입/완료)
-
-**Phase 가이드**:
-| 현재 | 다음 | 안내 |
-|------|------|------|
-| plan | design | `/pdca design X.Y` |
-| design | do | `/pdca do X.Y` |
-| do | analyze | `/pdca analyze X.Y` |
-| check (< 90%) | iterate | `/pdca iterate X.Y` |
-| check (≥ 90%) | report | `/pdca report X.Y` |
-| completed | archive | `/pdca archive X.Y` |
-| archived/없음 | plan | priority + dependencies 기반 다음 feature 추천 |
 
 ---
 
 ## PDCA 사이클 흐름
 
 ```
-/pdca plan X.Y
-    │  phase-X-core.md (읽기) + plan.template → plan.md (생성)
-    ▼
-/pdca design X.Y
-    │  plan.md (읽기) + design.template → design.md (생성)
-    ▼
-/pdca do X.Y
-    │  design.md (읽기) + do-guide.template → 구현 가이드 출력
-    ▼
-  [구현 작업]
-    ▼
-/pdca analyze X.Y
-    │  design.md + 코드 (읽기) + analysis.template → analysis.md (생성)
-    ▼
-  matchRate < 90%? ──► /pdca iterate X.Y (자동 수정 → 재분석, 최대 5회)
-       │                                         │
-       ≥ 90%                              재분석 ┘
-       ▼
-/pdca report X.Y
-    │  docs/phase-X-Y/ (읽기) + report.template → report.md (생성)
-    │  피드백 → 승인 대기 → 수정
-    ▼
-/pdca archive X.Y
-    │  docs/phase-X-Y/ → docs/archive/phase-X-Y/
-    ▼
-/pdca cleanup
+plan → design → do → [구현] → analyze
+  matchRate < 90%? → iterate (재분석, 최대 5회)
+  matchRate ≥ 90%? → report → archive → cleanup
 ```
+
+| 현재 phase | 다음 명령 |
+|-----------|---------|
+| plan | `/pdca design X.Y` |
+| design | `/pdca do X.Y` |
+| do | `/pdca analyze X.Y` |
+| check (< 90%) | `/pdca iterate X.Y` |
+| check (≥ 90%) | `/pdca report X.Y` |
+| completed | `/pdca archive X.Y` |
+| archived | `/pdca cleanup` |
+| 없음 | `/pdca next` |
 
 ---
 
 ## 쓰기 프로토콜
 
-### 원칙: memory 우선, status 지연 동기화
-
-- **매 액션**: pdca-memory.json만 업데이트 (~50 토큰)
-- **status 동기화**: 특정 시점에만 pdca-status.json 업데이트
-- **overview 재계산**: 동기화 시점에 tasks 배열에서 `phase !== null` (사이클 완료: completed/archived) 카운트하여 재집계
-
-### 쓰기 순서
-
-0. **Plan 모드 검사**: Plan 모드 활성 시 진행할 액션을 한 줄 알린 뒤 `ExitPlanMode` 호출,
-   승인 시 1번부터 진행. 거절 시 쓰기 생략하고 분석 결과만 출력.
-   메시지 형식: `PDCA <action> X.Y 쓰기 단계로 진입합니다. 승인 후 파일을 작성합니다.`
-   (`<action>` ∈ `plan` / `design` / `analyze` / `report`)
-1. 작업 수행 (문서 생성/수정)
-2. pdca-status.json 업데이트 (상태 변경 요약에서 해당 액션이 "동기화:"인 경우만)
-3. pdca-memory.json 업데이트 (항상 마지막)
+- **매 액션**: pdca-memory.json만 업데이트 (~50 토큰), pdca-status.json은 특정 시점에만 동기화
+- **overview 재계산**: 동기화 시점에 tasks 배열에서 `phase !== null` 카운트하여 재집계
+- **쓰기 순서**: ① 작업 수행 → ② status 동기화 (해당 액션만) → ③ memory 업데이트 (항상 마지막)
+- **Plan 모드**: 활성 시 `PDCA <action> X.Y 쓰기 단계로 진입합니다.` 알림 후 ExitPlanMode 호출, 거절 시 분석 결과만 출력 (`<action>` ∈ plan/design/analyze/report)
 
 > status 먼저 → memory 마지막. status 쓰기 실패 시 memory가 이전 상태를 유지하여 재시도 가능.
 
-### 상태 전이 규칙
+**상태 전이**: `(없음)→plan→design→do→check⇄iterate→report→archive→cleanup`
+허용된 전이만 수행, 위반 시 경고 후 중단.
+- check → iterate (matchRate < 90%) / report (≥ 90%)
+- archived → cleanup 또는 plan (새 feature)
 
-허용된 전이만 수행. 위반 시 사용자에게 경고 후 중단.
-
-```
-plan → design → do → check → iterate(반복) → report → archive → cleanup
-                              ↑_______________|
-                              (matchRate < 90%)
-```
-
-| 현재 phase | 허용되는 다음 phase |
-|-----------|-------------------|
-| (없음) | plan |
-| plan | design |
-| design | do |
-| do | check |
-| check | iterate, report (matchRate ≥ 90%) |
-| iterate | check (재분석) |
-| completed | archive |
-| archived | cleanup, plan (새 feature) |
-
-### feature 전환 규칙
-
-새 feature로 `/pdca plan X.Y` 실행 시:
-1. 현재 memory의 feature 상태를 pdca-status.json에 flush
-2. memory를 새 feature로 덮어쓰기
-
-### 작업 중단 규칙
+### 전환·중단 규칙
 
 | 상황 | tasks flush | memory 처리 |
 |------|-------------|-------------|
 | 일시 중단 | 불필요 | 유지 |
-| 타 작업 전환 (PDCA 외 작업) | 현재 상태 flush | null 초기화 |
-| feature 전환 (`/pdca plan X.Y`) | 기존 전환 규칙 적용 | 새 feature로 덮어쓰기 |
+| 타 작업 전환 (PDCA 외 작업) | features에 flush 후 해당 항목을 suspended.json[feature]로 이동 (features에서 제거) | suspended.json[memory] 저장 후 null 초기화 (단일 슬롯, 하나의 작업만 보관) |
+| feature 전환 (`/pdca plan X.Y`) | 기존 feature flush | 새 feature로 덮어쓰기 |
+
+> suspended.json이 이미 존재하면 덮어쓰기 전에 기존 내용(feature, phase)을 사용자에게 알리고 확인 대기.
+> Claude는 사용자의 PDCA 외 작업 의도(예: "다른 작업하자", "잠깐 X 보고 올게")를 감지하면 진행 중 작업 정보를 제시하고 전환 확인을 받은 뒤 본 절차를 자율 수행한다. (별도 슬래시 명령 없음)
 
 ### 상태 변경 요약
 
@@ -311,7 +265,7 @@ plan → design → do → check → iterate(반복) → report → archive → 
 | cleanup | 전부 null | 동기화: features 삭제, tasks에 이력(description/startedAt/completedAt) 추가, overview 재계산 |
 | status | (변경 없음) | 동기화: overview 재계산 |
 | next | (변경 없음) | 조건부 동기화: 사이클 완료 시 overview 재계산 |
-| 작업 전환 (PDCA 외) | 현재 상태 flush 후 null 초기화 | memory → tasks flush |
+| 작업 전환 (PDCA 외) | suspended.json[memory] 저장 후 null 초기화 | features 해당 항목을 suspended.json[feature]로 이동 (features에서 제거) |
 
 ---
 

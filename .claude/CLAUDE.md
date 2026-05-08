@@ -48,7 +48,7 @@ Slash commands are shortcuts for users who want to explicitly trigger specific s
 
 1. `/pdca` 스킬 사용 여부를 먼저 물어본다:
    "PDCA 스킬(`/pdca plan X.Y`)을 사용하시겠습니까?"
-2. 동의하면: `pdca-status.json`에서 Phase 번호 확인 후 `/pdca plan X.Y` 스킬 실행
+2. 동의하면: `/pdca next`로 다음 feature 확인 후 `/pdca plan X.Y` 스킬 실행
 3. 거부하면: 기존 PDCA 문서(`docs/phase-X-Y/`)가 있으면 읽고 진행, 없으면 바로 구현 진행
 
 ## 참조 문서 (필요 시 읽기)
