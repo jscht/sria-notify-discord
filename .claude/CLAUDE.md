@@ -42,6 +42,15 @@ Slash commands are shortcuts for users who want to explicitly trigger specific s
 - 세션 종료 시 진행 상황을 todo.md에 반영 (체크박스 갱신, 완료 섹션 이동)
 - 자세한 액션은 `/todo` 스킬 참조
 
+## 설계·계획·기능 구현 요청 처리
+
+사용자가 설계, 계획, 기능 구현을 요청하는 경우:
+
+1. `/pdca` 스킬 사용 여부를 먼저 물어본다:
+   "PDCA 스킬(`/pdca plan X.Y`)을 사용하시겠습니까?"
+2. 동의하면: `/pdca next`로 다음 feature 확인 후 `/pdca plan X.Y` 스킬 실행
+3. 거부하면: 기존 PDCA 문서(`docs/phase-X-Y/`)가 있으면 읽고 진행, 없으면 바로 구현 진행
+
 ## 참조 문서 (필요 시 읽기)
 
 - README.md — 프로젝트 개요
