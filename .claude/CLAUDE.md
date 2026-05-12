@@ -16,6 +16,12 @@ Slash commands are shortcuts for users who want to explicitly trigger specific s
 - Not in docs → Ask user
 - Never guess
 
+## 응답 스타일
+
+- 설계, 분석, 검토 요청이 아닌 경우 **짧게 답변** (1~3문장 또는 핵심 항목만)
+- 단순 사실 확인, yes/no 질문, 상태 조회는 한 문장으로 종료
+- 코드 변경 후 요약, 결정 사항 보고도 2~3줄 이내
+
 ## 기술 스택
 
 - @.claude/docs/tech-stack.md
@@ -27,6 +33,14 @@ Slash commands are shortcuts for users who want to explicitly trigger specific s
 ## 언어
 
 - 코드 주석, 커밋 메시지, 문서: 한국어, 영어
+
+## 일일 태스크 트래커
+
+- `.claude/docs/todo.md` — 일일 ad-hoc 작업 체크리스트
+- 사용자가 "TODO 첫 번째부터" 등으로 지시하면 이 파일을 먼저 읽고 가장 위 미완료 항목 처리
+- Phase 단위 큰 작업은 TODO가 아닌 PDCA 사이클 사용 (`/pdca plan X.Y`)
+- 세션 종료 시 진행 상황을 todo.md에 반영 (체크박스 갱신, 완료 섹션 이동)
+- 자세한 액션은 `/todo` 스킬 참조
 
 ## 참조 문서 (필요 시 읽기)
 
