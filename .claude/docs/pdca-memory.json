@@ -1,8 +1,8 @@
 {
-  "feature": null,
-  "phase": null,
+  "feature": "phase-1-4-notification-store",
+  "phase": "do",
   "matchRate": null,
-  "startedAt": null,
+  "startedAt": "2026-05-13",
   "completedAt": null,
-  "description": null
+  "description": "Notification settings Firestore store + AlarmSubscription 타입 단일화"
 }

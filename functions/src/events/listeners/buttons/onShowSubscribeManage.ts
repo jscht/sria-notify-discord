@@ -1,6 +1,6 @@
 import { ButtonInteraction } from "discord.js";
 import { alertRegionEditButtons } from "../../../providers/discord/builder/buttons/alertRegionEditButtons";
-import { AlertModeSelectAction } from "../../../constants/alertModeSelectAction";
+import { AlertMode } from "@/common/types";
 import { onShowSubscribeEnable } from "./onShowSubscribeEnable";
 import { SubscribeStatus } from "../../../constants/userAlertSetting";
 
@@ -18,7 +18,7 @@ export async function onShowSubscribeManage(interaction: ButtonInteraction) {
     return onShowSubscribeEnable(interaction);
   }
 
-  const isSelectedRegionMode = currentMode === AlertModeSelectAction.SELECTED;
+  const isSelectedRegionMode = currentMode === AlertMode.SELECTED;
   const buttons = alertRegionEditButtons(isSelectedRegionMode);
   await interaction.update({
     content: "⚙️ 지역 설정을 시작할게요.\n(전체 지역 모드일 땐 제거 버튼이 비활성화됩니다.)",

@@ -48,7 +48,7 @@ export type ExtractByPrefix<P extends string> =
 /** "REGION_EDIT:ADD" | "REGION_EDIT:REMOVE" | "REGION_EDIT:CLEAR" */
 export type RegionEditActionId = ExtractByPrefix<typeof ALERT_REGION_EDIT_PREFIX>;
 
-/** "ALERT_MODE:ALL" | "ALERT_MODE:SELECTED_REGIONS" */
+/** "ALERT_MODE:ALL" | "ALERT_MODE:SELECTED" */
 export type AlertModeActionId = ExtractByPrefix<typeof ALERT_MODE_SELECT_PREFIX>;
 
 /** "REGION_MODE_CHANGE:CONFIRM" | "REGION_MODE_CHANGE:CANCEL" */

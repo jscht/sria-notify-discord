@@ -1,13 +1,13 @@
 import { SlashCommandBuilder, APIApplicationCommandOptionChoice } from "discord.js";
 import { DiscordBotCommand } from "@/providers/discord/constants";
-import { AlertModeSelectAction } from "@/features/alarmSubscribe/constants";
+import { AlertMode } from "@/common/types";
 import type { SubscribeCommand } from "@/features/alarmSubscribe/types";
 
 export const MAX_REGION_COUNT = 2;
 
 const subscribeChoices: APIApplicationCommandOptionChoice<SubscribeCommand>[] = [
-  { name: "🌐 전체 지역 알림 받기", value: AlertModeSelectAction.ALL },
-  { name: "📍 내가 선택한 지역만 알림 받기", value: AlertModeSelectAction.SELECTED },
+  { name: "🌐 전체 지역 알림 받기", value: AlertMode.ALL },
+  { name: "📍 내가 선택한 지역만 알림 받기", value: AlertMode.SELECTED },
 ];
 
 export const alarmSubscribeCommand = new SlashCommandBuilder()

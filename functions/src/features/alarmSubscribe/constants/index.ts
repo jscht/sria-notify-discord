@@ -4,8 +4,8 @@
  */
 
 // Alert Mode Select
-export { 
-  ALERT_MODE_SELECT_PREFIX, AlertModeSelectAction, alertModeSelectActionId 
+export {
+  ALERT_MODE_SELECT_PREFIX, alertModeSelectActionId
 } from "./alertModeSelectAction";
 
 // Alert Region Edit

@@ -2,7 +2,7 @@ import { ButtonInteraction, CommandInteraction } from "discord.js";
 import { SubscribeCommand } from "../../../constants/alarmSubscribeCommand";
 import { cityNameConverter } from "../../../utils/cityName";
 import { CityKo } from "../../../types/city";
-import { AlertModeSelectAction } from "../../../constants/alertModeSelectAction";
+import { AlertMode } from "@/common/types";
 
 export type SubscribeRemovePayload = {
   interaction: CommandInteraction | ButtonInteraction;
@@ -21,7 +21,7 @@ export async function subscribeRemove({ interaction, mode, region }: SubscribeRe
   }
 
   // 이 작업은 선택 지역 구독 중 일 때만 사용됨.
-  if (mode === AlertModeSelectAction.ALL) {
+  if (mode === AlertMode.ALL) {
     await interaction.editReply(`⚠️ 모든 지역 알림 설정 중이라 이 작업을 수행할 수 없어요.`);
     return;
   }
@@ -38,7 +38,7 @@ export async function subscribeRemove({ interaction, mode, region }: SubscribeRe
 
   const updatedRegions = currentRegions.filter((rg: string) => rg !== koreanRegion);
 
-  const alertSetting = buildAlertSetting(userId, updatedRegions, "SELECTED_REGIONS", mode)
+  const alertSetting = buildAlertSetting(userId, updatedRegions, AlertMode.SELECTED, mode)
 
   await updateUserAlertSettings(alertSetting);
   await interaction.editReply(

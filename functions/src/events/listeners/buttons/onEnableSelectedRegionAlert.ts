@@ -3,7 +3,7 @@ import { ButtonInteraction, MessageFlags } from "discord.js";
 import { isValidCityName } from "../../../utils/cityName";
 import { chooseEunNeun } from "../../../utils/koreanJosaUtils";
 import { AlarmSubscribeActions, SubscribeCommand } from "../../../constants/alarmSubscribeCommand";
-import { AlertModeSelectAction } from "../../../constants/alertModeSelectAction";
+import { AlertMode } from "@/common/types";
 import { SubscribeStatus } from "../../../constants/userAlertSetting";
 
 export async function onEnableSelectedRegionAlert(interaction: ButtonInteraction) {
@@ -24,7 +24,7 @@ export async function onEnableSelectedRegionAlert(interaction: ButtonInteraction
 
     const region = cityName as string | undefined;
 
-    const mode: SubscribeCommand = AlertModeSelectAction.SELECTED;
+    const mode: SubscribeCommand = AlertMode.SELECTED;
     const userId = interaction.user.id;
     const currentMode: SubscribeStatus = await getUserAlertMode(userId);
 

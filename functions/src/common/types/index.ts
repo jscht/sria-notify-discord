@@ -15,6 +15,10 @@ export type { Job, HashedString, JobHashes, JobDiffResult } from "./job.d";
 // Response Types
 export type { ResponseHandler } from "./responseHandler.d";
 
+// Alarm Subscription Types
+export { AlertMode } from "./alarmSubscription";
+export type { AlarmSubscription, AlarmSubscriptionInput } from "./alarmSubscription";
+
 // Firebase Admin Types (augmentation)
 import "./firebase-admin.d";
 

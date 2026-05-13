@@ -11,7 +11,7 @@ import { showSubscribeOptionButtons } from "../../../providers/discord/builder/b
  *    => onShowSubscribeManage  
  *    • 사용자가 선택한 모드가 최초 모드로 바로 설정된다.
  *      - "ALL" → 전체 지역 알림을 즉시 활성화
- *      - "SELECTED_REGIONS" → 선택 지역 알림 설정으로 즉시 진입
+ *      - "SELECTED" → 선택 지역 알림 설정으로 즉시 진입
  *
  * 2) 기존 설정 모드와 요청 모드가 동일한 경우 (mode === currentMode)  
  *    => onEnableAllRegionAlert, onEnableSelectedRegionAlert  

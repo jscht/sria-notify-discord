@@ -1,7 +1,7 @@
 import "@/common/utils/systemLogger";
 import { ButtonInteraction, MessageFlags } from "discord.js";
 import { SubscribeCommand } from "../../../constants/alarmSubscribeCommand";
-import { AlertModeSelectAction } from "../../../constants/alertModeSelectAction";
+import { AlertMode } from "@/common/types";
 import { SubscribeStatus } from "../../../constants/userAlertSetting";
 import { showConfirmChangeAlertModeButtons } from "../../../providers/discord/builder/buttons/showConfirmChangeAlertModeButtons";
 
@@ -9,7 +9,7 @@ export async function onEnableAllRegionAlert(interaction: ButtonInteraction) {
   try {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-    const mode: SubscribeCommand = AlertModeSelectAction.ALL;
+    const mode: SubscribeCommand = AlertMode.ALL;
     const userId = interaction.user.id;
     const currentMode: SubscribeStatus = await getUserAlertMode(userId);
 
