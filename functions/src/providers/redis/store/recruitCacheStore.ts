@@ -1,7 +1,7 @@
 import { RedisClientType } from "redis";
 import { RecruitKeyManager } from "../key/recruitKeyManager";
 import type { RecruitData } from "@/crawlers/types";
-import { CityEn } from "../../../types/city";
+import type { CityEn } from "@/common/types";
 
 // #region Redis Functions...
 // #endregion

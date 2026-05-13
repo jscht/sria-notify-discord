@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from "discord.js";
-import { DiscordBotCommand } from "@/common/constants";
+import { DiscordBotCommand } from "@/providers/discord/constants";
 
 /**
  * Recruit Request Slash Command

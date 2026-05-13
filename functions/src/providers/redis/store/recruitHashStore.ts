@@ -1,6 +1,6 @@
 import { RedisClientType } from "redis";
 import { RecruitKeyManager } from "../key/recruitKeyManager";
-import { CityEn } from "../../../types/city";
+import type { CityEn } from "@/common/types";
 
 export class RecruitHashStore {
   constructor(

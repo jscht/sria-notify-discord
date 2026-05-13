@@ -1,6 +1,6 @@
 import "@/common/utils/systemLogger";
 import { getFirestore } from "firebase-admin/firestore";
-import { ProxyDoc } from "../../../types/proxyData";
+import type { ProxyDoc } from "@/crawlers/types";
 import { FirebaseCollection } from "./../constants/collections";
 
 export class ProxyStore {

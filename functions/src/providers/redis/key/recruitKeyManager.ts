@@ -1,4 +1,4 @@
-import { CityEn } from "../../../types/city";
+import type { CityEn } from "@/common/types";
 import { SERVICE_NAME } from "../constants/serviceName";
 import { BaseKeyManager } from "./baseKeyManager";
 

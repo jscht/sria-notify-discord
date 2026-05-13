@@ -1,27 +1,6 @@
-import { ButtonInteraction } from "discord.js";
-import { alertRegionEditButtons } from "../../../providers/discord/builder/buttons/alertRegionEditButtons";
-import { AlertMode } from "@/common/types";
-import { onShowSubscribeEnable } from "./onShowSubscribeEnable";
-import { SubscribeStatus } from "../../../constants/userAlertSetting";
+import type { ButtonInteraction } from "discord.js";
 
-export async function onShowSubscribeManage(interaction: ButtonInteraction) {
-  const userId = interaction.user.id;
-  const currentMode: SubscribeStatus = await getUserAlertMode(userId);
-
-  // 구독 모드가 설정되지 않은 경우 → 안내 후 구독 활성화 플로우로 이동
-  if (currentMode === null) {
-    await interaction.update({
-      content: "🔔 알림을 먼저 활성화해주세요!",
-      components: []
-    });
-
-    return onShowSubscribeEnable(interaction);
-  }
-
-  const isSelectedRegionMode = currentMode === AlertMode.SELECTED;
-  const buttons = alertRegionEditButtons(isSelectedRegionMode);
-  await interaction.update({
-    content: "⚙️ 지역 설정을 시작할게요.\n(전체 지역 모드일 땐 제거 버튼이 비활성화됩니다.)",
-    components: [buttons]
-  });
+export async function onShowSubscribeManage(_interaction: ButtonInteraction): Promise<void> {
+  // Phase 1.5: SubscriptionService 연동으로 구현 예정
+  throw new Error("onShowSubscribeManage: not yet implemented (Phase 1.5)");
 }

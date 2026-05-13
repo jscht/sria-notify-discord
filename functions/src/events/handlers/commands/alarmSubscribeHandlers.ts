@@ -1,4 +1,4 @@
-import { DiscordBotCommand } from "@/common/constants";
+import { DiscordBotCommand } from "@/providers/discord/constants";
 import { onAlarmSubscribe } from "../../listeners/commands/onAlarmSubscribe";
 
 export const alarmSubscribeCommandHandlers = {

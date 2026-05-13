@@ -1,6 +1,6 @@
 import {
   Events, Interaction, CommandInteraction, MessageFlags,
-  ButtonInteraction, ModalSubmitInteraction, StringSelectMenuInteraction
+  ButtonInteraction, ModalSubmitInteraction
 } from "discord.js";
 import { DiscordEventHandler } from "./discordEventHandler";
 import { commandHandlers } from "./handlers/commands";
@@ -46,16 +46,7 @@ export const onInteraction = (): DiscordEventHandler => ({
         return;
       }
 
-      /** 🔹 셀렉트 메뉴 (String Select Menu Interaction) */
-      if (interaction.isStringSelectMenu()) {
-        const actionId = interaction.customId;
-        const handler = stringSelectHandler[actionId];
-        if (handler) {
-          await handler(interaction as StringSelectMenuInteraction);
-        }
-        return;
-      }
-
+      // Phase 1.5: StringSelectMenu 핸들러는 SubscriptionService 연동 시 도입 예정
     } catch (error) {
       if (interaction.isRepliable()) {
         await interaction.reply({

@@ -1,5 +1,5 @@
 import { ActionRowBuilder, ButtonBuilder } from "discord.js";
-import { subscribeOptionActionId } from "@/common/constants";
+import { subscribeOptionActionId } from "@/features/alarmSubscribe/constants";
 
 /**
  * 알림 옵션 선택 버튼
