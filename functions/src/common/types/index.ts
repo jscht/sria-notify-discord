@@ -19,8 +19,5 @@ export type { ResponseHandler } from "./responseHandler.d";
 export { AlertMode } from "./alarmSubscription";
 export type { AlarmSubscription, AlarmSubscriptionInput } from "./alarmSubscription";
 
-// Firebase Admin Types (augmentation)
-import "./firebase-admin.d";
-
-// Global Types
-import "./global.d";
+// Note: firebase-admin.d.ts / global.d.ts 는 tsconfig.include 로 자동 픽업.
+// 런타임 require 로 변환되지 않도록 side-effect import 를 두지 않음.

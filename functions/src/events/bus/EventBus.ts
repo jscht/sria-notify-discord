@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import type { EventType } from './types';
 import { EVENT_BUS_CONFIG } from './constants';
 import { eventLogger } from './utils/eventLogger';
