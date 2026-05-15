@@ -1,48 +1,26 @@
 import "@/common/utils/systemLogger";
 /**
  * Initialize Worker Middleware
- * 애플리케이션 초기화 및 스케줄러 시작
+ * Provider init이 완료될 때까지 요청을 보류하는 게이트.
+ * 실제 init은 모듈 로드 시점에 app/index.ts에서 시작되며,
+ * initializeProviders()는 메모이즈되어 있어 여기서 await만 한다.
  */
 
-import { initializeSchedulers, setupGracefulShutdown } from "@/crawlers";
+import { initializeProviders } from "@/providers";
 import type { Request, Response, NextFunction } from "express";
-import { CRAWL_MODE } from "../constants";
 
-let isInitialized = false;
+// 스케줄러는 별도 의사결정 영역으로 분리됨 (현재 비활성화).
+// 활성화 시 app/index.ts의 eager init과 동일한 위치에서 시작할 것.
+// import { initializeSchedulers, setupGracefulShutdown } from "@/crawlers";
+// import { CRAWL_MODE } from "../constants";
 
-/**
- * 애플리케이션 초기화 미들웨어
- * 한 번만 실행되며 Provider 초기화 및 스케줄러를 시작합니다.
- */
 export default async function initializeWorker(
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> {
-  if (isInitialized) {
-    return next();
-  }
-
   try {
-    // 동적 import로 순환 참조 방지
-    const { initializeProviders } = await import("@/providers");
-
-    // Provider 초기화 (Firebase, Redis, Discord)
     await initializeProviders();
-
-    // 스케줄러 초기화
-    // const manager = initializeSchedulers({
-    //   recruitInterval: 4 * 60 * 60 * 1000, // 4시간 간격
-    //   recruitMode: CRAWL_MODE.DUMMY,
-    //   proxyInterval: 6 * 60 * 60 * 1000,   // 6시간 간격
-    // });
-
-    // Graceful shutdown 설정
-    // setupGracefulShutdown(manager);
-
-    isInitialized = true;
-    globalLogger.info("✅ Initialization completed successfully.");
-
     next();
   } catch (error) {
     next(error);
