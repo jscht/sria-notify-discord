@@ -16,16 +16,7 @@
 ### 주요 파일
 
 #### package.json
-```json
-{
-  "scripts": {
-    "dev": "concurrently \"npm run build:watch\" \"nodemon --watch lib --ext js --exec \\\"npm run emulator\\\"\"",
-    "build": "tsc -p tsconfig.build.json",
-    "deploy": "firebase deploy --only functions",
-    "register:commands": "tsx src/providers/discord/register-commands.ts"
-  }
-}
-```
+- 스크립트 정의는 [`package.json`](./package.json) 참조 (SoT)
 
 #### tsconfig.json
 - 경로 매핑: `@/common`, `@/services`, `@/providers`, `@/events`, `@/events/eventBus` 등
@@ -53,7 +44,7 @@ DISCORD_CLIENT_ID=your-client-id
 ADMIN_USER_ID=your-discord-user-id
 
 # Redis
-REDIS_URL=redis://localhost:6379
+REDIS_URL=redis://127.0.0.1:6379
 REDIS_PASSWORD=your-redis-password
 
 # Hugging Face (Phase 4)
