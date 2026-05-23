@@ -241,7 +241,7 @@ DISCORD_CLIENT_ID=your-client-id
 ADMIN_USER_ID=your-discord-user-id
 
 # Redis
-REDIS_URL=redis://localhost:6379
+REDIS_URL=redis://127.0.0.1:6379
 REDIS_PASSWORD=your-redis-password
 
 # Hugging Face
