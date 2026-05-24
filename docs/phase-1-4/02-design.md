@@ -284,7 +284,7 @@ export class SubscriptionStore {
   }
 
   async getNotificationSettings(userId: string): Promise<AlarmSubscription | null>;
-  async setNotificationSettings(userId: string, input: AlarmSubscriptionInput): Promise<AlarmSubscription>;
+  async setNotificationSettings(userId: string, input: AlarmSubscriptionInput): Promise<void>;
   async updateAlertMode(userId: string, alertMode: AlertMode): Promise<void>;
   async updateAlertRegions(userId: string, regions: CityEn[]): Promise<void>;
   async toggleNotificationEnabled(userId: string, enabled: boolean): Promise<void>;
@@ -313,7 +313,8 @@ async getNotificationSettings(userId: string): Promise<AlarmSubscription | null>
   return toAlarmSubscription(userId, snap.data()!);
 }
 
-async setNotificationSettings(userId: string, input: AlarmSubscriptionInput): Promise<AlarmSubscription> {
+// 쓰기 전용(CQS) — 저장 후 상태가 필요하면 호출자가 getNotificationSettings 호출.
+async setNotificationSettings(userId: string, input: AlarmSubscriptionInput): Promise<void> {
   const ref = this.getSettingsRef(userId);
   const now = Timestamp.now();
   const snap = await ref.get();
@@ -324,30 +325,21 @@ async setNotificationSettings(userId: string, input: AlarmSubscriptionInput): Pr
 
   await ref.set(docData, { merge: true });
   providerLogger.info("Notification settings saved", { userId, alertMode: input.alertMode });
-
-  const final = await ref.get();
-  return toAlarmSubscription(userId, final.data()!);
 }
 
+// 부분 업데이트는 update() 사용 — 문서 없으면 NOT_FOUND throw.
+// set(merge:true)의 upsert가 createdAt 누락 문서를 만드는 것을 차단하여
+// "문서 생성은 setNotificationSettings만" 계약(아래 에러 처리)을 런타임에 강제.
 async updateAlertMode(userId: string, alertMode: AlertMode): Promise<void> {
-  await this.getSettingsRef(userId).set(
-    { alertMode, updatedAt: Timestamp.now() },
-    { merge: true }
-  );
+  await this.getSettingsRef(userId).update({ alertMode, updatedAt: Timestamp.now() });
 }
 
 async updateAlertRegions(userId: string, regions: CityEn[]): Promise<void> {
-  await this.getSettingsRef(userId).set(
-    { regions, updatedAt: Timestamp.now() },
-    { merge: true }
-  );
+  await this.getSettingsRef(userId).update({ regions, updatedAt: Timestamp.now() });
 }
 
 async toggleNotificationEnabled(userId: string, enabled: boolean): Promise<void> {
-  await this.getSettingsRef(userId).set(
-    { enabled, updatedAt: Timestamp.now() },
-    { merge: true }
-  );
+  await this.getSettingsRef(userId).update({ enabled, updatedAt: Timestamp.now() });
 }
 
 async getAllActiveSubscribers(): Promise<AlarmSubscription[]> {
@@ -369,6 +361,7 @@ async getAllActiveSubscribers(): Promise<AlarmSubscription[]> {
 - Firestore 작업 실패 시 throw 전파 (호출자가 SystemError 패턴으로 변환). Phase 1.4 store 계층은 raw error 통과.
 - `getNotificationSettings`은 문서 없음을 정상 흐름으로 처리 (`null` 반환).
 - 기본값 자동 생성 안 함 — 명시적 `setNotificationSettings` 호출이 있어야 문서 생성.
+- 부분 업데이트 3종은 `update()` 사용 — 문서 미존재 시 NOT_FOUND throw로 위 "자동 생성 안 함" 계약을 강제. (Phase 1.4 분석 이슈 #1 반영, 2026-05-24. 초안 pseudo-code의 `set(merge:true)`는 이 계약과 모순되어 정정됨)
 
 ---
 
