@@ -1,8 +1,8 @@
 {
-  "feature": "phase-1-4-notification-store",
-  "phase": "completed",
-  "matchRate": 100.0,
-  "startedAt": "2026-05-13",
-  "completedAt": "2026-05-24",
-  "description": "Notification settings Firestore store + AlarmSubscription 타입 단일화"
+  "feature": null,
+  "phase": null,
+  "matchRate": null,
+  "startedAt": null,
+  "completedAt": null,
+  "description": null
 }
