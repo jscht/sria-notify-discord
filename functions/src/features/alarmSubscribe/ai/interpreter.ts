@@ -1,4 +1,5 @@
 import type { AlarmIntent } from "./intents";
+import type { AlertMode } from "@/common/types";
 
 /**
  * Alarm Subscribe Feature - Interpreter
@@ -9,7 +10,7 @@ export interface AlarmInterpretResult {
   intent: AlarmIntent | null;
   entities: {
     regions?: string[];
-    mode?: "ALL" | "SELECTED_REGIONS";
+    mode?: AlertMode;
   };
   confidence: number;
 }

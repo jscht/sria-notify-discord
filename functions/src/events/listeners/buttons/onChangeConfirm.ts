@@ -1,16 +1,6 @@
-import { ButtonInteraction } from "discord.js";
-import { alertRegionEditButtons } from "../../../providers/discord/builder/buttons/alertRegionEditButtons";
+import type { ButtonInteraction } from "discord.js";
 
-export async function onChangeConfirm(interaction: ButtonInteraction) {
-  const userId = interaction.user.id;
-  const currentMode: SubscribeStatus = await getUserAlertMode(userId);
-
-  
-
-  const isSelectedRegionMode = currentMode === AlertModeSelectAction.SELECTED;
-  const buttons = alertRegionEditButtons();
-  await interaction.update({
-    content: "✅ 선택 지역 알림 모드 설정을 시작할게요.",
-    components: [buttons]
-  });
+export async function onChangeConfirm(_interaction: ButtonInteraction): Promise<void> {
+  // Phase 1.5: SubscriptionService 연동으로 구현 예정
+  throw new Error("onChangeConfirm: not yet implemented (Phase 1.5)");
 }

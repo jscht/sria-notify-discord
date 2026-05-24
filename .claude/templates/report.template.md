@@ -117,10 +117,11 @@
 
 ## 7. 다음 단계
 
-1. [ ] 사용자 피드백 확인 및 승인
-2. [ ] Git 커밋 및 PR 생성 (dev 브랜치)
-3. [ ] pdca-status.json 업데이트
-4. [ ] `/pdca archive {{X.Y}}` 실행
+1. [ ] 사용자 피드백 확인 및 승인 (✅ 완료)
+2. [ ] `/pdca archive {{X.Y}}` 실행 (문서 아카이브)
+3. [ ] `/pdca cleanup` 실행 (status JSON 정리 + memory 초기화)
+4. [ ] Git 커밋(논리 단위) + push + PR 생성 (base dev) — archive/cleanup 변경 포함
+5. [ ] PR 머지 → dev 동기화 → `/pdca next`
 
 ---
 

@@ -2,10 +2,10 @@
   "name": "functions",
   "scripts": {
     "lint": "eslint --ext .js,.ts .",
-    "build": "tsc -p tsconfig.build.json",
-    "build:watch": "tsc -p tsconfig.build.json --watch",
+    "build": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
+    "build:watch": "concurrently \"tsc -p tsconfig.build.json --watch\" \"tsc-alias -p tsconfig.build.json --watch\"",
     "emulator": "firebase emulators:start --only functions",
-    "dev": "concurrently \"npm run build:watch\" \"nodemon --watch lib --ext js --exec \\\"npm run emulator\\\"\"",
+    "dev": "concurrently -k -n tsc,alias,emu \"tsc -p tsconfig.build.json --watch\" \"tsc-alias -p tsconfig.build.json --watch\" \"nodemon --watch lib --ext js --delay 2000ms --exec \\\"firebase emulators:start --only functions\\\"\"",
     "serve": "npm run build && firebase emulators:start --only functions",
     "shell": "npm run build && firebase functions:shell",
     "start": "npm run shell",
@@ -39,6 +39,7 @@
     "eslint-plugin-import": "^2.25.4",
     "firebase-functions-test": "^3.1.0",
     "nodemon": "^3.1.9",
+    "tsc-alias": "^1.8.17",
     "tsx": "^4.19.4",
     "typescript": "5.1"
   },

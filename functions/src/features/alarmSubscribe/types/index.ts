@@ -5,5 +5,5 @@
 // Alarm Subscribe Command
 export type { SubscribeCommand, AlarmSubscribeAction } from "./alarmSubscribeCommand";
 
-// Alarm Subscription Data
-export type { AlarmSubscription, AlarmSubscriptionInput } from "./alarmSubscription";
+// Alarm Subscription Data (canonical: @/common/types)
+export type { AlarmSubscription, AlarmSubscriptionInput } from "@/common/types";

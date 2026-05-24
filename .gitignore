@@ -82,3 +82,6 @@ user-memo.md
 
 # Daily TODO tracker (Claude Code)
 .claude/docs/todo.md
+
+# Local verification scripts (not part of deploy)
+functions/scripts/

@@ -15,8 +15,9 @@ export type { Job, HashedString, JobHashes, JobDiffResult } from "./job.d";
 // Response Types
 export type { ResponseHandler } from "./responseHandler.d";
 
-// Firebase Admin Types (augmentation)
-import "./firebase-admin.d";
+// Alarm Subscription Types
+export { AlertMode } from "./alarmSubscription";
+export type { AlarmSubscription, AlarmSubscriptionInput } from "./alarmSubscription";
 
-// Global Types
-import "./global.d";
+// Note: firebase-admin.d.ts / global.d.ts 는 tsconfig.include 로 자동 픽업.
+// 런타임 require 로 변환되지 않도록 side-effect import 를 두지 않음.

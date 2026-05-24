@@ -1,6 +1,6 @@
 import "@/common/utils/systemLogger";
 import { Router } from "express";
-import { CRAWL_MODE } from "../constants/crawlMode";
+import { CRAWL_MODE } from "@/common/constants";
 import { RecruitService, CrawlService } from "../services";
 import { scanKeys } from "../providers/redis/client/scanKeys";
 import { SERVICE_NAME } from "../providers/redis/constants/serviceName";
@@ -85,8 +85,11 @@ testRouter.get("/proxy-scraper", async (req, res) => {
   const crawlService = new CrawlService();
   const result = await crawlService.proxy();
 
+  // ProxyData → ProxyDoc 변환 (available/used 기본값). Phase 1.5+ 에서 별도 마이그레이션 예정.
+  const docs = result.map(p => ({ ...p, available: true, used: false }));
+
   const proxy_firestore = new ProxyStore();
-  proxy_firestore.saveProxyList(result);
+  proxy_firestore.saveProxyList(docs);
 
   res.json({ result });
 });

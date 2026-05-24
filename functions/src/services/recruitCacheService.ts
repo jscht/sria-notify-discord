@@ -1,4 +1,4 @@
-import crypto from "crypto";
+import crypto from "node:crypto";
 import { RecruitCacheStore, RecruitHashStore } from "../providers/redis/store";
 import type { CityEn } from "@/common/types/city.d";
 import type { Job, HashedString, JobDiffResult, JobHashes } from "@/common/types/job.d";

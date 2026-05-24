@@ -1,12 +1,13 @@
 import {
   Events, Interaction, CommandInteraction, MessageFlags,
-  ButtonInteraction, ModalSubmitInteraction, StringSelectMenuInteraction
+  ButtonInteraction, ModalSubmitInteraction
 } from "discord.js";
 import { DiscordEventHandler } from "./discordEventHandler";
 import { commandHandlers } from "./handlers/commands";
 import { buttonHandlers } from "./handlers/buttons";
 import { modalHandler } from "./handlers/modals";
 import { isValidFullActionId } from "@/common/utils";
+import { providerLogger } from "@/common/utils/systemLogger";
 import { DiscordBotCommand } from "@/providers/discord/constants";
 
 export const onInteraction = (): DiscordEventHandler => ({
@@ -46,24 +47,25 @@ export const onInteraction = (): DiscordEventHandler => ({
         return;
       }
 
-      /** 🔹 셀렉트 메뉴 (String Select Menu Interaction) */
-      if (interaction.isStringSelectMenu()) {
-        const actionId = interaction.customId;
-        const handler = stringSelectHandler[actionId];
-        if (handler) {
-          await handler(interaction as StringSelectMenuInteraction);
-        }
-        return;
-      }
-
+      // Phase 1.5: StringSelectMenu 핸들러는 SubscriptionService 연동 시 도입 예정
     } catch (error) {
+      const context: Record<string, unknown> = {
+        type: interaction.type,
+        id: interaction.id,
+      };
+      if (interaction.isChatInputCommand()) {
+        context.commandName = interaction.commandName;
+      } else if (interaction.isButton() || interaction.isModalSubmit()) {
+        context.customId = interaction.customId;
+      }
+      providerLogger.error("Interaction handler error", error as Error, context);
+
       if (interaction.isRepliable()) {
         await interaction.reply({
           content: "⚠️ 처리 중 오류가 발생했습니다. 다시 시도해 주세요.",
           flags: MessageFlags.Ephemeral
         }).catch(() => {});
       }
-      throw new Error("❌ Interaction handler error");
     }
   },
 });

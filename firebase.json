@@ -19,5 +19,12 @@
         "npm --prefix \"$RESOURCE_DIR\" run build"
       ]
     }
-  ]
+  ],
+  "emulators": {
+    "firestore": { "port": 8080 },
+    "ui": { "enabled": true, "port": 4005 },
+    "hub": { "port": 4401 },
+    "logging": { "port": 4501 },
+    "singleProjectMode": true
+  }
 }

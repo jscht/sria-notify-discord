@@ -69,6 +69,8 @@ Ref: pdca-status.json Phase X.Y
    )"
    ```
 
+> **PDCA 사이클 PR 순서**: report 승인 → `/pdca archive` → `/pdca cleanup`까지 마친 뒤 PR을 생성한다 (문서 이동·상태 JSON 변경을 같은 PR에 포함). PR 머지 후 `git checkout dev && git pull` → `/pdca next`. 상세 순서는 `.claude/rules/review-process.md` 참조.
+
 **PR 규칙**:
 
 | 항목 | 규칙 |

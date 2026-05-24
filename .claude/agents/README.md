@@ -4,13 +4,15 @@
 
 ```
 CTO Lead (opus)
+│   ← pdca plan / design / do / iterate 입구
+│   ← pdca analyze 출구 (조건부)
 ├── Discord Agent (opus) ←→ Frontend Architect (sonnet) — UI 협업
 │                        ←→ Integration Lead (opus) — 기능 협업
 ├── Integration Lead (opus)
 │   └── Backend Expert (sonnet)
 ├── AI Agent (opus)
 ├── Security Architect (opus)
-├── Design Validator (opus)
+├── Design Validator (opus) ← pdca design 후
 ├── Gap Detector (opus) ← pdca analyze
 ├── Code Analyzer (opus) ← pdca analyze
 ├── Report Generator (haiku) ← pdca report
@@ -54,6 +56,11 @@ CTO Lead (opus)
 ### 데이터 작업: Integration Lead → Backend Expert
 - Integration Lead: 캐시 흐름, TTL 정책 결정
 - Backend Expert: Firestore/Redis 스키마 설계
+
+### PDCA 오케스트레이션: pdca skill → CTO Lead → 도메인 에이전트
+- CTO Lead: plan / design / do / analyze / iterate 액션 입구·출구에서 위임안 산출, 사용자 승인 게이트 운영
+- 도메인 에이전트: 승인된 위임 계획에 따라 plan/design/do/iterate 실제 작업 수행
+- analyze 출구는 조건부 호출 (matchRate < 90% OR 🔴 Critical ≥ 1건), iterate는 첫 진입 1회만 승인 후 최대 5회 자동 루프
 
 ### PDCA 분석: pdca skill → Gap Detector + Code Analyzer
 - Gap Detector: Structural/Functional/Contract 3차원 갭 → analysis.md §1~§3

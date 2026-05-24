@@ -48,15 +48,18 @@ alarmSubscribe/
 ```typescript
 // handlers/messageHandler.ts
 import { aiService } from '@/services/aiService';
-import { setNotificationSettings } from '@/providers/firebase/store/subscription';
+import { SubscriptionStore } from '@/providers/firebase/store/subscription';
+
+// 실제 배선은 alarmSubscriptionService 경유 가능 — 여기선 store 직접 사용 예시
+const subscriptionStore = new SubscriptionStore();
 
 export async function handleNaturalLanguageSubscribe(message: string, userId: string) {
   // AI로 의도 분석
   const intent = await aiService.parseUserIntent(message);
 
   if (intent.action === 'subscribe') {
-    // "경기도 공고만 받을래" → 알림 설정 변경
-    await setNotificationSettings(userId, {
+    // "경기도 공고만 받을래" → 알림 설정 변경 (setNotificationSettings는 void)
+    await subscriptionStore.setNotificationSettings(userId, {
       alertMode: 'SELECTED',
       regions: intent.regions || [],
       enabled: true
@@ -65,7 +68,7 @@ export async function handleNaturalLanguageSubscribe(message: string, userId: st
     return { success: true, regions: intent.regions };
   } else if (intent.action === 'unsubscribe') {
     // "알림 끄기" → 알림 비활성화
-    await setNotificationSettings(userId, {
+    await subscriptionStore.setNotificationSettings(userId, {
       alertMode: 'ALL',
       regions: [],
       enabled: false
@@ -132,14 +135,18 @@ notification/
 **작업 내용 (Phase 1.7)**:
 ```typescript
 // NotificationService.ts
+import { SubscriptionStore } from '@/providers/firebase/store/subscription';
+
 export class NotificationService {
+  private readonly subscriptionStore = new SubscriptionStore();
+
   constructor() {
     // recruit.new 이벤트 리스너 등록
     eventBus.on('recruit.new', this.notifyNewRecruits);
   }
 
   async notifyNewRecruits(data) {
-    const subscribers = await getAllActiveSubscribers();
+    const subscribers = await this.subscriptionStore.getAllActiveSubscribers();
 
     for (const subscriber of subscribers) {
       const filteredRecruits = this.filterRecruitsForUser(
@@ -212,13 +219,17 @@ adminBroadcast/
 **작업 내용 (Phase 2.2)**:
 ```typescript
 // BroadcastService.ts
+import { SubscriptionStore } from '@/providers/firebase/store/subscription';
+
 export class BroadcastService {
+  private readonly subscriptionStore = new SubscriptionStore();
+
   constructor() {
     eventBus.on('admin.broadcast.request', this.sendBroadcast);
   }
 
   async sendBroadcast(content, author) {
-    const subscribers = await getAllActiveSubscribers();
+    const subscribers = await this.subscriptionStore.getAllActiveSubscribers();
 
     let sentCount = 0;
     for (const subscriber of subscribers) {

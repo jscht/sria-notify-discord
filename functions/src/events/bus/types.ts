@@ -6,6 +6,7 @@
 
 import type { Job, JobDiffResult } from "@/common/types/job.d";
 import type { CityEn } from "@/common/types/city.d";
+import type { AlarmSubscription } from "@/common/types";
 import type { CRAWL_MODE } from "@/common/constants";
 import type { RecruitData } from "@/crawlers/types";
 
@@ -96,20 +97,9 @@ export interface RecruitRequestCompletedEvent extends BaseEvent {
 
 /**
  * Notification Domain 이벤트 페이로드
+ *
+ * AlertMode, AlarmSubscription은 @/common/types에서 재사용 (SoT)
  */
-
-// 알림 구독 모드
-export type AlertMode = "ALL" | "SELECTED";
-
-// 알림 설정 인터페이스
-export interface AlarmSubscription {
-  userId: string;
-  enabled: boolean;
-  alertMode: AlertMode;
-  regions: CityEn[];
-  createdAt: number;
-  updatedAt: number;
-}
 
 // 알림 구독 이벤트
 export interface NotificationSubscribeEvent extends BaseEvent {

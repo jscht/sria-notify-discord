@@ -1,10 +1,9 @@
 import "@/common/utils/systemLogger";
 import { CommandInteraction } from "discord.js";
 import { RecruitService } from "../../../services";
-import { CRAWL_MODE } from "../../../constants/crawlMode";
-import { isValidCityName } from "../../../utils/cityName";
-import { recruitMessageEmbed } from "../../../providers/discord/builder/embeds/recruitMessageEmbed";
-import { chooseEunNeun } from "../../../utils/koreanJosaUtils";
+import { CRAWL_MODE } from "@/common/constants";
+import { isValidCityName, chooseEunNeun } from "@/common/utils";
+import { recruitMessageEmbed } from "@/providers/discord/builder/embeds/recruitMessageEmbed";
 import { eventBus, EventType } from "@/events/bus";
 import type { RecruitRequestedEvent, RecruitRequestCompletedEvent } from "@/events/bus";
 import type { CityEn } from "@/common/types";
