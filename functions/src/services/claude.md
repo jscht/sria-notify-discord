@@ -157,11 +157,13 @@ export class RecruitCacheService {
 ```typescript
 import { eventBus } from '@/eventBus/EventBus';
 import { EventType, RecruitNewEvent } from '@/eventBus/types';
-import { getAllActiveSubscribers } from '@/providers/firebase/store/subscription';
+import { SubscriptionStore } from '@/providers/firebase/store/subscription';
 import { sendNotificationDM } from '@/providers/discord/utils/dmSender';
 import { filterByRegion } from '@/features/notification/filters/RecruitFilter';
 
 export class NotificationService {
+  private readonly subscriptionStore = new SubscriptionStore();
+
   constructor() {
     // recruit.new 이벤트 리스너 등록
     eventBus.onEvent<RecruitNewEvent>(EventType.RECRUIT_NEW, (payload) => {
@@ -179,7 +181,7 @@ export class NotificationService {
 
     if (allNewRecruits.length === 0) return;
 
-    const subscribers = await getAllActiveSubscribers();
+    const subscribers = await this.subscriptionStore.getAllActiveSubscribers();
     console.log(`[NotificationService] Notifying ${subscribers.length} subscribers`);
 
     for (const subscriber of subscribers) {

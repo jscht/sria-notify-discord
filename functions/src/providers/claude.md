@@ -117,73 +117,37 @@ export async function sendBulkNotifications(
 
 ### Firestore 스키마
 ```
-users/{userId}/notifications/settings
+users/{userId}/notifications/settings   (문서 ID는 고정값 "settings")
 {
   alertMode: 'ALL' | 'SELECTED',
-  regions: string[],
+  regions: CityEn[],
   enabled: boolean,
-  createdAt: Timestamp,
+  createdAt: Timestamp,   // 앱 계층은 number(ms)로 인지 — store가 Timestamp ↔ number 변환
   updatedAt: Timestamp
 }
 ```
 
 ### 구현
-```typescript
-import { getFirestore } from 'firebase-admin/firestore';
 
-const db = getFirestore();
+> **구현 SoT**: `providers/firebase/store/subscription.ts` (class `SubscriptionStore`)
+> **타입 SoT**: `@/common/types` (`AlarmSubscription` / `AlarmSubscriptionInput` / `AlertMode`)
+>
+> 예시 코드를 복제하지 않고 시그니처·계약만 요약한다 (문서-코드 드리프트 방지). 정확한 구현은 위 파일 참조.
 
-export async function getNotificationSettings(userId: string) {
-  const doc = await db
-    .collection('users')
-    .doc(userId)
-    .collection('notifications')
-    .doc('settings')
-    .get();
+| 메서드 | 반환 | 비고 |
+|--------|------|------|
+| `getNotificationSettings(userId)` | `AlarmSubscription \| null` | 없으면 `null` (자동 생성 X) |
+| `setNotificationSettings(userId, input)` | `void` | CQS 쓰기 전용. 신규=createdAt+updatedAt, 기존=updatedAt만 |
+| `updateAlertMode(userId, mode)` | `void` | `update()` — 문서 없으면 NOT_FOUND throw |
+| `updateAlertRegions(userId, regions)` | `void` | `update()` |
+| `toggleNotificationEnabled(userId, enabled)` | `void` | `update()` |
+| `getAllActiveSubscribers()` | `AlarmSubscription[]` | `collectionGroup('notifications')` + `enabled==true` |
 
-  if (!doc.exists) {
-    // 기본값 반환
-    return {
-      alertMode: 'ALL',
-      regions: [],
-      enabled: false
-    };
-  }
-
-  return doc.data();
-}
-
-export async function setNotificationSettings(
-  userId: string,
-  settings: {
-    alertMode: 'ALL' | 'SELECTED';
-    regions: string[];
-    enabled: boolean;
-  }
-) {
-  await db
-    .collection('users')
-    .doc(userId)
-    .collection('notifications')
-    .doc('settings')
-    .set({
-      ...settings,
-      updatedAt: new Date()
-    }, { merge: true });
-}
-
-export async function getAllActiveSubscribers() {
-  const snapshot = await db
-    .collectionGroup('notifications')
-    .where('enabled', '==', true)
-    .get();
-
-  return snapshot.docs.map(doc => ({
-    userId: doc.ref.parent.parent!.id,
-    ...doc.data()
-  }));
-}
-```
+**계약**:
+- `Timestamp ↔ number` 변환은 store 경계(`toAlarmSubscription` 헬퍼)에서만 수행 — 외부 코드는 항상 `number`(ms)
+- 쓰기 메서드는 `void`, 읽기 메서드만 데이터 반환 (CQS). 부분 업데이트는 `setNotificationSettings` 선행 전제
+- `ProxyStore` 패턴 준수: `private readonly db = getFirestore()`, private `getSettingsRef`, `providerLogger` 사용
+- 인스턴스화: `const subscriptionStore = new SubscriptionStore();` (싱글톤 export 없음)
 
 ---
 
@@ -344,11 +308,9 @@ export const FREE_TIER_LIMITS = {
 
 ## 작업 순서
 
-### Phase 1.4 (subscription.ts)
-1. Firestore 스키마 설계
-2. getNotificationSettings() 구현
-3. setNotificationSettings() 구현
-4. getAllActiveSubscribers() 구현
+### Phase 1.4 (subscription.ts) ✅ 완료
+- class `SubscriptionStore` 6개 메서드 구현 (CQS, `update()` 부분 업데이트, `Timestamp↔number` 격리)
+- 상세: 위 `firebase/store/subscription.ts` 섹션 참조
 
 ### Phase 1.8 (dmSender.ts)
 1. sendNotificationDM() 구현
@@ -370,4 +332,4 @@ export const FREE_TIER_LIMITS = {
 
 ---
 
-*최종 수정: 2026-01-05*
+*최종 수정: 2026-05-25*
