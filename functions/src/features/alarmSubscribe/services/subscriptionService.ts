@@ -20,7 +20,7 @@ export class AlarmSubscriptionService {
    * 사용자 알림 구독
    */
   async subscribe(userId: string, input: AlarmSubscriptionInput): Promise<AlarmSubscription> {
-    // TODO Phase 1.5: SubscriptionStore.setNotificationSettings
+    // TODO Phase 1.5: SubscriptionStore.setNotificationSettings + 후속 조회 (set은 void)
     throw new Error("Not implemented");
   }
 

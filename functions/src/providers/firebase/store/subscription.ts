@@ -56,14 +56,16 @@ export class SubscriptionStore {
   }
 
   /**
-   * 알림 설정 신규 생성 또는 덮어쓰기.
+   * 알림 설정 신규 생성 또는 덮어쓰기 (쓰기 전용 — CQS).
    * - 신규: createdAt/updatedAt 모두 현재 시각
    * - 기존: createdAt 보존, updatedAt 갱신
+   *
+   * @remarks 저장 직후 상태가 필요하면 호출자가 `getNotificationSettings`를 호출한다.
    */
   async setNotificationSettings(
     userId: string,
     input: AlarmSubscriptionInput
-  ): Promise<AlarmSubscription> {
+  ): Promise<void> {
     const ref = this.getSettingsRef(userId);
     const now = Timestamp.now();
     const snap = await ref.get();
@@ -78,39 +80,34 @@ export class SubscriptionStore {
       alertMode: input.alertMode,
       enabled: input.enabled,
     });
-
-    const final = await ref.get();
-    return toAlarmSubscription(userId, final.data()!);
   }
 
   /**
-   * 알림 모드만 부분 업데이트
+   * 알림 모드만 부분 업데이트.
+   *
+   * @remarks 문서 선존재 전제 — `setNotificationSettings`로 먼저 생성돼 있어야 함.
+   *   `update()`는 문서가 없으면 NOT_FOUND를 throw → `createdAt` 누락 문서 생성을 차단.
    */
   async updateAlertMode(userId: string, alertMode: AlertMode): Promise<void> {
-    await this.getSettingsRef(userId).set(
-      { alertMode, updatedAt: Timestamp.now() },
-      { merge: true }
-    );
+    await this.getSettingsRef(userId).update({ alertMode, updatedAt: Timestamp.now() });
   }
 
   /**
-   * 알림 지역 목록만 부분 업데이트
+   * 알림 지역 목록만 부분 업데이트.
+   *
+   * @remarks 문서 선존재 전제 — `setNotificationSettings` 선행 필수. 없으면 NOT_FOUND throw.
    */
   async updateAlertRegions(userId: string, regions: CityEn[]): Promise<void> {
-    await this.getSettingsRef(userId).set(
-      { regions, updatedAt: Timestamp.now() },
-      { merge: true }
-    );
+    await this.getSettingsRef(userId).update({ regions, updatedAt: Timestamp.now() });
   }
 
   /**
-   * 알림 활성화 여부만 부분 업데이트
+   * 알림 활성화 여부만 부분 업데이트.
+   *
+   * @remarks 문서 선존재 전제 — `setNotificationSettings` 선행 필수. 없으면 NOT_FOUND throw.
    */
   async toggleNotificationEnabled(userId: string, enabled: boolean): Promise<void> {
-    await this.getSettingsRef(userId).set(
-      { enabled, updatedAt: Timestamp.now() },
-      { merge: true }
-    );
+    await this.getSettingsRef(userId).update({ enabled, updatedAt: Timestamp.now() });
   }
 
   /**
