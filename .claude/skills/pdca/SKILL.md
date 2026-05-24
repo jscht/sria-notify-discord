@@ -25,6 +25,7 @@ allowed-tools:
   - Glob
   - Grep
   - Bash
+  - Agent
 ---
 
 # PDCA Skill
@@ -61,24 +62,38 @@ allowed-tools:
 ### plan [X.Y] — Plan Phase
 
 1. `.claude/phases/phase-{{X}}-core.md` 시드 읽기 + X.Y feature 이름 확인
-2. 브랜치 생성/체크아웃 (`.claude/rules/git-workflow.md` 브랜치 네이밍 규칙 준수)
+2. **CTO Lead 에이전트 호출** → 의존성·우선순위 검증 + 위임 후보 도메인 에이전트 1~2개 지정
+3. CTO 위임안 출력 → **사용자 승인 대기** (승인 전 다음 단계 진행 금지)
+   - 수정 요청 시 CTO Lead 재호출 → 2번 복귀
+   - 승인 시 4번 진행
+4. 브랜치 생성/체크아웃 (`.claude/rules/git-workflow.md` 브랜치 네이밍 규칙 준수)
    - 이미 존재하면: checkout, 없으면: dev 기반으로 신규 생성
    - 실패 시 plan 중단 + 수동 생성 안내
-3. `.claude/templates/plan.template.md` 구조로 `docs/phase-{{X}}-{{Y}}/01-plan.md` 생성
-4. pdca-memory.json 업데이트: `phase = "plan"`
-5. pdca-status.json features에 항목 생성
+5. `.claude/templates/plan.template.md` 구조로 `docs/phase-{{X}}-{{Y}}/01-plan.md` 생성 — `§위임 계획` 섹션에 CTO Lead 결과 반영
+6. pdca-memory.json 업데이트: `phase = "plan"`
+7. pdca-status.json features에 항목 생성
 
 ### design [X.Y] — Design Phase
 
 1. Plan 문서 존재 확인 (없으면 plan 먼저 실행 안내)
-2. `.claude/templates/design.template.md` 구조로 `docs/phase-{{X}}-{{Y}}/02-design.md` 생성
-3. pdca-memory.json 업데이트: `phase = "design"`
+2. **CTO Lead 에이전트 호출** → 크로스커팅 판단(Discord ↔ Integration ↔ AI 경계) + design.md 작성자 위임 결정
+3. CTO 위임안 출력 → **사용자 승인 대기** (승인 전 다음 단계 진행 금지)
+4. 승인 시 위임된 도메인 에이전트가 `.claude/templates/design.template.md` 구조로 `docs/phase-{{X}}-{{Y}}/02-design.md` 작성
+5. **Design Validator 에이전트 호출** → 설계 품질 게이트
+6. pdca-memory.json 업데이트: `phase = "design"`
 
 ### do [X.Y] — Do Phase
 
 1. Design 문서 존재 확인 (필수)
-2. `.claude/templates/do-guide.template.md` 기반으로 구현 가이드 **출력만** (파일 생성 없음)
-3. pdca-memory.json 업데이트: `phase = "do"`
+2. **CTO Lead 에이전트 호출** → plan.md `§위임 계획` + design.md 영역 매핑 기반 실제 구현 위임안 작성 (`.claude/templates/do-guide.template.md` 가이드를 위임안에 포함)
+3. CTO 위임안 출력 → **사용자 승인 대기** (승인 전 다음 단계 진행 금지)
+4. 승인 시 영역별 도메인 에이전트에 구현 위임:
+   - Discord UI → Discord Agent (+ Frontend Architect 협업)
+   - 서비스/캐시 → Integration Lead (Backend Expert 위임)
+   - AI/NLP → AI Agent
+   - 데이터 스키마 단독 → Backend Expert
+5. 각 에이전트가 코드 작성 후 CTO Lead가 통합 보고 출력
+6. pdca-memory.json 업데이트: `phase = "do"`
 
 ### analyze [X.Y] — Check Phase
 
@@ -91,15 +106,22 @@ allowed-tools:
 5. 매치율 산출: `Structural × 0.2 + Functional × 0.4 + Contract × 0.4`
 6. pdca-memory.json 업데이트: `phase = "check"`, `matchRate`
 7. pdca-status.json tasks/features 업데이트
-8. matchRate < 90% 또는 🔴 Critical 이슈 존재 시 → 이슈 알림 출력 (D 포맷)
+8. **CTO Lead 에이전트 호출** (matchRate < 90% OR 🔴 Critical ≥ 1건 시 필수, 그 외 생략 가능)
+   → analysis.md 사후 종합 평가, 다음 단계 권장(report/iterate), iterate 시 위임 대상 사전 결정
+9. CTO 위임안 출력 → **사용자 승인 대기** (승인 전 다음 단계 진행 금지)
+10. 승인 시 권장된 다음 단계로 분기
+11. matchRate < 90% 또는 🔴 Critical 이슈 존재 시 → 이슈 알림 출력 (D 포맷)
 
 ### iterate [X.Y] — Act Phase
 
 1. matchRate < 90% 확인 (≥ 90%이면 report 안내)
-2. analysis.md의 갭 목록 기반 자동 코드 수정
-3. 수정 후 자동 재분석 (analyze 재실행)
-4. 최대 5회 반복, matchRate ≥ 90% 도달 시 중단
-5. pdca-memory.json 업데이트: `matchRate`, pdca-status.json features `iterationCount++`
+2. **첫 진입인 경우만**: CTO Lead 에이전트 호출 → 갭 위치별 수정 위임안 출력 → **사용자 승인 대기** (1회)
+   - analyze 단계에서 이미 위임 대상이 결정되어 있으면 그 결과 재사용 (CTO Lead 호출 생략 가능)
+3. 승인된 위임안에 따라 영역별 도메인 에이전트가 analysis.md 갭 목록 기반 자동 코드 수정
+4. 수정 후 자동 재분석 (analyze 재실행) — CTO Lead 재승인 없이 자동 진행
+5. 최대 5회 반복, matchRate ≥ 90% 도달 시 중단
+6. 5회 도달 후에도 matchRate < 90%면 CTO Lead 재호출 → 블로커 판정 + 사용자 의사결정 요청
+7. pdca-memory.json 업데이트: `matchRate`, pdca-status.json features `iterationCount++`
 
 ### report [X.Y] — Completion Report
 
@@ -266,6 +288,17 @@ plan → design → do → [구현] → analyze
 | status | (변경 없음) | 동기화: overview 재계산 |
 | next | (변경 없음) | 조건부 동기화: 사이클 완료 시 overview 재계산 |
 | 작업 전환 (PDCA 외) | suspended.json[memory] 저장 후 null 초기화 | features 해당 항목을 suspended.json[feature]로 이동 (features에서 제거) |
+
+---
+
+## CTO Lead 게이트 규칙
+
+- plan / design / do / analyze 액션 입구·출구에서 CTO Lead 호출 시, 위임안 출력 후 **사용자 승인 대기**
+- 승인 전까지 다음 단계 진행 금지 (`.claude/rules/review-process.md` 원칙과 동일)
+- iterate는 첫 진입에서만 승인. 이후 자동 루프 (최대 5회), 5회 도달 후에도 matchRate < 90%면 CTO Lead 재호출 (블로커 판정)
+- analyze에서 matchRate ≥ 90% AND 🔴 Critical 0건이면 CTO Lead 호출 생략 가능 (비용 절감)
+- CTO 위임안 표준 포맷: `의존성/선행 조건` + `위임 계획 표(영역/위임 대상/근거/예상 산출물)` + `리스크(있을 때만)` + `다음 단계 권장(analyze 종합 평가일 때만)` + `승인 여부: y / 수정 / 거부`
+- report / archive / cleanup / status / next 액션은 CTO Lead 통합 미적용
 
 ---
 
