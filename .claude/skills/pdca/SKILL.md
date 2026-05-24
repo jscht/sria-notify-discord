@@ -159,7 +159,11 @@ docs/archive/phase-{{X}}-{{Y}}/
 4. pdca-memory.json 전부 null 초기화
 5. overview 수치 갱신
 
-> 완료 후 `/pdca next` 호출 시 다음 feature 추천.
+> **사이클 마감 핸드오프 (cleanup 직후)**:
+> ① archive/cleanup 변경 포함 논리 단위 commit → push → PR(base dev)
+> ② PR 머지 → `git checkout dev && git pull`
+> ③ `/pdca next`로 다음 feature 추천 → `/pdca plan X.Y`(최신 dev 기반 새 브랜치)
+> 커밋/PR은 **사용자 지시 시에만** 수행. 상세 순서는 `.claude/rules/review-process.md` 검토 단계 참조.
 
 ### status — Status Check
 
@@ -233,6 +237,7 @@ Phase 1: XX% │ Phase 2: XX% │ Phase 3: XX% │ Phase 4: XX%
 plan → design → do → [구현] → analyze
   matchRate < 90%? → iterate (재분석, 최대 5회)
   matchRate ≥ 90%? → report → archive → cleanup
+                       → commit + PR(base dev) → 머지 → checkout dev → next
 ```
 
 | 현재 phase | 다음 명령 |
@@ -245,6 +250,8 @@ plan → design → do → [구현] → analyze
 | completed | `/pdca archive X.Y` |
 | archived | `/pdca cleanup` |
 | 없음 | `/pdca next` |
+
+> cleanup 완료 후 phase가 비워지기 전에 **commit → PR(base dev) → 머지 → dev 동기화**를 거친 뒤 `/pdca next` (상세: `.claude/rules/review-process.md`).
 
 ---
 
