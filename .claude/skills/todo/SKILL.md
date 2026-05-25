@@ -9,8 +9,10 @@ description: |
   - "todo 완료", "[항목] 끝났어" → done 액션
   - "TODO 업데이트", "TODO 정리" → update 액션
   - "todo 목록", "남은 일" → list 액션
+  - pdca·phase·feature·사이클 신호 없는 "뭐 해야 하지/다음 뭐" → 오늘치 ad-hoc 기본값으로 todo
 
-  사용하지 않는 경우: Phase 단위 작업(/pdca 사용), 단순 코드 질문
+  사용하지 않는 경우: Phase 단위 작업(/pdca), 단순 코드 질문
+  상세 분기: .claude/rules/task-routing.md
 argument-hint: "[list|start [N|항목]|done [N|항목]|update]"
 user-invocable: true
 allowed-tools:

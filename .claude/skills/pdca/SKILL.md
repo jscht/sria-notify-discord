@@ -12,9 +12,12 @@ description: |
   - "iterate", "반복 개선", "매치율 올려" → iterate 액션
   - "report", "보고서", "완료" → report 액션
   - "archive", "아카이브" → archive 액션
-  - "status", "현황", "다음" → status/next 액션
+  - "현황", "진행률", "어디까지 왔어" 등 전체 상태 → status 액션
+  - "다음", "다음 단계/작업", "뭐 해야/뭐 하지" 등 다음 행동 질문 → next 액션
+  - pdca 맥락인데 액션 단어가 모호하면 → next 우선 (read-only·경량). 전체 대시보드는 "현황" 명시 시 status
 
-  사용하지 않는 경우: PDCA 컨텍스트 없는 단순 질문, 코드만 수정하는 작업
+  사용하지 않는 경우: PDCA 신호가 전혀 없는 일반 질문(→ todo), 코드만 수정하는 작업
+  상세 분기: .claude/rules/task-routing.md
 argument-hint: "[action] [phase-X.Y]"
 user-invocable: true
 state-file: .claude/docs/pdca-memory.json
