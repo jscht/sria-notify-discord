@@ -13,7 +13,7 @@ import { renderSubscribeManage } from "./renderSubscribeManage";
  */
 export async function onShowSubscribeManage(interaction: ButtonInteraction): Promise<void> {
   await interaction.update({
-    components: disableMessageComponents(interaction.message, interaction.customId),
+    components: disableMessageComponents(interaction.message),
   });
 
   const sub = await alarmSubscriptionService.getSubscription(interaction.user.id);

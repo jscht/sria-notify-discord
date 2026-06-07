@@ -1,7 +1,10 @@
 import type { ButtonInteraction } from "discord.js";
 import { AlertMode } from "@/common/types";
 import { alarmSubscriptionService } from "@/features/alarmSubscribe/services/subscriptionService";
-import { disableMessageComponents } from "@/providers/discord/builder/disableMessageComponents";
+import {
+  disableMessageComponents,
+  restoreMessageComponents,
+} from "@/providers/discord/builder/disableMessageComponents";
 import { renderSubscribeManage } from "./renderSubscribeManage";
 
 /**
@@ -12,14 +15,22 @@ import { renderSubscribeManage } from "./renderSubscribeManage";
  * 구독 문서가 없으면 `updateMode` 내부 `ensureExists`가 기본 문서를 만든 뒤 변경한다.
  */
 export async function onChangeConfirm(interaction: ButtonInteraction): Promise<void> {
+  const original = interaction.message.components;
   await interaction.update({
     components: disableMessageComponents(interaction.message, interaction.customId),
   });
   const userId = interaction.user.id;
 
-  const current = await alarmSubscriptionService.getUserAlertMode(userId);
-  const nextMode = current === AlertMode.SELECTED ? AlertMode.ALL : AlertMode.SELECTED;
-  const updated = await alarmSubscriptionService.updateMode(userId, nextMode);
+  try {
+    const current = await alarmSubscriptionService.getUserAlertMode(userId);
+    const nextMode = current === AlertMode.SELECTED ? AlertMode.ALL : AlertMode.SELECTED;
+    const updated = await alarmSubscriptionService.updateMode(userId, nextMode);
 
-  await renderSubscribeManage(interaction, updated);
+    await renderSubscribeManage(interaction, updated);
+  } catch (e) {
+    await interaction
+      .editReply({ components: restoreMessageComponents(original) })
+      .catch(() => {});
+    throw e;
+  }
 }

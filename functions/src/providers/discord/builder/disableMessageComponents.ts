@@ -28,24 +28,38 @@ export function disableMessageComponents(
   message: Message,
   loadingCustomId?: string,
 ): ActionRowBuilder<MessageActionRowComponentBuilder>[] {
-  return message.components.map((row) => rebuildRow(row, loadingCustomId));
+  return message.components.map((row) => rebuildRow(row, { disabled: true, loadingCustomId }));
+}
+
+/**
+ * 핸들러 진입 시점에 캡처한 원본 `ActionRow[]`를 enabled + 원본 라벨로 재빌드한다.
+ *
+ * 백엔드 쓰기 실패 시 catch 분기에서 `interaction.editReply({ components })`로
+ * 넘겨 "⏳ 적용 중…" + disabled 상태에 갇힌 UI를 클릭 가능한 원상태로 되돌리는 용도다.
+ * 캡처는 반드시 `interaction.update(disableMessageComponents(...))` 호출 **전에**
+ * 해야 한다 — update 후 `interaction.message`는 disabled+적용중 상태로 갱신된다.
+ */
+export function restoreMessageComponents(
+  rows: ActionRow<MessageActionRowComponent>[],
+): ActionRowBuilder<MessageActionRowComponentBuilder>[] {
+  return rows.map((row) => rebuildRow(row, { disabled: false }));
 }
 
 function rebuildRow(
   row: ActionRow<MessageActionRowComponent>,
-  loadingCustomId?: string,
+  options: { disabled: boolean; loadingCustomId?: string },
 ): ActionRowBuilder<MessageActionRowComponentBuilder> {
   const builder = new ActionRowBuilder<MessageActionRowComponentBuilder>();
 
   for (const component of row.components) {
     if (component.type === ComponentType.Button) {
-      const next = ButtonBuilder.from(component).setDisabled(true);
-      if (loadingCustomId && component.customId === loadingCustomId) {
+      const next = ButtonBuilder.from(component).setDisabled(options.disabled);
+      if (options.loadingCustomId && component.customId === options.loadingCustomId) {
         next.setLabel(LOADING_LABEL);
       }
       builder.addComponents(next);
     } else if (component.type === ComponentType.StringSelect) {
-      builder.addComponents(StringSelectMenuBuilder.from(component).setDisabled(true));
+      builder.addComponents(StringSelectMenuBuilder.from(component).setDisabled(options.disabled));
     }
   }
 

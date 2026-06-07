@@ -1,7 +1,10 @@
 import type { ButtonInteraction, CommandInteraction } from "discord.js";
 import type { SubscribeCommand } from "@/features/alarmSubscribe/types";
 import { alarmSubscriptionService } from "@/features/alarmSubscribe/services/subscriptionService";
-import { disableMessageComponents } from "@/providers/discord/builder/disableMessageComponents";
+import {
+  disableMessageComponents,
+  restoreMessageComponents,
+} from "@/providers/discord/builder/disableMessageComponents";
 import { renderSubscribeManage } from "@/events/listeners/buttons/renderSubscribeManage";
 
 export type SubscribeClearPayload = {
@@ -19,9 +22,17 @@ export async function subscribeClear(payload: SubscribeClearPayload): Promise<vo
     return;
   }
 
+  const original = interaction.message.components;
   await interaction.update({
     components: disableMessageComponents(interaction.message, interaction.customId),
   });
-  const updated = await alarmSubscriptionService.updateRegions(interaction.user.id, []);
-  await renderSubscribeManage(interaction, updated);
+  try {
+    const updated = await alarmSubscriptionService.updateRegions(interaction.user.id, []);
+    await renderSubscribeManage(interaction, updated);
+  } catch (e) {
+    await interaction
+      .editReply({ components: restoreMessageComponents(original) })
+      .catch(() => {});
+    throw e;
+  }
 }

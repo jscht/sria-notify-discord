@@ -12,7 +12,7 @@ import { disableMessageComponents } from "@/providers/discord/builder/disableMes
  */
 export async function onChangeRequest(interaction: ButtonInteraction): Promise<void> {
   await interaction.update({
-    components: disableMessageComponents(interaction.message, interaction.customId),
+    components: disableMessageComponents(interaction.message),
   });
   const userId = interaction.user.id;
 

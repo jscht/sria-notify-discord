@@ -1,7 +1,10 @@
 import type { ButtonInteraction } from "discord.js";
 import { alarmSubscriptionService } from "@/features/alarmSubscribe/services/subscriptionService";
 import { buildSubscribeEntryView } from "@/providers/discord/builder/subscribeEntryView";
-import { disableMessageComponents } from "@/providers/discord/builder/disableMessageComponents";
+import {
+  disableMessageComponents,
+  restoreMessageComponents,
+} from "@/providers/discord/builder/disableMessageComponents";
 
 /**
  * SUBSCRIBE_OPTION:DISABLE 버튼 핸들러.
@@ -9,13 +12,21 @@ import { disableMessageComponents } from "@/providers/discord/builder/disableMes
  * 알림을 비활성화(unsubscribe)한 뒤 갱신된 진입 화면으로 복귀한다.
  */
 export async function onDisableSubscribe(interaction: ButtonInteraction): Promise<void> {
+  const original = interaction.message.components;
   await interaction.update({
     components: disableMessageComponents(interaction.message, interaction.customId),
   });
   const userId = interaction.user.id;
 
-  const sub = await alarmSubscriptionService.unsubscribe(userId);
-  const { content, components } = buildSubscribeEntryView(sub);
+  try {
+    const sub = await alarmSubscriptionService.unsubscribe(userId);
+    const { content, components } = buildSubscribeEntryView(sub);
 
-  await interaction.editReply({ content, components, embeds: [] });
+    await interaction.editReply({ content, components, embeds: [] });
+  } catch (e) {
+    await interaction
+      .editReply({ components: restoreMessageComponents(original) })
+      .catch(() => {});
+    throw e;
+  }
 }
