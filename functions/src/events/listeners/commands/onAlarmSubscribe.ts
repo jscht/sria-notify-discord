@@ -1,18 +1,19 @@
 import { CommandInteraction, MessageFlags } from "discord.js";
-import { showSubscribeOptionButtons } from "@/providers/discord/builder/buttons/showSubscribeOptionButtons";
+import { alarmSubscriptionService } from "@/features/alarmSubscribe/services/subscriptionService";
+import { buildSubscribeEntryView } from "@/providers/discord/builder/subscribeEntryView";
 
 /**
  * /alarm-subscribe 진입점.
  *
- * 사용자에게 알림 옵션(켜기/관리) 버튼을 노출한다.
- * 모드 변경/저장 분기는 Phase 1.5 의 SubscriptionService 연동에서 완성한다.
+ * 현재 구독 상태를 조회해 상태 요약 + 옵션 버튼(켜기·끄기/설정 관리)을 노출한다.
  */
 export async function onAlarmSubscribe(interaction: CommandInteraction): Promise<void> {
-  const buttons = showSubscribeOptionButtons();
+  const sub = await alarmSubscriptionService.getSubscription(interaction.user.id);
+  const { content, components } = buildSubscribeEntryView(sub);
 
   await interaction.reply({
-    content: "🔔 알림을 시작하거나 설정을 변경할 수 있어요.",
-    components: [buttons],
+    content,
+    components,
     flags: MessageFlags.Ephemeral,
   });
 }

@@ -1,11 +1,12 @@
 import {
   Events, Interaction, CommandInteraction, MessageFlags,
-  ButtonInteraction, ModalSubmitInteraction
+  ButtonInteraction, ModalSubmitInteraction, StringSelectMenuInteraction
 } from "discord.js";
 import { DiscordEventHandler } from "./discordEventHandler";
 import { commandHandlers } from "./handlers/commands";
 import { buttonHandlers } from "./handlers/buttons";
 import { modalHandler } from "./handlers/modals";
+import { selectMenuHandlers } from "./handlers/selectMenus";
 import { isValidFullActionId } from "@/common/utils";
 import { providerLogger } from "@/common/utils/systemLogger";
 import { DiscordBotCommand } from "@/providers/discord/constants";
@@ -47,7 +48,14 @@ export const onInteraction = (): DiscordEventHandler => ({
         return;
       }
 
-      // Phase 1.5: StringSelectMenu 핸들러는 SubscriptionService 연동 시 도입 예정
+      /** 🔹 StringSelectMenu (지역 선택 2단계) */
+      if (interaction.isStringSelectMenu()) {
+        const handler = selectMenuHandlers[interaction.customId];
+        if (handler) {
+          await handler(interaction as StringSelectMenuInteraction);
+        }
+        return;
+      }
     } catch (error) {
       const context: Record<string, unknown> = {
         type: interaction.type,
@@ -55,16 +63,26 @@ export const onInteraction = (): DiscordEventHandler => ({
       };
       if (interaction.isChatInputCommand()) {
         context.commandName = interaction.commandName;
-      } else if (interaction.isButton() || interaction.isModalSubmit()) {
+      } else if (
+        interaction.isButton() ||
+        interaction.isModalSubmit() ||
+        interaction.isStringSelectMenu()
+      ) {
         context.customId = interaction.customId;
       }
       providerLogger.error("Interaction handler error", error as Error, context);
 
       if (interaction.isRepliable()) {
-        await interaction.reply({
+        const payload = {
           content: "⚠️ 처리 중 오류가 발생했습니다. 다시 시도해 주세요.",
-          flags: MessageFlags.Ephemeral
-        }).catch(() => {});
+          flags: MessageFlags.Ephemeral as const
+        };
+        if (interaction.deferred || interaction.replied) {
+          // defer/reply 이후 reply()는 InteractionAlreadyReplied → followUp으로 안내
+          await interaction.followUp(payload).catch(() => {});
+        } else {
+          await interaction.reply(payload).catch(() => {});
+        }
       }
     }
   },

@@ -30,23 +30,27 @@ features/
 
 ```
 alarmSubscribe/
-├── commands/            # /alarm-subscribe 명령어
-├── handlers/            # 버튼/모달 핸들러
-│   └── messageHandler.ts    # 자연어 처리 (Phase 4)
-├── interactions/        # UI 컴포넌트
-├── services/            # 알림 설정 서비스
-│   └── notificationSettingsService.ts  # TODO 구현
+├── commands/            # /alarm-subscribe 명령어 정의 (slashCommand.ts, MAX_REGION_COUNT)
+├── constants/           # customId 상수 (alertModeSelect/alertRegionEdit/regionModeChange/subscribeOption/alarmSubscribeModal)
+├── services/            # 구독 비즈니스 로직
+│   └── subscriptionService.ts  # AlarmSubscriptionService (CQS 오케스트레이션)
+├── ai/                  # 자연어 처리 (Phase 4)
 └── types/
 ```
 
+> **Phase 1.5 구조 변경 (2026-05-25)**: UI 컴포넌트·이벤트 핸들러는 Presentation 계층(`events/`, `providers/discord/builder/`)으로 일원화했다. 옛 `handlers/`·`interactions/` 디렉토리의 중복 스텁은 제거(#B)했고, 알림 설정 로직은 `notificationSettingsService`가 아니라 `subscriptionService.ts`(`AlarmSubscriptionService`)가 담당한다.
+> - Slash 진입점: `events/listeners/commands/onAlarmSubscribe.ts`
+> - 버튼/모달 핸들러: `events/listeners/buttons/`, `events/handlers/{buttons,modals}/`
+> - UI 빌더(버튼/모달/Embed): `providers/discord/builder/`
+
 **작업 내용 (Phase 1.5)**:
-- notificationSettingsService.ts 구현
-- getUserAlertMode(), setUserAlertMode() 함수
-- 미구현 버튼 핸들러 완성
+- `subscriptionService.ts`(`AlarmSubscriptionService`) 6개 메서드 구현 (CQS + 이벤트 발행)
+- throw 핸들러 본문 + 지역 편집 어댑터/모달 제출 핸들러 배선
+- 잔재 #A 버그 fix, 잔재 #B 중복 파일 삭제
 
 **작업 내용 (Phase 4)**:
 ```typescript
-// handlers/messageHandler.ts
+// ai/handler.ts
 import { aiService } from '@/services/aiService';
 import { SubscriptionStore } from '@/providers/firebase/store/subscription';
 

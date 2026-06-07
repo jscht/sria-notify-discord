@@ -19,6 +19,6 @@ export {
 } from "./regionModeChangeAction";
 
 // Subscribe Option
-export { 
-  SUBSCRIBE_OPTION_PREFIX, SubscribeOptionAction, subscribeOptionActionId 
+export {
+  SUBSCRIBE_OPTION_PREFIX, SubscribeOptionAction, subscribeOptionActionId
 } from "./subscribeOptionAction";

@@ -126,3 +126,19 @@ export const CITIES = {
   ...GyeongnamCities,
   ...JejuCities,
 } as const;
+
+// 권역 그룹 (권역→시 2단계 SelectMenu 구성용)
+export const CITY_GROUPS = {
+  metropolitan: { label: "광역시", cities: MetropolitanCities },
+  gyeonggi: { label: "경기", cities: GyeonggiCities },
+  gangwon: { label: "강원", cities: GangwonCities },
+  chungbuk: { label: "충북", cities: ChungbukCities },
+  chungnam: { label: "충남", cities: ChungnamCities },
+  jeonbuk: { label: "전북", cities: JeonbukCities },
+  jeonnam: { label: "전남", cities: JeonnamCities },
+  gyeongbuk: { label: "경북", cities: GyeongbukCities },
+  gyeongnam: { label: "경남", cities: GyeongnamCities },
+  jeju: { label: "제주", cities: JejuCities },
+} as const;
+
+export type CityGroupKey = keyof typeof CITY_GROUPS;
