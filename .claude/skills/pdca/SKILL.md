@@ -114,6 +114,7 @@ allowed-tools:
 9. CTO 위임안 출력 → **사용자 승인 대기** (승인 전 다음 단계 진행 금지)
 10. 승인 시 권장된 다음 단계로 분기
 11. matchRate < 90% 또는 🔴 Critical 이슈 존재 시 → 이슈 알림 출력 (D 포맷)
+12. (선택) matchRate ≥ 90% 시 사용자에게 **런타임 검증**을 제안할 수 있다(강제 아님). 사용자가 선택하면 구현물 기준 체크리스트를 동적 생성해 진행하고 실패 항목은 iterate로 환류한다. 수행 절차는 `.claude/rules/review-process.md` 0단계 참조
 
 ### iterate [X.Y] — Act Phase
 
@@ -253,6 +254,8 @@ plan → design → do → [구현] → analyze
 | completed | `/pdca archive X.Y` |
 | archived | `/pdca cleanup` |
 | 없음 | `/pdca next` |
+
+> `check (≥ 90%)`에서 report 전에 **선택적 런타임 검증**(review-process.md 0단계)을 사용자에게 제안할 수 있다 (강제 아님).
 
 > cleanup 완료 후 phase가 비워지기 전에 **commit → PR(base dev) → 머지 → dev 동기화**를 거친 뒤 `/pdca next` (상세: `.claude/rules/review-process.md`).
 

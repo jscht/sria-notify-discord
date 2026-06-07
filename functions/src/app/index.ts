@@ -1,9 +1,13 @@
 import dotenv from "dotenv";
 dotenv.config();
 import "@/common/utils/systemLogger";
+import { registerGlobalErrorHandlers } from "./registerGlobalErrorHandlers";
 import { initExpress } from "./express";
 import { firebaseDeploy } from "@/providers/firebase";
 import { initializeProviders } from "@/providers";
+
+// 최후의 거름망(A): init 중 발생하는 미처리 rejection/예외도 잡도록 가장 먼저 등록한다.
+registerGlobalErrorHandlers();
 
 // 모듈 로드 시점에 즉시 init 시작 (로컬 emulator 부팅 / 프로덕션 cold start).
 // initializeProviders()는 메모이즈되어 있어 미들웨어가 다시 호출해도

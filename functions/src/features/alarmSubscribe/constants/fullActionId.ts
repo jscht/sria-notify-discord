@@ -20,10 +20,13 @@ export const fullActionId = {
   // REGION_MODE_CHANGE
   REGION_MODE_CHANGE_CONFIRM: regionModeChangeActionId.CONFIRM,
   REGION_MODE_CHANGE_CANCEL: regionModeChangeActionId.CANCEL,
+  REGION_MODE_CHANGE_OPEN: regionModeChangeActionId.OPEN,
 
   // SUBSCRIBE_OPTION
   SUBSCRIBE_OPTION_ENABLE: subscribeOptionActionId.ENABLE,
   SUBSCRIBE_OPTION_MANAGE: subscribeOptionActionId.MANAGE,
+  SUBSCRIBE_OPTION_DISABLE: subscribeOptionActionId.DISABLE,
+  SUBSCRIBE_OPTION_BACK: subscribeOptionActionId.BACK,
 
   // ALERT_MODE
   ALERT_MODE_ALL: alertModeSelectActionId.ALL,

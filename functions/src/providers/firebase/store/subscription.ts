@@ -36,9 +36,13 @@ function toAlarmSubscription(
  * 외부 코드는 항상 `number` ms 타임스탬프를 보고, Firestore Timestamp 변환은 본 클래스가 담당.
  */
 export class SubscriptionStore {
-  private readonly db = getFirestore();
-
-  constructor() {}
+  // 지연 평가: getFirestore()를 모듈 로드/생성 시점이 아니라 실제 접근 시점에 호출한다.
+  // 싱글톤(alarmSubscriptionService)이 import 평가 중 생성되면서 initializeApp() 전에
+  // getFirestore()를 부르던 app/no-app 로드 실패를 차단한다. getFirestore()는 default app의
+  // Firestore를 메모이즈 반환하므로 매 접근 비용은 사실상 0.
+  private get db() {
+    return getFirestore();
+  }
 
   private getSettingsRef(userId: string) {
     return this.db

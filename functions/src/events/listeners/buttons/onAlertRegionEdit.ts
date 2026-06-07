@@ -17,17 +17,14 @@ export type OnAlertRegionEditPayload =
       payload: SubscribeClearPayload;
     };
 
-export function onAlertRegionEdit({ action, payload }: OnAlertRegionEditPayload) {
+export function onAlertRegionEdit({ action, payload }: OnAlertRegionEditPayload): Promise<void> {
   switch(action) {
     case "REGION_EDIT:ADD":
-      subscribeAdd(payload);
-      break;
+      return subscribeAdd(payload);
     case "REGION_EDIT:REMOVE":
-      subscribeRemove(payload);
-      break;
+      return subscribeRemove(payload);
     case "REGION_EDIT:CLEAR":
-      subscribeClear(payload);
-      break;
+      return subscribeClear(payload);
     default:
       throw new Error(`Unknown alert region edit action: ${action}`);
   }

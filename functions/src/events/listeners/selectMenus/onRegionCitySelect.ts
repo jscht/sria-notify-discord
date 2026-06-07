@@ -1,44 +1,32 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
-import type { ButtonInteraction } from "discord.js";
-import type { AlarmSubscription } from "@/common/types";
-import { AlertMode } from "@/common/types";
+import type { StringSelectMenuInteraction } from "discord.js";
+import type { CityEn } from "@/common/types";
 import { alarmSubscriptionService } from "@/features/alarmSubscribe/services/subscriptionService";
+import { MAX_REGION_COUNT } from "@/features/alarmSubscribe/commands/slashCommand";
 import { subscribeOptionActionId } from "@/features/alarmSubscribe/constants";
 import {
   disableMessageComponents,
   restoreMessageComponents,
 } from "@/providers/discord/builder/disableMessageComponents";
+import { subscribeManageButtons } from "@/providers/discord/builder/buttons/subscribeManageButtons";
 import { renderSubscribeManage } from "@/events/listeners/buttons/renderSubscribeManage";
 
 /**
- * ALERT_MODE:SELECTED 버튼 핸들러.
+ * 2단계 — 시 선택(추가) 핸들러.
  *
- * 선택 지역 알림(SELECTED) 모드를 확정하고 지역 편집 UI로 진입한다.
- * - 신규 사용자(모드 null): `subscribe`로 신규 활성화
- * - 기존 사용자가 다른 모드: `updateMode`로 SELECTED 전환
- * 확정 후 현재 지역 목록과 지역 편집 버튼을 노출한다.
+ * Firestore 접근이 있으므로 `deferUpdate` 후 `editReply`로 갱신한다.
+ * 중복/상한(MAX_REGION_COUNT) 검사는 철거된 모달 핸들러에서 계승했다.
  */
-export async function onEnableSelectedRegionAlert(interaction: ButtonInteraction): Promise<void> {
+export async function onRegionCitySelect(interaction: StringSelectMenuInteraction): Promise<void> {
   const original = interaction.message.components;
   await interaction.update({
     components: disableMessageComponents(interaction.message, interaction.customId),
   });
   const userId = interaction.user.id;
+  const cityEn = interaction.values[0] as CityEn;
 
   try {
-    const current = await alarmSubscriptionService.getUserAlertMode(userId);
-    let sub: AlarmSubscription | null;
-    if (current === null) {
-      sub = await alarmSubscriptionService.subscribe(userId, {
-        enabled: true,
-        alertMode: AlertMode.SELECTED,
-        regions: [],
-      });
-    } else if (current !== AlertMode.SELECTED) {
-      sub = await alarmSubscriptionService.updateMode(userId, AlertMode.SELECTED);
-    } else {
-      sub = await alarmSubscriptionService.getSubscription(userId);
-    }
+    const sub = await alarmSubscriptionService.getSubscription(userId);
 
     // 방어: 구독 정보가 없으면 #1과 동일하게 뒤로가기만 노출하고 종료한다.
     if (!sub) {
@@ -56,7 +44,25 @@ export async function onEnableSelectedRegionAlert(interaction: ButtonInteraction
       return;
     }
 
-    await renderSubscribeManage(interaction, sub);
+    const current = sub.regions;
+
+    if (current.includes(cityEn)) {
+      await interaction.editReply({
+        content: "이미 추가된 지역이에요.",
+        components: subscribeManageButtons(sub),
+      });
+      return;
+    }
+    if (current.length >= MAX_REGION_COUNT) {
+      await interaction.editReply({
+        content: `최대 ${MAX_REGION_COUNT}개까지 선택할 수 있어요.`,
+        components: subscribeManageButtons(sub),
+      });
+      return;
+    }
+
+    const updated = await alarmSubscriptionService.updateRegions(userId, [...current, cityEn]);
+    await renderSubscribeManage(interaction, updated);
   } catch (e) {
     await interaction
       .editReply({ components: restoreMessageComponents(original) })

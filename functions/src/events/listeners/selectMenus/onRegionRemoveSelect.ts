@@ -1,7 +1,6 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
-import type { ButtonInteraction } from "discord.js";
-import type { AlarmSubscription } from "@/common/types";
-import { AlertMode } from "@/common/types";
+import type { StringSelectMenuInteraction } from "discord.js";
+import type { CityEn } from "@/common/types";
 import { alarmSubscriptionService } from "@/features/alarmSubscribe/services/subscriptionService";
 import { subscribeOptionActionId } from "@/features/alarmSubscribe/constants";
 import {
@@ -11,34 +10,20 @@ import {
 import { renderSubscribeManage } from "@/events/listeners/buttons/renderSubscribeManage";
 
 /**
- * ALERT_MODE:SELECTED 버튼 핸들러.
+ * 지역 제거 핸들러.
  *
- * 선택 지역 알림(SELECTED) 모드를 확정하고 지역 편집 UI로 진입한다.
- * - 신규 사용자(모드 null): `subscribe`로 신규 활성화
- * - 기존 사용자가 다른 모드: `updateMode`로 SELECTED 전환
- * 확정 후 현재 지역 목록과 지역 편집 버튼을 노출한다.
+ * Firestore 접근이 있으므로 `deferUpdate` 후 `editReply`로 갱신한다.
  */
-export async function onEnableSelectedRegionAlert(interaction: ButtonInteraction): Promise<void> {
+export async function onRegionRemoveSelect(interaction: StringSelectMenuInteraction): Promise<void> {
   const original = interaction.message.components;
   await interaction.update({
     components: disableMessageComponents(interaction.message, interaction.customId),
   });
   const userId = interaction.user.id;
+  const cityEn = interaction.values[0] as CityEn;
 
   try {
-    const current = await alarmSubscriptionService.getUserAlertMode(userId);
-    let sub: AlarmSubscription | null;
-    if (current === null) {
-      sub = await alarmSubscriptionService.subscribe(userId, {
-        enabled: true,
-        alertMode: AlertMode.SELECTED,
-        regions: [],
-      });
-    } else if (current !== AlertMode.SELECTED) {
-      sub = await alarmSubscriptionService.updateMode(userId, AlertMode.SELECTED);
-    } else {
-      sub = await alarmSubscriptionService.getSubscription(userId);
-    }
+    const sub = await alarmSubscriptionService.getSubscription(userId);
 
     // 방어: 구독 정보가 없으면 #1과 동일하게 뒤로가기만 노출하고 종료한다.
     if (!sub) {
@@ -56,7 +41,11 @@ export async function onEnableSelectedRegionAlert(interaction: ButtonInteraction
       return;
     }
 
-    await renderSubscribeManage(interaction, sub);
+    const updated = await alarmSubscriptionService.updateRegions(
+      userId,
+      sub.regions.filter((r) => r !== cityEn)
+    );
+    await renderSubscribeManage(interaction, updated);
   } catch (e) {
     await interaction
       .editReply({ components: restoreMessageComponents(original) })
