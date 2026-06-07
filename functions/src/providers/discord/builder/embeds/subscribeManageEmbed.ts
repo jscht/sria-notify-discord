@@ -17,8 +17,8 @@ export function buildSubscribeManageEmbed(sub: AlarmSubscription): EmbedBuilder 
     .setTitle("🔧 내 알림 설정")
     .setColor(sub.enabled ? 0x00b0f4 : 0x99aab5)
     .addFields(
-      { name: "알림 상태", value: statusLabel, inline: true },
-      { name: "알림 모드", value: modeLabel, inline: true },
+      { name: "알림 상태", value: statusLabel },
+      { name: "알림 모드", value: modeLabel },
     );
 
   if (sub.alertMode === AlertMode.SELECTED) {
