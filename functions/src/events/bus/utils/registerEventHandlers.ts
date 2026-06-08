@@ -7,6 +7,7 @@
 
 import { eventBus } from '../EventBus';
 import { eventLogger } from './eventLogger';
+import { registerNotificationHandlers } from '../handlers/NotificationEventHandler';
 
 /**
  * 핸들러 등록 상태 추적
@@ -44,8 +45,9 @@ export function registerAllEventHandlers(): void {
   // Phase 1.3: RecruitCacheService 핸들러 (TODO)
   // registerRecruitHandlers();
 
-  // Phase 1.7: NotificationService 핸들러 (TODO)
-  // registerNotificationHandlers();
+  // Phase 1.7: NotificationService 핸들러
+  // 등록만 연결 — registerAllEventHandlers() 자체의 startup 호출은 Phase 1.9 위임
+  registerNotificationHandlers();
 
   // Phase 1.10: ProxyErrorHandler 핸들러 (TODO)
   // registerProxyErrorHandlers();
