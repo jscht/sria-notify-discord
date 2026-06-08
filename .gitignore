@@ -83,8 +83,8 @@ user-memo.md
 # Daily TODO tracker (Claude Code)
 .claude/docs/todo.md
 
-# Agent memory (Claude Code)
-.claude/agent-memory/
+# Agent memory (Claude Code) — 루트·중첩(functions/ 등) 모두 무시
+**/.claude/agent-memory/
 
 # Local verification scripts (not part of deploy)
 functions/scripts/
