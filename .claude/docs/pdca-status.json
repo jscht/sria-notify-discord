@@ -1,9 +1,9 @@
 {
   "overview": {
     "total": 25,
-    "completed": 9,
+    "completed": 10,
     "phases": {
-      "phase-1": { "completed": 9, "total": 12, "progress": "75%" },
+      "phase-1": { "completed": 10, "total": 12, "progress": "83%" },
       "phase-2": { "completed": 0, "total": 2, "progress": "0%" },
       "phase-3": { "completed": 0, "total": 5, "progress": "0%" },
       "phase-4": { "completed": 0, "total": 6, "progress": "0%" }
@@ -68,7 +68,7 @@
       { "features": "phase-1-5-notification-settings-ui", "phase": "archived", "matchRate": 98.3, "description": "/alarm-subscribe 슬래시 커맨드 UI 완성 — 모드(전체/선택) 전환, 지역 편집(SelectMenu), 알림 켜기/끄기 토글, U1+U3+U5 안정화(클릭 즉시 disabled + '⏳ 적용 중…' 라벨 + Firestore round-trip 3→2), 전역 에러 핸들러 dev/prod 분기 + 신규 헬퍼 disableMessageComponents", "startedAt": "2026-05-25", "completedAt": "2026-06-08", "documents": { "plan": "docs/archive/phase-1-5/01-plan.md", "design": "docs/archive/phase-1-5/02-design.md", "analysis": "docs/archive/phase-1-5/03-analysis.md", "report": "docs/archive/phase-1-5/04-report.md" } },
       { "features": "phase-1-6-recruit-request-enhancement", "phase": "archived", "matchRate": 100.0, "documents": { "plan": "docs/archive/phase-1-6/01-plan.md", "design": "docs/archive/phase-1-6/02-design.md", "analysis": "docs/archive/phase-1-6/03-analysis.md", "report": "docs/archive/phase-1-6/04-report.md" } },
       { "features": "phase-1-7-auto-notification-system", "phase": "archived", "matchRate": 100.0, "description": "RECRUIT_NEW 구독 → 활성 구독자 조회 → 모드/지역 필터(filterByMode/filterByRegion) → 구독자별 NOTIFICATION_SEND 발행 (이벤트 경계까지). 필터를 common/utils로 배치(services→features 금지 준수), 잡셋=addedJobs+updatedJobs. 실제 DM 발송은 1.8, startup wiring은 1.9 위임", "startedAt": "2026-06-08", "completedAt": "2026-06-09", "documents": { "plan": "docs/archive/phase-1-7/01-plan.md", "design": "docs/archive/phase-1-7/02-design.md", "analysis": "docs/archive/phase-1-7/03-analysis.md", "report": "docs/archive/phase-1-7/04-report.md" } },
-      { "features": "phase-1-8-discord-dm-utility", "phase": null, "matchRate": null, "documents": {} },
+      { "features": "phase-1-8-discord-dm-utility", "phase": "archived", "matchRate": 100.0, "description": "NOTIFICATION_SEND → 실제 Discord DM 전송 연결. dmSender(embeds 기반 포맷 무관 전송기, 재시도 3회+429 retry_after+50007 graceful skip) + 알림 임베드 빌더 + jobLink 공용 헬퍼(DRY) + NOTIFICATION_SEND 소비 핸들러(→NOTIFICATION_SENT 발행) + registerEventHandlers 등록 연결. sendNotificationDM 시그니처를 후속 Phase(1.9/1.10/2.1/2.2) 계약으로 격상. startup·client 로그인·E2E는 1.9 위임", "startedAt": "2026-06-09", "completedAt": "2026-06-10", "documents": { "plan": "docs/archive/phase-1-8/01-plan.md", "design": "docs/archive/phase-1-8/02-design.md", "analysis": "docs/archive/phase-1-8/03-analysis.md", "report": "docs/archive/phase-1-8/04-report.md" } },
       { "features": "phase-1-9-scheduler-reactivation", "phase": null, "matchRate": null, "documents": {} },
       { "features": "phase-1-10-proxy-integration", "phase": null, "matchRate": null, "documents": {} }
     ],

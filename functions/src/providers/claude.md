@@ -38,75 +38,57 @@ providers/
 
 ## discord/utils/ (NEW - Phase 1.8)
 
-### dmSender.ts
-**역할**: Discord DM 발송, Rate Limit 처리
+### dmSender.ts (Phase 1.8 확정 계약)
+**역할**: Discord DM 발송, Rate Limit·차단 처리 (graceful degradation)
+
+> **구현 SoT**: `providers/discord/utils/dmSender.ts`
+> **계약**: 시그니처는 **embeds 기반 포맷 무관**(format-agnostic) — 후속 4개 Phase(1.9/1.10/2.1/2.2)의 공유 계약이므로 `title/recruits` 같은 포맷을 시그니처에 박지 않는다.
 
 ```typescript
-import { Client } from 'discord.js';
+import type { MessageCreateOptions } from "discord.js";
+import { client } from "@/providers/discord/client";
+import { providerLogger } from "@/common/utils/systemLogger";
 
+export interface DmPayload {
+  embeds?: MessageCreateOptions["embeds"]; // 호출 측 빌더 산출물 (예: notificationMessageEmbed)
+  content?: string;
+}
+
+export interface DmSendResult {
+  ok: boolean;          // 전송 성공 여부 (skip도 ok=false)
+  skipped?: boolean;    // DM 차단(50007) 등 "보낼 수 없는 정상 상태"
+  reason?: string;      // "dm_disabled" | "unknown_user" | "max_retries"
+  errorCode?: number;   // Discord API 에러 코드 (기록용)
+  durationMs: number;
+  attempts: number;
+}
+
+// 포맷 무관 — 임베드는 호출 측(이벤트 핸들러)이 빌더로 완성해 전달.
+// provider 계층은 throw 금지 — 모든 결과를 DmSendResult로 흡수 반환.
 export async function sendNotificationDM(
   userId: string,
-  options: {
-    title: string;
-    description?: string;
-    recruits?: RecruitData[];
-    color?: number;
-  }
-): Promise<void> {
-  const client = getDiscordClient();
-
-  try {
-    const user = await client.users.fetch(userId);
-
-    const embed = {
-      title: options.title,
-      description: options.description || '',
-      color: options.color || 0x5865F2,
-      fields: options.recruits?.map(r => ({
-        name: r.title,
-        value: `지역: ${r.region}\n기간: ${r.startDate} ~ ${r.endDate}`,
-        inline: false
-      })) || [],
-      timestamp: new Date().toISOString()
-    };
-
-    await user.send({ embeds: [embed] });
-
-    console.log(`[dmSender] DM sent to ${userId}`);
-
-  } catch (error) {
-    if (error.code === 50007) {
-      console.error(`[dmSender] User ${userId} has DMs disabled`);
-    } else {
-      console.error(`[dmSender] Failed to send DM to ${userId}:`, error);
-      throw error;
-    }
-  }
-}
-
-// Rate Limit 처리 (Discord: 5 req/5s per user)
-export async function sendBulkNotifications(
-  userIds: string[],
-  options: any
-): Promise<{ sent: number; failed: number }> {
-  let sent = 0;
-  let failed = 0;
-
-  for (const userId of userIds) {
-    try {
-      await sendNotificationDM(userId, options);
-      sent++;
-
-      // Rate Limit 대기 (1초)
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    } catch (error) {
-      failed++;
-    }
-  }
-
-  return { sent, failed };
-}
+  payload: DmPayload
+): Promise<DmSendResult>;
 ```
+
+**에러 분류** (`error.code` switch + RateLimitError 방어):
+
+| 코드/유형 | 처리 | 재시도 | 로깅 |
+|-----------|------|--------|------|
+| `50007` (DM 차단/공유 길드 없음) | graceful skip `{ ok:false, skipped:true, reason:"dm_disabled" }` | ❌ | `providerLogger.warn` |
+| `10013` (Unknown User) | 실패 `{ ok:false, reason:"unknown_user" }` | ❌ | `providerLogger.error` |
+| 429 / `RateLimitError` | 대기 후 재시도 | ✅ | `providerLogger.warn` |
+| 그 외 미지 코드 | 짧은 backoff 후 재시도, 소진 시 `{ ok:false, reason:"max_retries" }` | ✅ (최대 3회) | `providerLogger.error` |
+| 성공 | `{ ok:true }` | — | `providerLogger.info` |
+
+**discord.js 14.17 rate limit 단위 (중요)**:
+- 기본 설정(`rejectOnRateLimit: null`)에서 discord.js REST는 rate limit을 **내부 큐로 흡수·대기**하므로 보통 `RateLimitError`를 throw하지 않는다(내부 `retries: 3` 포함).
+- 방어적으로 `RateLimitError`를 받을 경우 `retryAfter`/`timeToReset`는 **밀리초(ms)** 단위다 — 원시 HTTP의 `retry_after`(초)와 다르므로 **`*1000` 보정 금지**.
+- 구독자 간 발송 간격은 v14 REST 내장 큐에 위임한다. `setTimeout` 기반 순차 발송 헬퍼(`sendBulkNotifications`)는 본 Phase 범위가 아니며, 순차 발송 블로킹 비용은 Phase 1.9 E2E에서 실측한다.
+
+**금지 사항**:
+- `console.log`/`console.error` 금지 → 성공(info)/skip(warn)/실패(error) 모두 `providerLogger`(LogSource `provider`).
+- provider 계층은 services/features 참조 금지.
 
 ---
 
