@@ -1,11 +1,7 @@
 import { APIEmbed, EmbedBuilder } from "discord.js";
 import type { RecruitData } from "@/crawlers/types";
 import { ENV } from "@/common/utils";
-
-function extractJobId(path: string) {
-  const match = path.match(/\/jobs\/(\d+)/);
-  return match ? match[1] : "";
-}
+import { formatJobTitleLink } from "./jobLink";
 
 export function recruitMessageEmbed(list: RecruitData[], region?: string): APIEmbed {
   const baseUrl = ENV.SRIA_URL;
@@ -25,9 +21,7 @@ export function recruitMessageEmbed(list: RecruitData[], region?: string): APIEm
     .setTimestamp();
 
   list.slice(0, topCount).forEach((item, index) => {
-    const titleLine = baseUrl
-      ? `[${item.title}](${baseUrl}${extractJobId(item.href)})`
-      : item.title;
+    const titleLine = formatJobTitleLink(item.title, item.href, baseUrl);
     embed
       .addFields({
         name: `\n`,
