@@ -9,10 +9,8 @@ import "@/common/utils/systemLogger";
 import { initializeProviders } from "@/providers";
 import type { Request, Response, NextFunction } from "express";
 
-// 스케줄러는 별도 의사결정 영역으로 분리됨 (현재 비활성화).
-// 활성화 시 app/index.ts의 eager init과 동일한 위치에서 시작할 것.
-// import { initializeSchedulers, setupGracefulShutdown } from "@/crawlers";
-// import { CRAWL_MODE } from "../constants";
+// 스케줄러 init은 app/index.ts의 eager 블록(provider init 완료 후)에서 시작한다 (Phase 1.9 확정).
+// 이 미들웨어는 provider init 게이트만 담당한다.
 
 export default async function initializeWorker(
   req: Request,

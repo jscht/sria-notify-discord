@@ -1,5 +1,6 @@
 import type { MessageCreateOptions } from "discord.js";
 import { client } from "@/providers/discord/client";
+import { getDiscordReady } from "@/providers/discord/discordReady";
 import { providerLogger } from "@/common/utils/systemLogger";
 
 /**
@@ -110,6 +111,10 @@ export async function sendNotificationDM(
 ): Promise<DmSendResult> {
   const startedAt = Date.now();
   let attempts = 0;
+
+  // ClientReady 전 client.users.fetch()는 실패한다 → 발송 직전 1회만 ready 빗장을 기다린다(C안).
+  // 루프 진입 전에 두어 재시도마다 재-await하지 않는다. 빗장은 leaf 모듈에서 직접 import(R3 순환 차단).
+  await getDiscordReady();
 
   while (attempts < MAX_ATTEMPTS) {
     attempts++;
