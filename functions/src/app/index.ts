@@ -5,6 +5,9 @@ import { registerGlobalErrorHandlers } from "./registerGlobalErrorHandlers";
 import { initExpress } from "./express";
 import { firebaseDeploy } from "@/providers/firebase";
 import { initializeProviders } from "@/providers";
+import { registerAllEventHandlers } from "@/events";
+import { initializeSchedulers, setupGracefulShutdown } from "@/crawlers";
+import { CRAWL_MODE } from "@/common/constants";
 
 // 최후의 거름망(A): init 중 발생하는 미처리 rejection/예외도 잡도록 가장 먼저 등록한다.
 registerGlobalErrorHandlers();
@@ -12,9 +15,24 @@ registerGlobalErrorHandlers();
 // 모듈 로드 시점에 즉시 init 시작 (로컬 emulator 부팅 / 프로덕션 cold start).
 // initializeProviders()는 메모이즈되어 있어 미들웨어가 다시 호출해도
 // 같은 promise를 await할 뿐 중복 실행되지 않는다.
-initializeProviders().catch((error) => {
-  globalLogger.error("Eager provider initialization failed:", error);
-});
+//
+// provider init 완료 후 알림 파이프라인을 연결한다 (Phase 1.9 — 로컬 wiring):
+//   1) EventBus 핸들러 등록 (멱등 가드 내장) — 없으면 RECRUIT_NEW에 구독자 0
+//   2) RecruitScheduler 시작 (DUMMY, Proxy off→1.10) — 첫 크롤이 자동 E2E
+//   3) graceful shutdown 연결
+// 스케줄러는 Discord ready로 막지 않는다(C안) — DM 발송 직전 dmSender에서만 대기.
+initializeProviders()
+  .then(() => {
+    registerAllEventHandlers();
+    const manager = initializeSchedulers({
+      recruitMode: CRAWL_MODE.DUMMY,
+      enableProxy: false,
+    });
+    setupGracefulShutdown(manager);
+  })
+  .catch((error) => {
+    globalLogger.error("Eager provider initialization / pipeline wiring failed:", error);
+  });
 
 const expressApp = initExpress();
 const appServer = firebaseDeploy(expressApp);

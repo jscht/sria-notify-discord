@@ -10,14 +10,14 @@ config();
 
 // npm run register:commands
 
-const rest = new REST({ version: '10' }).setToken(process.env.SARIAN_BOT_TOKEN!);
+const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_BOT_TOKEN!);
 
 (async () => {
   try {
     providerLogger.debug("🔁 명령어 등록 중...");
 
     await rest.put(
-      Routes.applicationGuildCommands(process.env.SARIAN_APP_ID!, process.env.SARIAN_TEST_GUILD_ID!),
+      Routes.applicationGuildCommands(process.env.DISCORD_APP_ID!, process.env.DISCORD_TEST_GUILD_ID!),
       { body: commands.map(cmd => cmd.toJSON()) },
     );
 

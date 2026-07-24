@@ -1,7 +1,10 @@
 import "@/common/utils/systemLogger"; // globalLogger 전역 등록
 import { eventBus, EventType } from "@/events/bus";
 import type { NotificationSendEvent, NotificationSentEvent } from "@/events/bus";
-import { notificationMessageEmbed } from "@/providers/discord/builder/embeds/notificationMessageEmbed";
+import {
+  notificationMessageEmbed,
+  notificationBannerContent,
+} from "@/providers/discord/builder/embeds/notificationMessageEmbed";
 import { sendNotificationDM } from "@/providers/discord/utils/dmSender";
 
 /**
@@ -19,8 +22,13 @@ export function registerNotificationSendHandlers(): void {
     try {
       if (payload.jobs.length === 0) return;
 
-      const embed = notificationMessageEmbed(payload.jobs);
-      const result = await sendNotificationDM(payload.userId, { embeds: [embed] });
+      // Phase 1.9 iterate §7: 배너 요약(content) + 상세 임베드로 분리 발송.
+      const content = notificationBannerContent(payload.jobs, payload.settings);
+      const embed = notificationMessageEmbed(payload.jobs, payload.settings);
+      const result = await sendNotificationDM(payload.userId, {
+        content,
+        embeds: [embed],
+      });
 
       // skip(DM 차단)도 success=false로 발행 — 1.9+ 소비자가 결과를 관찰한다.
       // 성공/skip/실패 구분은 dmSender가 providerLogger로 이미 기록하므로

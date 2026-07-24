@@ -256,6 +256,7 @@ plan → design → do → [구현] → analyze
 | 없음 | `/pdca next` |
 
 > `check (≥ 90%)`에서 report 전에 **선택적 런타임 검증**(review-process.md 0단계)을 사용자에게 제안할 수 있다 (강제 아님).
+> 런타임 검증 진입 전 `git add -A`로 기준선을 스냅샷한다. 수정분은 stage하지 않고 `git diff`로 식별하며, 커밋은 5단계에서만 한다 (review-process.md 0단계).
 
 > cleanup 완료 후 phase가 비워지기 전에 **commit → PR(base dev) → 머지 → dev 동기화**를 거친 뒤 `/pdca next` (상세: `.claude/rules/review-process.md`).
 
