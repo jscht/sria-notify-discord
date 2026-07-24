@@ -22,6 +22,7 @@
 | Phase 1.10 | Proxy 통합 및 우회 설정 | 0 | 0 | 5 |
 | Phase 1.11 | DebugLogger 마이그레이션 | 0 | 0 | 4 |
 | Phase 1.12 | Events 아키텍처 통합 | 5 | 0 | 0 |
+| Phase 1.13 | 프로덕션 런타임 & 스케줄러 트리거 재설계 | 0 | 0 | 6 |
 
 ---
 
@@ -399,6 +400,41 @@
 - [x] Import 경로 단순화 (@/events/* 만 필요)
 - [x] 기술부채 감소 (불필요한 파일 정리)
 - [x] TypeScript 컴파일 성공 (기존 에러 제외)
+
+---
+
+## Phase 1.13: 프로덕션 런타임 & 스케줄러 트리거 재설계 (미착수)
+**우선순위**: ⭐⭐⭐ (P0)
+**의존성**: Phase 1.9 완료
+
+**배경**: 배포 타깃이 `onRequest` cold-start Cloud Functions라, 아래 두 가지가 프로덕션에서 동작하지 않는다. Phase 1.9는 이 때문에 "로컬 검증 한정"으로 축소되었고(startup wiring + 로컬 DUMMY 스케줄러 + ready 게이트 + env rename + emulator DM E2E), 실 CRAWL·프로덕션 구동은 본 Phase로 이월됐다.
+- `BaseScheduler`의 in-process `setTimeout` 스케줄러 → 응답 후 CPU 동결로 4시간 타이머가 발화하지 않는다.
+- 봇이 gateway WebSocket에 의존 → dmSender(`client.users.fetch`)가 서버리스 틱과 비호환이다.
+
+- [ ] 런타임 결정: warm-persistent(상시 프로세스) vs serverless(Cloud Functions)
+- [ ] 스케줄러 트리거를 `setTimeout` 루프 → `onSchedule`(Cloud Scheduler)로 전환
+- [ ] dmSender를 discord.js 클라이언트 의존 → REST 전용으로 전환
+- [ ] 틱 완결 파이프라인: 한 번의 스케줄 실행이 크롤→diff→알림까지 완결되도록 보장
+- [ ] **스케줄러 크롤 경로 재설계 (변경감지 정합성)**
+  - 현재 `RecruitScheduler.performWork` → `recruitService.getRecruitList(mode)`는 3-tier(Redis → Firestore → 크롤) 순서로 읽는다.
+  - Firestore `recruit` 컬렉션에 TTL이 없어, 한 번 채워지면 Step2에서 항상 히트하고 Step4 실제 크롤에 도달하지 못한다.
+  - 결과적으로 첫 크롤 이후 스케줄러가 공고 변경(added/updated/deleted)을 감지하지 못한다.
+  - 스케줄러 경로는 캐시를 우회해 **강제 크롤 → `setRecruitList` diff**로 분리해야 한다.
+  - (Phase 1.9 로컬 E2E는 이 경로를 우회하는 드라이버로 `setRecruitList`를 직접 호출해 검증했다.)
+- [ ] 프로덕션 E2E: 실제 스케줄 주기에서 크롤→알림 전체 플로우 검증
+  - **검증 리스트**: 1.13 검증 단계 진입 시 review-process 0단계처럼 체크리스트를 동적 생성하고, 아래 Phase 1.9 이월 항목을 포함한다.
+  - [ ] R4 — ready race 해소: 첫 크롤이 ready보다 빨라도 DM 유실 없음 (실 타이밍 재현)
+  - [ ] R5 — ready 로그 / HTTP 비결합 음성검증 / graceful shutdown(Ctrl+C) 동작
+  - [ ] DM 에러분기 — 50007(DM 차단/공유 길드 없음) graceful skip, rate limit(429) 대기·재시도
+  - [ ] 부하·스트레스 테스트 — 구독자 수를 늘려가며 처리량·타임아웃 한계·429 발생 지점 측정. 순차 발송 시 `setTimeout`/`sleep` 블로킹이 실행시간·비용에 주는 영향을 측정 축으로 포함
+  - [ ] 로그 수집 검증 — `console.*`(providerLogger/systemLogger) 출력이 Cloud Logging에 전 레벨(info/warn/error) 누락 없이 적재되는지 확인
+    - 각 레벨이 올바른 심각도로 매핑되는지 (error→ERROR, warn→WARNING 등)
+    - 파이프라인 핵심 이벤트(크롤 시작·완료, RECRUIT_NEW, NOTIFICATION_SEND/SENT, DM 성공/skip/실패)가 로그로 추적되는지
+    - `firebase functions:log` 또는 GCP Logging 콘솔에서 조회 가능한지
+
+**완료 기준**:
+- [ ] 스케줄러가 매 실행마다 실제 크롤을 수행하고 변경을 감지한다
+- [ ] 프로덕션 런타임에서 크롤→diff→DM 전체 파이프라인이 완결된다
 
 ---
 
