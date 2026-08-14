@@ -7,7 +7,7 @@
  * - 타입 추론이 올바르게 작동
  */
 
-import { eventBus, EventType, RecruitNewEvent } from '../index';
+import { eventBus, EventType, RecruitChangedEvent } from '../index';
 
 /**
  * 간단한 테스트 함수
@@ -23,19 +23,19 @@ export async function testEventBus(): Promise<void> {
   // 2. 이벤트 리스너 등록
   console.log('\n✓ 테스트 2: 이벤트 리스너 등록');
   let eventReceived = false;
-  let receivedPayload: RecruitNewEvent | null = null;
+  let receivedPayload: RecruitChangedEvent | null = null;
 
-  eventBus.onEvent<RecruitNewEvent>(EventType.RECRUIT_NEW, (payload) => {
+  eventBus.onEvent<RecruitChangedEvent>(EventType.RECRUIT_CHANGED, (payload) => {
     console.log('  이벤트 수신됨!');
     eventReceived = true;
     receivedPayload = payload;
   });
 
-  console.log(`  리스너 등록 완료 (${EventType.RECRUIT_NEW})`);
+  console.log(`  리스너 등록 완료 (${EventType.RECRUIT_CHANGED})`);
 
   // 3. 이벤트 발행
   console.log('\n✓ 테스트 3: 이벤트 발행');
-  const testPayload: RecruitNewEvent = {
+  const testPayload: RecruitChangedEvent = {
     timestamp: Date.now(),
     source: 'test',
     addedJobs: [
@@ -54,7 +54,7 @@ export async function testEventBus(): Promise<void> {
     deletedIds: [],
   };
 
-  const emitResult = eventBus.emitEvent(EventType.RECRUIT_NEW, testPayload);
+  const emitResult = eventBus.emitEvent(EventType.RECRUIT_CHANGED, testPayload);
   console.log(`  이벤트 발행 결과: ${emitResult ? '성공' : '실패'}`);
 
   // 4. 이벤트 수신 확인
@@ -70,7 +70,7 @@ export async function testEventBus(): Promise<void> {
 
   // 5. 리스너 수 확인
   console.log('\n✓ 테스트 5: 리스너 수 확인');
-  const listenerCount = eventBus.listenerCountForEvent(EventType.RECRUIT_NEW);
+  const listenerCount = eventBus.listenerCountForEvent(EventType.RECRUIT_CHANGED);
   console.log(`  현재 리스너 수: ${listenerCount}`);
 
   // 6. 타입 안전성 테스트

@@ -26,7 +26,8 @@ export abstract class BaseScheduler {
   protected abstract performWork(): Promise<WorkResult>;
 
   /**
-   * 스케줄러 시작
+   * 스케줄러 시작 (로컬 장기 실행 — setTimeout 재스케줄 루프).
+   * 서버리스(onSchedule)는 이 메서드 대신 runOnce()를 직접 호출한다.
    */
   startWork(): void {
     if (this.isRunning) {
@@ -37,18 +38,15 @@ export abstract class BaseScheduler {
     this.isRunning = true;
     globalLogger.info(`[${this.config.name}] ✅ Scheduler started.`);
 
-    this.scheduleNextWork().catch((error) => {
-      this.handleError(error);
-      this.scheduleNextWork(); // 재시도
-    });
+    void this.runOnce().finally(() => this.scheduleNextExecution());
   }
 
   /**
-   * 다음 작업 스케줄링
+   * 단일 tick 실행 — STARTED 발행 → performWork → COMPLETED/FAILED 발행.
+   * throw 없이 항상 WorkResult를 반환하며, 재스케줄(scheduleNextExecution)을 하지 않는다.
+   * 서버리스 onSchedule 및 startWork 루프가 공유하는 실행 단위.
    */
-  private async scheduleNextWork(): Promise<void> {
-    if (!this.isRunning) return;
-
+  async runOnce(): Promise<WorkResult> {
     const startTime = Date.now();
 
     // STARTED 이벤트 발행
@@ -82,8 +80,17 @@ export abstract class BaseScheduler {
       );
 
       this.logWorkCompletion(result);
-    } catch (error) {
+      return result;
+    } catch (thrown) {
       const durationMs = Date.now() - startTime;
+
+      // performWork가 던지는 객체는 WorkResult 유사 형태(error/message 포함) — 안전 변환
+      const err =
+        thrown instanceof Error
+          ? thrown
+          : (thrown as { error?: Error })?.error ??
+            new Error(String((thrown as { message?: string })?.message ?? thrown));
+      const message = (thrown as { message?: string })?.message ?? err.message;
 
       // FAILED 이벤트 발행
       eventBus.emitEvent<RecruitCrawlFailedEvent>(
@@ -92,20 +99,26 @@ export abstract class BaseScheduler {
           timestamp: Date.now(),
           source: "BaseScheduler",
           schedulerName: this.config.name,
-          error: error as Error,
+          error: err,
           duration: durationMs,
         }
       );
 
-      this.handleError(error as Error);
-    }
+      this.handleError(err);
 
-    // 다음 실행 스케줄링
-    this.scheduleNextExecution();
+      return {
+        success: false,
+        startTime: new Date(startTime),
+        endTime: new Date(),
+        durationMs,
+        error: err,
+        message: `[${this.config.name}] Work failed: ${message}`,
+      };
+    }
   }
 
   /**
-   * 다음 실행 스케줄링
+   * 다음 실행 스케줄링 (로컬 장기 실행 전용)
    */
   private scheduleNextExecution(): void {
     if (!this.isRunning) return;
@@ -117,7 +130,8 @@ export abstract class BaseScheduler {
     this.nextRunTime = new Date(now + delay);
 
     setTimeout(() => {
-      this.scheduleNextWork();
+      if (!this.isRunning) return;
+      void this.runOnce().finally(() => this.scheduleNextExecution());
     }, delay);
   }
 

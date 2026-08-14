@@ -54,7 +54,7 @@ export const eventBus = EventBus.getInstance();
 export enum EventType {
   // Recruit Events
   CRAWL_STARTED = 'recruit.crawl.started',
-  RECRUIT_NEW = 'recruit.new',
+  RECRUIT_CHANGED = 'recruit:changed',
 
   // Notification Events
   NOTIFICATION_SEND = 'notification.send',
@@ -77,8 +77,8 @@ export interface BaseEvent {
   source: string;
 }
 
-export interface RecruitNewEvent extends BaseEvent {
-  type: EventType.RECRUIT_NEW;
+export interface RecruitChangedEvent extends BaseEvent {
+  type: EventType.RECRUIT_CHANGED;
   data: {
     addedJobs: Job[];
     updatedJobs: Job[];
@@ -94,7 +94,7 @@ export interface RecruitNewEvent extends BaseEvent {
 
 ```
 handlers/
-├── NotificationEventHandler.ts  # recruit.new → 알림 발송
+├── NotificationEventHandler.ts  # recruit:changed → 알림 발송
 ├── ErrorEventHandler.ts          # error.critical → 관리자 알림
 └── index.ts                      # 전체 핸들러 export
 ```
@@ -102,11 +102,11 @@ handlers/
 **예시: NotificationEventHandler.ts**
 ```typescript
 import { eventBus } from '../EventBus';
-import { EventType, RecruitNewEvent } from '../types';
+import { EventType, RecruitChangedEvent } from '../types';
 import { notificationService } from '@/services/notificationService';
 
 export function registerNotificationHandlers() {
-  eventBus.onEvent<RecruitNewEvent>(EventType.RECRUIT_NEW, async (payload) => {
+  eventBus.onEvent<RecruitChangedEvent>(EventType.RECRUIT_CHANGED, async (payload) => {
     await notificationService.notifyNewRecruits(payload.data);
   });
 }
@@ -143,12 +143,12 @@ registerAllEventHandlers();  // 모듈 레벨에서 1회만 실행
 ### 1. 이벤트 루프 방지
 ```typescript
 // ❌ 무한 루프
-eventBus.on('recruit.new', (payload) => {
-  eventBus.emit('recruit.new', payload);  // 재발행!
+eventBus.on('recruit:changed', (payload) => {
+  eventBus.emit('recruit:changed', payload);  // 재발행!
 });
 
 // ✅ 다른 이벤트 발행
-eventBus.on('recruit.new', (payload) => {
+eventBus.on('recruit:changed', (payload) => {
   eventBus.emit('notification.send', { ... });
 });
 ```
@@ -156,7 +156,7 @@ eventBus.on('recruit.new', (payload) => {
 ### 2. 에러 처리
 ```typescript
 // ✅ 모든 핸들러는 try-catch
-eventBus.on('recruit.new', async (payload) => {
+eventBus.on('recruit:changed', async (payload) => {
   try {
     await processRecruits(payload);
   } catch (error) {

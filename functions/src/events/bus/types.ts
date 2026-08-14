@@ -18,7 +18,7 @@ export enum EventType {
   RECRUIT_CRAWL_STARTED = "recruit:crawl:started",
   RECRUIT_CRAWL_COMPLETED = "recruit:crawl:completed",
   RECRUIT_CRAWL_FAILED = "recruit:crawl:failed",
-  RECRUIT_NEW = "recruit:new",
+  RECRUIT_CHANGED = "recruit:changed",
   RECRUIT_REQUESTED = "recruit:requested",
   RECRUIT_REQUEST_COMPLETED = "recruit:request:completed",
 
@@ -74,7 +74,7 @@ export interface RecruitCrawlFailedEvent extends BaseEvent {
  *
  * @description JobDiffResult (공고 변경 사항)를 이벤트 페이로드로 감싸는 인터페이스
  */
-export interface RecruitNewEvent extends BaseEvent, JobDiffResult {}
+export interface RecruitChangedEvent extends BaseEvent, JobDiffResult {}
 
 // 사용자 공고 요청 시작 이벤트
 export interface RecruitRequestedEvent extends BaseEvent {
@@ -174,7 +174,7 @@ export interface EventPayloadMap {
   [EventType.RECRUIT_CRAWL_STARTED]: RecruitCrawlStartedEvent;
   [EventType.RECRUIT_CRAWL_COMPLETED]: RecruitCrawlCompletedEvent;
   [EventType.RECRUIT_CRAWL_FAILED]: RecruitCrawlFailedEvent;
-  [EventType.RECRUIT_NEW]: RecruitNewEvent;
+  [EventType.RECRUIT_CHANGED]: RecruitChangedEvent;
   [EventType.RECRUIT_REQUESTED]: RecruitRequestedEvent;
   [EventType.RECRUIT_REQUEST_COMPLETED]: RecruitRequestCompletedEvent;
 

@@ -3,8 +3,15 @@ import { RecruitCacheStore, RecruitHashStore } from "../providers/redis/store";
 import type { CityEn } from "@/common/types/city.d";
 import type { Job, HashedString, JobDiffResult, JobHashes } from "@/common/types/job.d";
 import type { RecruitData } from "@/crawlers/types";
-import { eventBus, EventType } from "@/events/bus";
-import type { RecruitNewEvent } from "@/events/bus";
+
+/**
+ * 공고 캐시 갱신 결과 상태
+ */
+export enum CacheUpdateStatus {
+  NO_DATA = "NO_DATA",
+  UNCHANGED = "UNCHANGED",
+  CHANGED = "CHANGED",
+}
 
 /**
  * 공고 리스트 갱신 흐름:
@@ -28,13 +35,9 @@ export class RecruitCacheService {
       : await this.cacheStore.getAll();
   }
 
-  async setRecruitList(list: RecruitData[]) {
-    enum CacheUpdateStatus {
-      NO_DATA = "NO_DATA",
-      UNCHANGED = "UNCHANGED",
-      CHANGED = "CHANGED"
-    };
-
+  async setRecruitList(
+    list: RecruitData[]
+  ): Promise<{ status: CacheUpdateStatus; diff: JobDiffResult }> {
     const expiration = 6 * 60 * 60;  // 6시간
     const newJobs = this.mapToJob(list);
     const newHashes = this.createHashes(newJobs);
@@ -62,43 +65,27 @@ export class RecruitCacheService {
     switch (status) {
       case CacheUpdateStatus.NO_DATA:
         await this.saveAll(newJobs, newHashes, expiration);
-        globalLogger.info("No data found. Data cached successfully and expiry of 6 hours.");
+        // NOTE: 기준선(currentHashes) 부재로 diff 비교가 불가능하여 RECRUIT_CHANGED 미발행은 의도된 동작
+        globalLogger.warn("No data found. Data cached successfully and expiry of 6 hours. (기준선 부재로 RECRUIT_CHANGED 미발행)");
         break;
 
-      case CacheUpdateStatus.CHANGED:
+      case CacheUpdateStatus.CHANGED: {
         const { addedJobs, updatedJobs, deletedIds } = diffJobs;
         await this.syncChanges(addedJobs, updatedJobs, deletedIds, newHashes, expiration);
         globalLogger.info(`
           Redis cache updated.\n
           added: ${addedJobs.length}, deleted: ${deletedIds.length}, updated: ${updatedJobs.length}
         `);
-
-        // 새 공고 발견 시 이벤트 발행
-        // NOTE: Job[] 전체 전달 (id + value)
-        // - Phase 1.7의 구독자가 필요시 Job.id 사용 가능
-        // - 페이로드 최소화(value만 추출) vs 타입 정의 변경의 이펙트를 고려하여 Job[] 유지
-        try {
-          eventBus.emitEvent<RecruitNewEvent>(EventType.RECRUIT_NEW, {
-            timestamp: Date.now(),
-            source: "RecruitCacheService",
-            addedJobs,
-            updatedJobs,
-            deletedIds,
-          });
-        } catch (error) {
-          globalLogger.error("이벤트 발행 실패", error as Error, {
-            event: EventType.RECRUIT_NEW,
-            source: "RecruitCacheService",
-          });
-          // 캐시 업데이트는 이미 성공했으므로 계속 진행
-        }
         break;
+      }
 
       case CacheUpdateStatus.UNCHANGED:
         await this.extendExpiration(expiration);
         globalLogger.info("No changes. Expiration extended.");
         break;
     }
+
+    return { status, diff: diffJobs };
   }
 
   private createHashes(jobs: Job[]): JobHashes {

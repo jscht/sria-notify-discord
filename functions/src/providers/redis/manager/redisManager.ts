@@ -1,4 +1,5 @@
 import "@/common/utils/systemLogger";
+import crypto from "node:crypto";
 import { RedisClientType } from "redis";
 import { RecruitCacheStore, RecruitHashStore, CrawlCacheStore } from "../store";
 import { redisKeyManager } from "../key";
@@ -58,5 +59,24 @@ export class RedisManager {
       }
       return { newCursor: 0, foundKeys: [] };
     }
+  }
+
+  /**
+   * 분산 락 획득 (SET key token NX PX). 획득 성공 시 해제용 토큰 반환, 실패(이미 잠김) 시 null.
+   * @param key 락 키 (예: "lock:recruit:crawlAndDiff")
+   * @param ttlMs 락 자동 만료(ms) — 홀더 크래시 시 교착 방지
+   */
+  async acquireLock(key: string, ttlMs: number): Promise<string | null> {
+    const token = crypto.randomUUID();
+    const res = await this.client.set(key, token, { NX: true, PX: ttlMs });
+    return res === "OK" ? token : null;
+  }
+
+  /**
+   * 분산 락 해제 — 토큰이 일치할 때만 삭제(다른 홀더 락 오삭제 방지). CAS는 Lua로 원자 처리.
+   */
+  async releaseLock(key: string, token: string): Promise<void> {
+    const lua = `if redis.call("get", KEYS[1]) == ARGV[1] then return redis.call("del", KEYS[1]) else return 0 end`;
+    await this.client.eval(lua, { keys: [key], arguments: [token] });
   }
 };

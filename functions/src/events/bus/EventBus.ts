@@ -13,7 +13,7 @@ import { eventLogger } from './utils/eventLogger';
  * import { eventBus, EventType } from '@/events';
  *
  * // 이벤트 발행
- * eventBus.emitEvent(EventType.RECRUIT_NEW, {
+ * eventBus.emitEvent(EventType.RECRUIT_CHANGED, {
  *   timestamp: Date.now(),
  *   addedJobs: [],
  *   updatedJobs: [],
@@ -21,7 +21,7 @@ import { eventLogger } from './utils/eventLogger';
  * });
  *
  * // 이벤트 구독
- * eventBus.onEvent(EventType.RECRUIT_NEW, async (payload) => {
+ * eventBus.onEvent(EventType.RECRUIT_CHANGED, async (payload) => {
  *   console.log('New recruits:', payload);
  * });
  * ```
@@ -59,7 +59,7 @@ export class EventBus extends EventEmitter {
    *
    * @example
    * ```typescript
-   * eventBus.emitEvent(EventType.RECRUIT_NEW, {
+   * eventBus.emitEvent(EventType.RECRUIT_CHANGED, {
    *   timestamp: Date.now(),
    *   addedJobs: [job1, job2],
    *   updatedJobs: [],
@@ -78,6 +78,21 @@ export class EventBus extends EventEmitter {
   }
 
   /**
+   * 리스너들의 반환 promise를 수집해 모두 settle될 때까지 await한다.
+   * 서버리스 tick이 in-flight 핸들러(DM 발송 등)를 자르지 않도록 완결 보장.
+   * 기존 emitEvent(fire-and-forget)와 별개 — 틱 완결이 필요한 경로에서만 사용.
+   *
+   * @param event - 이벤트 타입 (EventType enum)
+   * @param payload - 이벤트 페이로드
+   */
+  async emitEventAndSettle<T>(event: EventType, payload: T): Promise<void> {
+    const listeners = this.listeners(event) as Array<(p: T) => void | Promise<void>>;
+    const hasListeners = listeners.length > 0;
+    await Promise.allSettled(listeners.map((l) => l(payload)));
+    eventLogger.emitted(event, hasListeners);
+  }
+
+  /**
    * 타입 안전성을 제공하는 이벤트 구독 메서드
    *
    * @param event - 구독할 이벤트 타입 (EventType enum)
@@ -86,7 +101,7 @@ export class EventBus extends EventEmitter {
    *
    * @example
    * ```typescript
-   * eventBus.onEvent<RecruitNewEvent>(EventType.RECRUIT_NEW, async (payload) => {
+   * eventBus.onEvent<RecruitChangedEvent>(EventType.RECRUIT_CHANGED, async (payload) => {
    *   await notificationService.notifyNewRecruits(payload);
    * });
    * ```
@@ -128,9 +143,9 @@ export class EventBus extends EventEmitter {
    * @example
    * ```typescript
    * const handler = (payload) => console.log(payload);
-   * eventBus.onEvent(EventType.RECRUIT_NEW, handler);
+   * eventBus.onEvent(EventType.RECRUIT_CHANGED, handler);
    * // 나중에 제거
-   * eventBus.offEvent(EventType.RECRUIT_NEW, handler);
+   * eventBus.offEvent(EventType.RECRUIT_CHANGED, handler);
    * ```
    */
   offEvent<T>(event: EventType, listener: (payload: T) => void | Promise<void>): this {
@@ -150,7 +165,7 @@ export class EventBus extends EventEmitter {
    *
    * @example
    * ```typescript
-   * eventBus.removeAllListenersForEvent(EventType.RECRUIT_NEW);
+   * eventBus.removeAllListenersForEvent(EventType.RECRUIT_CHANGED);
    * ```
    */
   removeAllListenersForEvent(event: EventType): this {
@@ -170,7 +185,7 @@ export class EventBus extends EventEmitter {
    *
    * @example
    * ```typescript
-   * const count = eventBus.listenerCountForEvent(EventType.RECRUIT_NEW);
+   * const count = eventBus.listenerCountForEvent(EventType.RECRUIT_CHANGED);
    * console.log(`Listeners: ${count}`);
    * ```
    */
@@ -186,7 +201,7 @@ export class EventBus extends EventEmitter {
  * ```typescript
  * import { eventBus, EventType } from '@/eventBus';
  *
- * eventBus.emitEvent(EventType.RECRUIT_NEW, data);
+ * eventBus.emitEvent(EventType.RECRUIT_CHANGED, data);
  * ```
  */
 export const eventBus = EventBus.getInstance();
