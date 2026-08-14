@@ -2,7 +2,7 @@ import "@/common/utils/systemLogger";
 import { RecruitScheduler } from "./RecruitScheduler";
 import { ProxyScheduler } from "./ProxyScheduler";
 import { CRAWL_MODE } from "@/common/constants";
-import type { SchedulerStatus } from "./types";
+import type { SchedulerStatus, WorkResult } from "./types";
 import { BaseScheduler } from "./base/BaseScheduler";
 
 /**
@@ -39,6 +39,23 @@ export class SchedulerManager {
     }
 
     scheduler.startWork();
+  }
+
+  /**
+   * Recruit 스케줄러 단일 tick 실행 (서버리스 onSchedule 전용).
+   * setTimeout 재스케줄 루프를 시작하지 않고 runOnce()만 1회 실행한다.
+   * @param mode CRAWL_MODE (프로덕션=CRAWL, 로컬 E2E=DUMMY)
+   */
+  async runRecruitOnce(mode: CRAWL_MODE): Promise<WorkResult> {
+    let scheduler = this.schedulers.get("recruit") as RecruitScheduler;
+
+    if (!scheduler) {
+      scheduler = new RecruitScheduler(undefined, mode);
+      this.schedulers.set("recruit", scheduler);
+    }
+
+    scheduler.setMode(mode);
+    return scheduler.runOnce();
   }
 
   /**

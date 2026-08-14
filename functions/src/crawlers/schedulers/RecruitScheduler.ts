@@ -36,13 +36,13 @@ export class RecruitScheduler extends BaseScheduler {
         `[${this.config.name}] 🔍 Crawling started (Mode: ${this.mode})...`
       );
 
-      const { data: recruitData } = await this.recruitService.getRecruitList(this.mode);
+      const diff = await this.recruitService.crawlAndDiff(this.mode);
 
       const endTime = new Date();
       const durationMs = endTime.getTime() - startTime.getTime();
 
-      const totalCount = recruitData?.length || 0;
-      const message = `Collected ${totalCount} recruitment data`;
+      const totalCount = diff.addedJobs.length + diff.updatedJobs.length;
+      const message = `Collected ${totalCount} recruitment data (added/updated)`;
 
       return {
         success: true,

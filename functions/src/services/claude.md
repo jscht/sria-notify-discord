@@ -95,8 +95,8 @@ export class RecruitCacheService {
         Deleted: ${deletedIds.length}`);
 
       // ⭐ 이벤트 발행 추가
-      eventBus.emitEvent(EventType.RECRUIT_NEW, {
-        type: EventType.RECRUIT_NEW,
+      eventBus.emitEvent(EventType.RECRUIT_CHANGED, {
+        type: EventType.RECRUIT_CHANGED,
         timestamp: new Date(),
         source: 'RecruitCacheService',
         data: { addedJobs, updatedJobs, deletedIds }
@@ -156,7 +156,7 @@ export class RecruitCacheService {
 ### 구현
 ```typescript
 import { eventBus } from '@/eventBus/EventBus';
-import { EventType, RecruitNewEvent } from '@/eventBus/types';
+import { EventType, RecruitChangedEvent } from '@/eventBus/types';
 import { SubscriptionStore } from '@/providers/firebase/store/subscription';
 import { sendNotificationDM } from '@/providers/discord/utils/dmSender';
 import { filterByRegion } from '@/features/notification/filters/RecruitFilter';
@@ -165,8 +165,8 @@ export class NotificationService {
   private readonly subscriptionStore = new SubscriptionStore();
 
   constructor() {
-    // recruit.new 이벤트 리스너 등록
-    eventBus.onEvent<RecruitNewEvent>(EventType.RECRUIT_NEW, (payload) => {
+    // recruit:changed 이벤트 리스너 등록
+    eventBus.onEvent<RecruitChangedEvent>(EventType.RECRUIT_CHANGED, (payload) => {
       this.notifyNewRecruits(payload.data);
     });
   }
@@ -403,7 +403,7 @@ export const aiService = new AIService();
 
 ### Phase 1.7 (notificationService)
 1. notificationService.ts 생성
-2. recruit.new 이벤트 리스너 등록
+2. recruit:changed 이벤트 리스너 등록
 3. 구독자 필터링 로직 구현
 4. DM 발송 조율
 

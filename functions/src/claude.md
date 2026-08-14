@@ -67,7 +67,7 @@ src/
 
 **주요 서비스**:
 - recruitService.ts (3-tier 캐싱)
-- **recruitCacheService.ts** 🆕 (Phase 1.3: RECRUIT_NEW 이벤트 발행)
+- **recruitCacheService.ts** 🆕 (Phase 1.3: RECRUIT_CHANGED 이벤트 발행)
 - notificationService.ts (알림 발송)
 - aiService.ts (AI 요약 - Phase 4)
 
@@ -110,17 +110,17 @@ src/
 2. **이벤트 기반 통신 (Phase 1.1+)**:
    ```typescript
    // 이벤트 발행 (services 계층)
-   eventBus.emitEvent<RecruitNewEvent>(EventType.RECRUIT_NEW, {
+   eventBus.emitEvent<RecruitChangedEvent>(EventType.RECRUIT_CHANGED, {
      timestamp: Date.now(),
      source: "RecruitCacheService",
      addedJobs, updatedJobs, deletedIds
    });
 
    // 이벤트 구독 (listeners 계층)
-   eventBus.on(EventType.RECRUIT_NEW, handleNewRecruits);
+   eventBus.on(EventType.RECRUIT_CHANGED, handleNewRecruits);
    ```
 
-   **Phase 1.3 구현**: recruitCacheService에서 캐시 변경 시 RECRUIT_NEW 이벤트 발행
+   **Phase 1.3 구현**: recruitCacheService에서 캐시 변경 시 RECRUIT_CHANGED 이벤트 발행
 
 3. **의존성 규칙**:
    - ✅ 상위 → 하위만 참조

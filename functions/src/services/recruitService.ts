@@ -3,9 +3,12 @@ import { CRAWL_MODE } from "@/common/constants";
 import { RedisManager } from "../providers/redis/manager/redisManager";
 import { RecruitStore } from "../providers/firebase/store";
 import { RecruitCacheService, CrawlService } from "../services";
+import { CacheUpdateStatus } from "@/services/recruitCacheService";
 import { CityKo, CityEn } from "@/common/types";
 import type { RecruitData } from "@/crawlers/types";
 import type { RecruitTier } from "@/events/bus";
+import { emitRecruitChangedEvent } from "@/events/bus";
+import type { JobDiffResult } from "@/common/types/job.d";
 import { cityNameConverter } from "@/common/utils/cityName";
 import { getCityFilteredList } from "@/common/utils";
 import { HttpError } from "@/common/utils/httpError";
@@ -55,10 +58,16 @@ export class RecruitService {
     try {
       const firestoreData = await this.firestore.getRecruitList();
       if (firestoreData) {
-        // 캐시 백업 시도
-        this.cacheService.setRecruitList(firestoreData).catch(() => {
-          globalLogger.warn("캐시 저장 실패");
-        });
+        // 캐시 백업 시도 (CHANGED 시 RECRUIT_CHANGED 발행 — fire-and-forget)
+        this.cacheService.setRecruitList(firestoreData)
+          .then(({ status, diff }) => {
+            if (status === CacheUpdateStatus.CHANGED) {
+              void emitRecruitChangedEvent(diff, "RecruitService", { awaitSettle: false });
+            }
+          })
+          .catch(() => {
+            globalLogger.warn("캐시 저장 실패");
+          });
         return { data: await getCityFilteredList(mode, convertedCity, firestoreData), tier: "firestore", durationMs: Date.now() - startedAt };
       }
     } catch (err) {
@@ -81,6 +90,36 @@ export class RecruitService {
     return { data: await getCityFilteredList(mode, convertedCity, crawled), tier: "crawler", durationMs: Date.now() - startedAt };
   }
 
+  /**
+   * 스케줄러 전용 크롤→diff→(CHANGED시)RECRUIT_CHANGED 발행. getRecruitList 3-tier를 우회한다.
+   * Redis 분산 락으로 사용자 백업 write와의 hash 경합(중복 emit)을 방지.
+   * @param mode CRAWL_MODE (city 미지정 = 전체 지역 — 부분 스코프 결과를 diff에 넣지 않음)
+   */
+  async crawlAndDiff(mode: CRAWL_MODE): Promise<JobDiffResult> {
+    const empty: JobDiffResult = { addedJobs: [], updatedJobs: [], deletedIds: [] };
+    const LOCK_KEY = "lock:recruit:crawlAndDiff";
+    const redis = RedisManager.getInstance();
+    const token = await redis.acquireLock(LOCK_KEY, 60_000);
+    if (!token) {
+      globalLogger.warn("crawlAndDiff 락 획득 실패 — 다른 크롤 진행 중, 스킵");
+      return empty;
+    }
+    try {
+      const list = await this.crawler.sriagent(mode); // city 미지정 = 전체
+      if (!list || list.length === 0) {
+        globalLogger.warn("crawlAndDiff: 크롤 결과 없음 — setRecruitList 스킵(오삭제 방지)");
+        return empty;
+      }
+      const { status, diff } = await this.cacheService.setRecruitList(list);
+      if (status === CacheUpdateStatus.CHANGED) {
+        await emitRecruitChangedEvent(diff, "RecruitService.crawlAndDiff", { awaitSettle: true });
+      }
+      return diff;
+    } finally {
+      await redis.releaseLock(LOCK_KEY, token);
+    }
+  }
+
   private async collectAndSaveRecruits(mode: CRAWL_MODE, city?: CityKo): Promise<RecruitData[] | null> {
     const list = await this.crawler.sriagent(mode, city);
 
@@ -93,9 +132,15 @@ export class RecruitService {
       this.firestore.saveRecruitList(list).catch(() => {
         globalLogger.warn("Firestore 저장 실패");
       }),
-      this.cacheService.setRecruitList(list).catch(() => {
-        globalLogger.warn("Redis 저장 실패");
-      })
+      this.cacheService.setRecruitList(list)
+        .then(({ status, diff }) => {
+          if (status === CacheUpdateStatus.CHANGED) {
+            void emitRecruitChangedEvent(diff, "RecruitService", { awaitSettle: false });
+          }
+        })
+        .catch(() => {
+          globalLogger.warn("Redis 저장 실패");
+        })
     ]);
 
     return list;

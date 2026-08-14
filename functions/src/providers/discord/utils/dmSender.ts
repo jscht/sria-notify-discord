@@ -1,6 +1,6 @@
-import type { MessageCreateOptions } from "discord.js";
-import { client } from "@/providers/discord/client";
-import { getDiscordReady } from "@/providers/discord/discordReady";
+import type { APIEmbed, MessageCreateOptions } from "discord.js";
+import { Routes } from "discord.js";
+import { rest } from "@/providers/discord/client";
 import { providerLogger } from "@/common/utils/systemLogger";
 
 /**
@@ -89,6 +89,20 @@ function getRateLimitWaitMs(error: unknown): number | undefined {
 }
 
 /**
+ * DmPayload.embeds(빌더 가능)를 REST body용 APIEmbed[]로 정규화한다.
+ * 빌더(.toJSON 존재)면 toJSON(), 이미 API 객체면 통과. embeds 없으면 undefined.
+ * @remarks 계약 밖 내부 변환 — DmPayload 필드·의미 불변.
+ */
+function toApiEmbeds(embeds: DmPayload["embeds"]): APIEmbed[] | undefined {
+  if (!embeds) return undefined;
+  return embeds.map((e) =>
+    typeof (e as { toJSON?: unknown }).toJSON === "function"
+      ? (e as { toJSON(): APIEmbed }).toJSON()
+      : (e as APIEmbed)
+  );
+}
+
+/**
  * 지정한 사용자에게 알림 DM을 발송한다.
  *
  * 포맷 무관(embeds 기반) — 임베드는 호출 측이 빌더로 완성해 전달한다.
@@ -112,15 +126,18 @@ export async function sendNotificationDM(
   const startedAt = Date.now();
   let attempts = 0;
 
-  // ClientReady 전 client.users.fetch()는 실패한다 → 발송 직전 1회만 ready 빗장을 기다린다(C안).
-  // 루프 진입 전에 두어 재시도마다 재-await하지 않는다. 빗장은 leaf 모듈에서 직접 import(R3 순환 차단).
-  await getDiscordReady();
-
+  // REST 전용 경로 — gateway 로그인/ready 빗장 불필요. setToken만으로 호출 성립.
   while (attempts < MAX_ATTEMPTS) {
     attempts++;
     try {
-      const user = await client.users.fetch(userId);
-      await user.send({ embeds: payload.embeds, content: payload.content });
+      // 1) DM 채널 개설 — POST /users/@me/channels { recipient_id }
+      const dmChannel = (await rest.post(Routes.userChannels(), {
+        body: { recipient_id: userId },
+      })) as { id: string };
+      // 2) 메시지 전송 — POST /channels/{id}/messages
+      await rest.post(Routes.channelMessages(dmChannel.id), {
+        body: { embeds: toApiEmbeds(payload.embeds), content: payload.content },
+      });
 
       const durationMs = Date.now() - startedAt;
       providerLogger.info("DM 발송 성공", { userId, durationMs, attempts });

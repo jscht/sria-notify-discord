@@ -145,8 +145,8 @@ export class NotificationService {
   private readonly subscriptionStore = new SubscriptionStore();
 
   constructor() {
-    // recruit.new 이벤트 리스너 등록
-    eventBus.on('recruit.new', this.notifyNewRecruits);
+    // recruit:changed 이벤트 리스너 등록
+    eventBus.on('recruit:changed', this.notifyNewRecruits);
   }
 
   async notifyNewRecruits(data) {

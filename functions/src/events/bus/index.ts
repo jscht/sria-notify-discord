@@ -19,3 +19,4 @@ export {
   areHandlersRegistered,
   resetHandlerRegistration,
 } from './utils/registerEventHandlers';
+export { emitRecruitChangedEvent } from './utils/emitRecruitChangedEvent';
