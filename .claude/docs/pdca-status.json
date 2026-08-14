@@ -1,10 +1,10 @@
 {
   "overview": {
-    "total": 26,
-    "completed": 11,
+    "total": 27,
+    "completed": 12,
     "phases": {
-      "phase-1": { "completed": 11, "total": 13, "progress": "85%" },
-      "phase-2": { "completed": 0, "total": 2, "progress": "0%" },
+      "phase-1": { "completed": 12, "total": 13, "progress": "92%" },
+      "phase-2": { "completed": 0, "total": 3, "progress": "0%" },
       "phase-3": { "completed": 0, "total": 5, "progress": "0%" },
       "phase-4": { "completed": 0, "total": 6, "progress": "0%" }
     }
@@ -21,6 +21,7 @@
     "P1": [
       "phase-1-6-recruit-request-enhancement", "phase-1-11-debuglogger-migration",
       "phase-2-1-auto-error-reporting", "phase-2-2-admin-broadcast",
+      "phase-2-3-user-feedback",
       "phase-3-1-test-framework-setup",
       "phase-4-1-ai-provider-setup", "phase-4-2-ai-nlp-cache",
       "phase-4-3-ai-nlp-service", "phase-4-4-discord-nlp-integration"
@@ -47,6 +48,7 @@
     "phase-1-13-production-runtime": ["phase-1-9-scheduler-reactivation"],
     "phase-2-1-auto-error-reporting": ["phase-1-1-eventbus-infrastructure", "phase-1-8-discord-dm-utility", "phase-1-13-production-runtime"],
     "phase-2-2-admin-broadcast": ["phase-1-4-notification-store", "phase-1-8-discord-dm-utility", "phase-1-13-production-runtime"],
+    "phase-2-3-user-feedback": ["phase-1-8-discord-dm-utility", "phase-1-13-production-runtime"],
     "phase-3-1-test-framework-setup": [],
     "phase-3-2-unit-tests": ["phase-3-1-test-framework-setup"],
     "phase-3-3-integration-tests": ["phase-3-1-test-framework-setup"],
@@ -73,11 +75,12 @@
       { "features": "phase-1-8-discord-dm-utility", "phase": "archived", "matchRate": 100.0, "description": "NOTIFICATION_SEND → 실제 Discord DM 전송 연결. dmSender(embeds 기반 포맷 무관 전송기, 재시도 3회+429 retry_after+50007 graceful skip) + 알림 임베드 빌더 + jobLink 공용 헬퍼(DRY) + NOTIFICATION_SEND 소비 핸들러(→NOTIFICATION_SENT 발행) + registerEventHandlers 등록 연결. sendNotificationDM 시그니처를 후속 Phase(1.9/1.10/2.1/2.2) 계약으로 격상. startup·client 로그인·E2E는 1.9 위임", "startedAt": "2026-06-09", "completedAt": "2026-06-10", "documents": { "plan": "docs/archive/phase-1-8/01-plan.md", "design": "docs/archive/phase-1-8/02-design.md", "analysis": "docs/archive/phase-1-8/03-analysis.md", "report": "docs/archive/phase-1-8/04-report.md" } },
       { "features": "phase-1-9-scheduler-reactivation", "phase": "archived", "matchRate": 100.0, "description": "알림 파이프라인 startup wiring(핸들러 등록·DUMMY 스케줄러·ready 게이트 C안·env rename) + 로컬 DUMMY E2E(실 DM 수신) + 알림 임베드 UX 개편(iterate #1: 배너 content 2줄·description 목록·오버플로 링크·SELECTED 안내문·ALL 분기). R4/R5·DM 에러분기·부하·로그 수집은 Phase 1.13 이월", "startedAt": "2026-06-11", "completedAt": "2026-07-24", "documents": { "plan": "docs/archive/phase-1-9/01-plan.md", "design": "docs/archive/phase-1-9/02-design.md", "analysis": "docs/archive/phase-1-9/03-analysis.md", "report": "docs/archive/phase-1-9/04-report.md" } },
       { "features": "phase-1-10-proxy-integration", "phase": null, "matchRate": null, "documents": {} },
-      { "features": "phase-1-13-production-runtime", "phase": null, "matchRate": null, "documents": {} }
+      { "features": "phase-1-13-production-runtime", "phase": "archived", "matchRate": 100.0, "description": "프로덕션 런타임 & 스케줄러 트리거 재설계 — C안 하이브리드(인터랙션 gateway 상시 / 크롤·알림 serverless onSchedule). 진입점 분리 + setTimeout→onSchedule(runOnce 단일 tick) + dmSender REST 전환(계약 불변) + emitEventAndSettle 틱 완결 파이프라인 + crawlAndDiff 분리(Redis 분산 락). RECRUIT_NEW→RECRUIT_CHANGED 이벤트 리네임. 런타임검증 R1~R3(로컬 DUMMY)+diff 3케이스 PASS. R4(실 DM)·R5(실배포)·crawlService DUMMY 버그는 1.10 이월. 코드+정적/로컬 한정", "startedAt": "2026-08-04", "completedAt": "2026-08-07", "documents": { "plan": "docs/archive/phase-1-13/01-plan.md", "design": "docs/archive/phase-1-13/02-design.md", "analysis": "docs/archive/phase-1-13/03-analysis.md", "report": "docs/archive/phase-1-13/04-report.md" } }
     ],
     "phase-2": [
       { "features": "phase-2-1-auto-error-reporting", "phase": null, "matchRate": null, "documents": {} },
-      { "features": "phase-2-2-admin-broadcast", "phase": null, "matchRate": null, "documents": {} }
+      { "features": "phase-2-2-admin-broadcast", "phase": null, "matchRate": null, "documents": {} },
+      { "features": "phase-2-3-user-feedback", "phase": null, "matchRate": null, "documents": {} }
     ],
     "phase-3": [
       { "features": "phase-3-1-test-framework-setup", "phase": null, "matchRate": null, "documents": {} },
