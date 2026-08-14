@@ -19,7 +19,7 @@
 | Phase 1.7 | 자동 알림 시스템 | 0 | 0 | 4 |
 | Phase 1.8 | DM 발송 유틸리티 | 0 | 0 | 3 |
 | Phase 1.9 | 스케줄러 재활성화 | 0 | 0 | 4 |
-| Phase 1.10 | Proxy 통합 및 우회 설정 | 0 | 0 | 5 |
+| Phase 1.10 | Proxy 통합 + IP 우회 스크래핑 + 실 CRAWL + 프로덕션 배포·E2E | 0 | 0 | 11 |
 | Phase 1.11 | DebugLogger 마이그레이션 | 0 | 0 | 4 |
 | Phase 1.12 | Events 아키텍처 통합 | 5 | 0 | 0 |
 | Phase 1.13 | 프로덕션 런타임 & 스케줄러 트리거 재설계 | 0 | 0 | 6 |
@@ -258,49 +258,52 @@
 
 ---
 
-## Phase 1.10: Proxy 통합 및 크롤러 우회 설정 (2-3시간)
-**우선순위**: ⭐⭐⭐
-**의존성**: Phase 1.2, 1.8 완료
+## Phase 1.10: Proxy 통합 + 실 CRAWL 활성화 + 프로덕션 배포·E2E
+**우선순위**: ⭐⭐⭐ (P0)
+**의존성**: Phase 1.2, 1.8, **1.13 완료**
+**스코프**: Phase 1.13의 런타임 재설계 코드를 전제로, 프록시(실제 IP 보호)를 갖춘 뒤 **실 CRAWL을 활성화하고 GCP(firebase)에 실배포하여 프로덕션 E2E까지 완결**한다. (Phase 1.9/1.13에서 이월된 프로덕션 실환경 검증을 본 Phase가 소유)
 
-- [ ] ProxyScheduler 완성
-  - [ ] `crawlers/schedulers/ProxyScheduler.ts` 수정
-  - [ ] `saveProxyList()` 메서드 구현
-  - [ ] ProxyStore와 연결하여 Firestore에 저장
+### 1) Proxy 통합
+- [ ] ProxyScheduler 완성 (`crawlers/schedulers/ProxyScheduler.ts`)
+  - [ ] `saveProxyList()` 구현 + ProxyStore(`providers/firebase/store/proxy.ts`)와 연결하여 Firestore 저장 — 현재 수집 결과가 TODO 주석으로 미저장 상태
   - [ ] 프록시 수집 실패 시 `error.critical` 이벤트 발행
+- [ ] ProxyService 구현 (`services/proxyService.ts`): `getAvailableProxy` / `markProxyAsUsed` / `markProxyAsFailed` / `releaseProxy` / `hasAvailableProxy`
+- [ ] SriaCrawler 프록시 통합 (`crawlers/strategies/recruit/sria/SriaCrawler.ts` — **Playwright 기반**)
+  - [ ] Playwright에 프록시 주입: `browser.newContext({ proxy })` 또는 `chromium.launch({ proxy })` — ※ 기존 seed의 "axios/https-proxy-agent"는 실제 크롤러(Playwright)와 불일치하여 정정
+  - [ ] 크롤 시작 전 `hasAvailableProxy()` 게이트 — 없으면 크롤 중단 + `proxy.unavailable` 발행
+  - [ ] 프록시 실패 시 다른 프록시로 재시도(최대 3회), 전부 실패 시 중단 + `proxy.unavailable`
+- [ ] Proxy 에러 처리 핸들러 (`features/proxyError/handlers/ProxyErrorHandler.ts`): `proxy.unavailable` 리스너 등록, 활성 구독자에 이용제한 안내 DM + 개발자 긴급 알림 DM
+- [ ] DM 메시지 템플릿 (`features/proxyError/messages/templates.ts`)
+  - 사용자용: "현재 서비스 이용에 일시적인 문제가 발생했습니다. 빠른 시일 내 복구하겠습니다."
+  - 개발자용: "🚨 프록시 서버 전체 불가 - 크롤링 중단됨. 즉시 확인 필요"
 
-- [ ] ProxyService 구현
-  - [ ] `services/proxyService.ts` 생성
-  - [ ] `getAvailableProxy()` - 사용 가능한 프록시 1개 반환
-  - [ ] `markProxyAsUsed(ipAddress)` - 프록시 사용 중 표시
-  - [ ] `markProxyAsFailed(ipAddress)` - 프록시 실패 처리
-  - [ ] `releaseProxy(ipAddress)` - 프록시 사용 완료 처리
-  - [ ] `hasAvailableProxy()` - 사용 가능한 프록시 존재 확인
+### 2) IP 우회 스크래핑 전략 (차단 위험 완화)
+프록시로 IP를 바꾸는 것만으로는 rate/fingerprint 기반 탐지를 못 피한다. 프록시 로테이션 + stealth 유지 + 차단 감지·백오프를 함께 계획해 실 CRAWL 중 IP 차단을 예방한다.
+- [ ] 프록시 로테이션 정책 확정: 세션당 고정(기본) vs 요청마다 교체 vs 실패 시만 교체 — 사람인 세션/쿠키 일관성과 탐지 회피의 트레이드오프 평가 후 결정
+- [ ] stealth 유지: 현재 `SriaCrawler`의 `playwright-extra` + `puppeteer-extra-plugin-stealth`(UA/핑거프린트 위장)를 프록시 컨텍스트에서도 유지. 프록시 geo와 `locale`/`timezoneId`/UA 정합성 확보 (불일치 시 오히려 탐지 위험 ↑)
+- [ ] 요청 간 지터(jitter)·throttle: 고정 주기 대신 랜덤 지연으로 봇 패턴 완화. 기존 요청제한(`isRequestAllowed` 10분 쿨다운)과 정합
+- [ ] 차단 감지·대응: 429 / CAPTCHA / 블록 페이지 / 비정상 응답(빈 목록·리다이렉트) 감지 → 해당 프록시 `markProxyAsFailed` + 다른 프록시 교체 + 지수 백오프 재시도, 연속 차단 시 `proxy.unavailable` 발행
+- [ ] (선택) 차단율 로깅: 프록시별 성공/차단 카운트를 남겨 저품질 프록시 조기 배제
 
-- [ ] SriaCrawler 프록시 통합
-  - [ ] `crawlers/strategies/recruit/SriaCrawler.ts` 수정
-  - [ ] axios 설정에 프록시 적용 (https-proxy-agent 사용)
-  - [ ] 크롤링 시작 전 `hasAvailableProxy()` 확인
-  - [ ] 프록시 없으면 크롤링 중단 및 `proxy.unavailable` 이벤트 발행
-  - [ ] 프록시 실패 시 다른 프록시로 재시도 (최대 3회)
-  - [ ] 모든 프록시 실패 시 크롤링 중단 및 `proxy.unavailable` 이벤트 발행
+### 3) 실 CRAWL 활성화
+- [ ] `app/index.ts` `initializeSchedulers({ recruitMode: CRAWL_MODE.CRAWL, enableProxy: true })`로 전환 (프록시 게이트가 IP 보호를 보장한 뒤에만)
+- [ ] 실 CRAWL ToS/robots·개인정보 재확인 (License/Compliance)
 
-- [ ] Proxy 에러 처리 핸들러
-  - [ ] `features/proxyError/handlers/ProxyErrorHandler.ts` 생성
-  - [ ] `proxy.unavailable` 이벤트 리스너 등록
-  - [ ] 모든 활성 구독자에게 서비스 이용 제한 안내 DM 발송
-  - [ ] 개발자에게 긴급 에러 알림 DM 발송
-
-- [ ] DM 메시지 템플릿 작성
-  - [ ] `features/proxyError/messages/templates.ts` 생성
-  - [ ] 사용자용 메시지: "현재 서비스 이용에 일시적인 문제가 발생했습니다. 빠른 시일 내 복구하겠습니다."
-  - [ ] 개발자용 메시지: "🚨 프록시 서버 전체 불가 - 크롤링 중단됨. 즉시 확인 필요"
+### 4) 프로덕션 배포 & E2E (Phase 1.9/1.13 이월 검증 포함)
+- [ ] `firebase deploy --only functions`로 GCP 실배포 (Blaze 요금제 전제; onSchedule → Cloud Scheduler 잡 자동 프로비저닝)
+- [ ] 프로덕션 E2E: 실제 스케줄 주기에서 크롤(프록시 경유)→diff→DM 전체 플로우 검증. 진입 시 review-process 0단계처럼 체크리스트를 동적 생성:
+  - [ ] R4 — ready race 해소: 첫 크롤이 ready보다 빨라도 DM 유실 없음 (실 타이밍 재현)
+  - [ ] R5 — ready 로그 / HTTP 비결합 음성검증 / graceful shutdown 동작
+  - [ ] DM 에러분기 — 50007(DM 차단/공유 길드 없음) graceful skip, rate limit(429) 대기·재시도
+  - [ ] 부하·스트레스 — 구독자 수를 늘려가며 처리량·타임아웃 한계·429 발생 지점 측정. 순차 발송 시 `setTimeout`/`sleep` 블로킹이 실행시간·비용에 주는 영향 포함
+  - [ ] 로그 수집 — `console.*`(providerLogger/systemLogger)가 Cloud Logging에 전 레벨(info/warn/error) 누락 없이 적재되는지, 심각도 매핑(error→ERROR, warn→WARNING), 핵심 이벤트(크롤 시작·완료, RECRUIT_NEW, NOTIFICATION_SEND/SENT, DM 성공/skip/실패) 추적, `firebase functions:log`/GCP 콘솔 조회 확인
 
 **완료 기준**:
+- [ ] SriaCrawler가 반드시 프록시를 통해서만 크롤링 수행 (프록시 없이는 크롤 절대 수행 안 함 — 실제 IP 보호)
+- [ ] 프록시 1개 실패 시 다른 프록시로 자동 전환(최대 3회), 전부 불가 시 사용자·개발자 알림
 - [ ] ProxyScheduler가 6시간마다 프록시 목록 갱신 및 Firestore 저장
-- [ ] SriaCrawler가 반드시 프록시를 통해서만 크롤링 수행
-- [ ] 프록시 1개 실패 시 다른 프록시로 자동 전환 (최대 3회)
-- [ ] 모든 프록시 사용 불가 시 사용자 및 개발자에게 알림 발송
-- [ ] 프록시 없이는 크롤링 절대 수행 안 함 (실제 IP 보호)
+- [ ] 프록시 로테이션 + stealth 유지 + 차단 감지·백오프로 실 CRAWL 중 IP 차단 없이 지속 수집
+- [ ] GCP 실배포 후 실제 스케줄 주기에서 크롤→diff→DM 전체 파이프라인이 완결된다
 
 ---
 
@@ -406,35 +409,31 @@
 ## Phase 1.13: 프로덕션 런타임 & 스케줄러 트리거 재설계 (미착수)
 **우선순위**: ⭐⭐⭐ (P0)
 **의존성**: Phase 1.9 완료
+**스코프**: 런타임 재설계 **코드까지 + 로컬 검증**. 실배포·실 CRAWL 활성화·프로덕션 E2E는 **Phase 1.10으로 이월**(프록시 IP 보호가 갖춰진 뒤 수행). onSchedule은 본 Phase에서 코드로 작성·정적검증하고, 실제 발화 검증만 1.10 배포에서 한다.
 
-**배경**: 배포 타깃이 `onRequest` cold-start Cloud Functions라, 아래 두 가지가 프로덕션에서 동작하지 않는다. Phase 1.9는 이 때문에 "로컬 검증 한정"으로 축소되었고(startup wiring + 로컬 DUMMY 스케줄러 + ready 게이트 + env rename + emulator DM E2E), 실 CRAWL·프로덕션 구동은 본 Phase로 이월됐다.
+**배경**: 배포 타깃이 `onRequest` cold-start Cloud Functions라, 아래 두 가지가 프로덕션에서 동작하지 않는다. Phase 1.9는 이 때문에 "로컬 검증 한정"으로 축소되었고(startup wiring + 로컬 DUMMY 스케줄러 + ready 게이트 + env rename + emulator DM E2E), 실 CRAWL·프로덕션 구동은 Phase 1.10으로 이월됐다.
 - `BaseScheduler`의 in-process `setTimeout` 스케줄러 → 응답 후 CPU 동결로 4시간 타이머가 발화하지 않는다.
 - 봇이 gateway WebSocket에 의존 → dmSender(`client.users.fetch`)가 서버리스 틱과 비호환이다.
 
-- [ ] 런타임 결정: warm-persistent(상시 프로세스) vs serverless(Cloud Functions)
-- [ ] 스케줄러 트리거를 `setTimeout` 루프 → `onSchedule`(Cloud Scheduler)로 전환
-- [ ] dmSender를 discord.js 클라이언트 의존 → REST 전용으로 전환
-- [ ] 틱 완결 파이프라인: 한 번의 스케줄 실행이 크롤→diff→알림까지 완결되도록 보장
+- [ ] 런타임 결정: warm-persistent(상시 프로세스) vs serverless(Cloud Functions) — design §1에 트레이드오프·비용·계약 영향 고정 후 승인
+- [ ] 스케줄러 트리거를 `setTimeout` 루프 → `onSchedule`(Cloud Scheduler)로 전환 (코드; 실제 발화 검증은 Phase 1.10 배포에서)
+- [ ] dmSender를 discord.js 클라이언트 의존 → REST 전용으로 전환 (DmPayload/DmSendResult 계약 불변 유지 — 1.9/1.10/2.1/2.2 공유 계약)
+- [ ] 틱 완결 파이프라인: 한 번의 스케줄 실행이 크롤→diff→알림까지 await 완결되도록 보장
 - [ ] **스케줄러 크롤 경로 재설계 (변경감지 정합성)**
   - 현재 `RecruitScheduler.performWork` → `recruitService.getRecruitList(mode)`는 3-tier(Redis → Firestore → 크롤) 순서로 읽는다.
-  - Firestore `recruit` 컬렉션에 TTL이 없어, 한 번 채워지면 Step2에서 항상 히트하고 Step4 실제 크롤에 도달하지 못한다.
-  - 결과적으로 첫 크롤 이후 스케줄러가 공고 변경(added/updated/deleted)을 감지하지 못한다.
-  - 스케줄러 경로는 캐시를 우회해 **강제 크롤 → `setRecruitList` diff**로 분리해야 한다.
+  - Firestore `recruit/list`는 단일 canonical doc이고 TTL이 없어, 한 번 채워지면 Step2에서 항상 히트하고 Step4 실제 크롤에 도달하지 못한다. (→ 첫 크롤 이후 공고 변경 감지 불가)
+  - 스케줄러 전용 `crawlAndDiff(mode)`로 분리 — Redis/Firestore 읽기 **우회 → 강제 크롤 → `setRecruitList` diff**(Redis hash 기준) → `RECRUIT_NEW`. 사용자 요청 경로(`getRecruitList` 3-tier)는 **보존**(회귀 방지).
   - (Phase 1.9 로컬 E2E는 이 경로를 우회하는 드라이버로 `setRecruitList`를 직접 호출해 검증했다.)
-- [ ] 프로덕션 E2E: 실제 스케줄 주기에서 크롤→알림 전체 플로우 검증
-  - **검증 리스트**: 1.13 검증 단계 진입 시 review-process 0단계처럼 체크리스트를 동적 생성하고, 아래 Phase 1.9 이월 항목을 포함한다.
-  - [ ] R4 — ready race 해소: 첫 크롤이 ready보다 빨라도 DM 유실 없음 (실 타이밍 재현)
-  - [ ] R5 — ready 로그 / HTTP 비결합 음성검증 / graceful shutdown(Ctrl+C) 동작
-  - [ ] DM 에러분기 — 50007(DM 차단/공유 길드 없음) graceful skip, rate limit(429) 대기·재시도
-  - [ ] 부하·스트레스 테스트 — 구독자 수를 늘려가며 처리량·타임아웃 한계·429 발생 지점 측정. 순차 발송 시 `setTimeout`/`sleep` 블로킹이 실행시간·비용에 주는 영향을 측정 축으로 포함
-  - [ ] 로그 수집 검증 — `console.*`(providerLogger/systemLogger) 출력이 Cloud Logging에 전 레벨(info/warn/error) 누락 없이 적재되는지 확인
-    - 각 레벨이 올바른 심각도로 매핑되는지 (error→ERROR, warn→WARNING 등)
-    - 파이프라인 핵심 이벤트(크롤 시작·완료, RECRUIT_NEW, NOTIFICATION_SEND/SENT, DM 성공/skip/실패)가 로그로 추적되는지
-    - `firebase functions:log` 또는 GCP Logging 콘솔에서 조회 가능한지
+- [ ] **`crawlService.ts` DUMMY 하드코딩 버그 수정**: `sriagent()`가 실크롤 후 `getCityFilteredList(CRAWL_MODE.DUMMY, ...)`로 mode를 하드코딩해 스크랩 결과를 버린다. `getCityFilteredList(mode, city, scraped)`로 수정해 실 CRAWL 데이터가 필터로 전달되게 한다. (실 CRAWL **활성화**는 1.10이지만 mode 전달 **정합성**은 본 Phase에서 확보)
+
+**검증** (정적 + 로컬, 배포 없음):
+- 정적 analyze(매치율) + `tsc` + 계약(DmPayload/DmSendResult) 불변 확인
+- 로컬 DUMMY 런타임 E2E: Phase 1.9 방식(setRecruitList 직접 호출 → EventBus → emulator DM)으로 dmSender REST 경로·`crawlAndDiff` 경로를 실제 동작 확인
 
 **완료 기준**:
-- [ ] 스케줄러가 매 실행마다 실제 크롤을 수행하고 변경을 감지한다
-- [ ] 프로덕션 런타임에서 크롤→diff→DM 전체 파이프라인이 완결된다
+- [ ] onSchedule 진입점·dmSender REST·`crawlAndDiff`·틱 완결 파이프라인이 코드로 완성되고 정적 analyze 통과
+- [ ] 로컬 DUMMY E2E에서 REST DM 수신 + `crawlAndDiff` diff 발행 확인
+- [ ] 실배포·실 CRAWL·프로덕션 E2E는 범위 밖 (→ Phase 1.10)
 
 ---
 
