@@ -1,21 +1,22 @@
 import "@/common/utils/systemLogger";
-import { Browser, Cookie } from "playwright-core";
+import { BrowserContext, Cookie } from "playwright-core";
 
 const requiredCookies = ["XSRF-TOKEN", "dyms_career_session"];
 
 /**
- * 브라우저에서 필요한 쿠키 추출
+ * 프록시·stealth가 적용된 context로 saramin에 접속해 필수 세션 쿠키를 취득한다.
+ *
+ * Phase 1.10 변경:
+ * - 시그니처를 `browser` → `context`로 변경 — 호출 측(SriaCrawler)이 프록시·ko-KR로
+ *   만든 context를 그대로 사용해야 쿠키 취득 단계에서 실 IP가 노출되지 않는다.
+ * - 접속 대상을 `PROXY_URL`(오접속 버그) → `SRIA_URL`(saramin)로 정합.
+ * - context는 호출 측이 소유하므로 닫지 않는다(페이지만 정리).
  */
-export async function getCookie(browser: Browser) {
-  const context = await browser.newContext()
-    .catch((error) => {
-      throw error;
-    });
+export async function getCookie(context: BrowserContext) {
+  const page = await context.newPage();
 
   try {
-    const page = await context.newPage();
-
-    const targetUrl = `${process.env.PROXY_URL}`;
+    const targetUrl = `${process.env.SRIA_URL}`;
     await page.goto(targetUrl, { waitUntil: "networkidle" });
 
     const cookies = await context.cookies();
@@ -36,6 +37,6 @@ export async function getCookie(browser: Browser) {
   } catch (error) {
     throw error;
   } finally {
-    await context.close();
+    await page.close();
   }
 }

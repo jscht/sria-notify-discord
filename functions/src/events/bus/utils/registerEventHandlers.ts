@@ -9,6 +9,7 @@ import { eventBus } from '../EventBus';
 import { eventLogger } from './eventLogger';
 import { registerNotificationHandlers } from '../handlers/NotificationEventHandler';
 import { registerNotificationSendHandlers } from '../handlers/NotificationSendHandler';
+import { registerProxyErrorHandlers } from '../handlers/ProxyErrorHandler';
 
 /**
  * 핸들러 등록 상태 추적
@@ -54,8 +55,8 @@ export function registerAllEventHandlers(): void {
   // 등록만 연결 — startup 호출·client 로그인은 Phase 1.9 위임
   registerNotificationSendHandlers();
 
-  // Phase 1.10: ProxyErrorHandler 핸들러 (TODO)
-  // registerProxyErrorHandlers();
+  // Phase 1.10: ProxyErrorHandler 핸들러 (PROXY_UNAVAILABLE → staleness + 개발자 알림)
+  registerProxyErrorHandlers();
 
   // Phase 2.1: ErrorReportHandler 핸들러 (TODO)
   // registerErrorHandlers();

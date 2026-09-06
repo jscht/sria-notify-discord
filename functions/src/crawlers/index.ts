@@ -14,6 +14,9 @@ export { getDelay, getRandomUserAgent } from "./utils";
 // 상수
 export { CrawlerStrategy, type CrawlerStrategyType } from "./constants";
 
+// 에러
+export { ProxyBlockedError } from "./errors";
+
 // 타입들
-export type { RecruitData, ProxyData } from "./types";
+export type { RecruitData, ProxyData, ProxyDoc, PlaywrightProxy } from "./types";
 export type { SchedulerStatus, SchedulerConfig } from "./schedulers";

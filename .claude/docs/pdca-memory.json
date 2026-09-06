@@ -1,8 +1,8 @@
 {
-  "feature": null,
-  "phase": null,
-  "matchRate": null,
-  "startedAt": null,
+  "feature": "phase-1-10-proxy-integration",
+  "phase": "check",
+  "matchRate": 95.3,
+  "startedAt": "2026-08-15",
   "completedAt": null,
-  "description": null
+  "description": "Proxy 통합 + 실 CRAWL 활성화 + 프로덕션 배포·E2E"
 }

@@ -79,4 +79,23 @@ export class RedisManager {
     const lua = `if redis.call("get", KEYS[1]) == ARGV[1] then return redis.call("del", KEYS[1]) else return 0 end`;
     await this.client.eval(lua, { keys: [key], arguments: [token] });
   }
+
+  /**
+   * 값이 없을 때만 세팅한다 (SET key value NX [PX]). 새로 세팅되면 true. (Phase 1.10 incident용)
+   */
+  async setIfAbsent(key: string, value: string, ttlMs?: number): Promise<boolean> {
+    const options = ttlMs ? { NX: true as const, PX: ttlMs } : { NX: true as const };
+    const res = await this.client.set(key, value, options);
+    return res === "OK";
+  }
+
+  /** 문자열 값 조회. */
+  async getValue(key: string): Promise<string | null> {
+    return this.client.get(key);
+  }
+
+  /** 키 삭제. */
+  async deleteKey(key: string): Promise<void> {
+    await this.client.del(key);
+  }
 };

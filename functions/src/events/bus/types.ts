@@ -36,6 +36,9 @@ export enum EventType {
   // Admin Domain
   ADMIN_BROADCAST_REQUEST = "admin:broadcast:request",
   ADMIN_BROADCAST_SENT = "admin:broadcast:sent",
+
+  // Proxy Domain (Phase 1.10)
+  PROXY_UNAVAILABLE = "proxy:unavailable",
 }
 
 /**
@@ -165,6 +168,21 @@ export interface AdminBroadcastSentEvent extends BaseEvent {
 }
 
 /**
+ * Proxy Domain 이벤트 페이로드 (Phase 1.10)
+ *
+ * @description 스케줄 갱신(crawlAndDiff)에서 프록시가 소진돼 크롤을 못 한 상황.
+ * 능동 요청 실패는 발행하지 않는다(요청자에게만 안내 — 전체 브로드캐스트 방지).
+ */
+export interface ProxyUnavailableEvent extends BaseEvent {
+  /** 소진 유형: 애초에 가용 프록시 없음 / 재시도(≤3) 소진. */
+  reason: "no_available_proxy" | "all_proxies_failed";
+  /** 실제 시도한 프록시 횟수. */
+  attempts: number;
+  /** 마지막으로 시도한 프록시 IP (기록용). */
+  lastProxyIp?: string;
+}
+
+/**
  * 이벤트 타입 매핑
  *
  * EventType enum을 각 페이로드 타입과 매핑합니다.
@@ -192,6 +210,9 @@ export interface EventPayloadMap {
   // Admin Domain
   [EventType.ADMIN_BROADCAST_REQUEST]: AdminBroadcastRequestEvent;
   [EventType.ADMIN_BROADCAST_SENT]: AdminBroadcastSentEvent;
+
+  // Proxy Domain (Phase 1.10)
+  [EventType.PROXY_UNAVAILABLE]: ProxyUnavailableEvent;
 }
 
 /**

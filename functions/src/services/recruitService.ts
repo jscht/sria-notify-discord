@@ -7,11 +7,14 @@ import { CacheUpdateStatus } from "@/services/recruitCacheService";
 import { CityKo, CityEn } from "@/common/types";
 import type { RecruitData } from "@/crawlers/types";
 import type { RecruitTier } from "@/events/bus";
-import { emitRecruitChangedEvent } from "@/events/bus";
+import { emitRecruitChangedEvent, emitProxyUnavailable } from "@/events/bus";
 import type { JobDiffResult } from "@/common/types/job.d";
 import { cityNameConverter } from "@/common/utils/cityName";
 import { getCityFilteredList } from "@/common/utils";
 import { HttpError } from "@/common/utils/httpError";
+import { crawlerLogger } from "@/common/utils/systemLogger";
+import { ProxyExhaustedError } from "./errors";
+import { proxyIncident } from "./proxyIncident";
 
 /**
  * 사용자 요청 처리 흐름:
@@ -80,8 +83,18 @@ export class RecruitService {
       throw HttpError.TooManyRequests("Crawling request limited.");
     }
 
-    // Step 4: 크롤링 실행
-    const crawled = await this.collectAndSaveRecruits(mode, convertedCity as CityKo);
+    // Step 4: 크롤링 실행 (Phase 1.10: 프록시 소진 시 요청자에게만 503 — 전체 브로드캐스트 격리)
+    let crawled: RecruitData[] | null;
+    try {
+      crawled = await this.collectAndSaveRecruits(mode, convertedCity as CityKo);
+    } catch (error) {
+      if (error instanceof ProxyExhaustedError) {
+        throw HttpError.ServiceUnavailable(
+          "최신 공고를 일시적으로 가져올 수 없습니다. 잠시 후 다시 시도해 주세요."
+        );
+      }
+      throw error;
+    }
     if (!crawled) {
       return { data: null, tier: "empty", durationMs: Date.now() - startedAt };
     }
@@ -105,12 +118,41 @@ export class RecruitService {
       return empty;
     }
     try {
-      const list = await this.crawler.sriagent(mode); // city 미지정 = 전체
+      let list: RecruitData[] | undefined;
+      try {
+        list = await this.crawler.sriagent(mode); // city 미지정 = 전체
+      } catch (error) {
+        if (error instanceof ProxyExhaustedError) {
+          // 스케줄 갱신 실패 → 전체 구독자 staleness + 개발자 incident 알림.
+          // tick은 정상 종료(throw 안 함 — 재시도 스톰·함수 에러 방지).
+          await emitProxyUnavailable(
+            error.reason,
+            error.attempts,
+            "RecruitService.crawlAndDiff",
+            { awaitSettle: true },
+            error.lastProxyIp
+          );
+          return empty;
+        }
+        throw error;
+      }
+
       if (!list || list.length === 0) {
         globalLogger.warn("crawlAndDiff: 크롤 결과 없음 — setRecruitList 스킵(오삭제 방지)");
         return empty;
       }
       const { status, diff } = await this.cacheService.setRecruitList(list);
+
+      // 성공: as-of 갱신 + incident 복구(RESOLVED 로그, 복구 DM 없음).
+      await this.firestore.setLastRefreshedAt();
+      const resolved = await proxyIncident.resolve();
+      if (resolved) {
+        crawlerLogger.warn("proxy incident RESOLVED", {
+          incidentId: resolved.id,
+          durationMs: resolved.durationMs,
+        });
+      }
+
       if (status === CacheUpdateStatus.CHANGED) {
         await emitRecruitChangedEvent(diff, "RecruitService.crawlAndDiff", { awaitSettle: true });
       }

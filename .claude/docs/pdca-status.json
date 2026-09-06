@@ -98,5 +98,17 @@
       { "features": "phase-4-6-ai-test-and-optimization", "phase": null, "matchRate": null, "documents": {} }
     ]
   },
-  "features": {}
+  "features": {
+    "phase-1-10-proxy-integration": {
+      "phase": "check",
+      "matchRate": 95.3,
+      "iterationCount": 0,
+      "startedAt": "2026-08-15",
+      "documents": {
+        "plan": "docs/phase-1-10/01-plan.md",
+        "design": "docs/phase-1-10/02-design.md",
+        "analysis": "docs/phase-1-10/03-analysis.md"
+      }
+    }
+  }
 }

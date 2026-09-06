@@ -1,6 +1,10 @@
 import "@/common/utils/systemLogger";
 import { BaseScheduler } from "./base/BaseScheduler";
 import { ProxyCrawler } from "@/crawlers/strategies";
+import { filterVerifiedProxies } from "@/crawlers/utils";
+import { ProxyStore } from "@/providers/firebase/store";
+import { SystemError } from "@/common/utils/systemError";
+import { emitSystemErrorEvent } from "@/common/utils/errorHandler";
 import type { SchedulerConfig, WorkResult } from "./types";
 
 /**
@@ -32,13 +36,25 @@ export class ProxyScheduler extends BaseScheduler {
 
       const proxyData = await this.proxyCrawler.crawl();
 
-      // TODO: Redis나 Firestore에 프록시 목록 저장
-      // await this.saveProxyList(proxyData);
+      // Phase 1.10: 저장 전 재검증(elite·HTTPS/SOCKS·liveness) — 통과분만 저장.
+      const verified = await filterVerifiedProxies(proxyData);
+
+      if (verified.length === 0) {
+        const err = SystemError.critical(
+          "ProxyScheduler: 검증 통과 프록시 0건 — 프록시 풀 고갈",
+          undefined,
+          { collected: proxyData.length }
+        );
+        emitSystemErrorEvent(err); // → SYSTEM_ERROR_CRITICAL
+        throw err;
+      }
+
+      await new ProxyStore().saveProxyList(verified);
 
       const endTime = new Date();
       const durationMs = endTime.getTime() - startTime.getTime();
 
-      const message = `Collected ${proxyData?.length || 0} proxies`;
+      const message = `Collected ${proxyData.length}, verified & saved ${verified.length} proxies`;
 
       globalLogger.info(`[${this.config.name}] ✅ ${message}`);
 
@@ -52,6 +68,13 @@ export class ProxyScheduler extends BaseScheduler {
     } catch (error) {
       const endTime = new Date();
       const durationMs = endTime.getTime() - startTime.getTime();
+
+      // 수집 자체 실패도 CRITICAL로 발행 (verify-empty는 이미 발행됨 — 중복 방지).
+      if (!(error instanceof SystemError)) {
+        emitSystemErrorEvent(
+          SystemError.critical("ProxyScheduler: 프록시 수집 실패", error as Error)
+        );
+      }
 
       throw {
         success: false,
