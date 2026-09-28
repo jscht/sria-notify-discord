@@ -1,7 +1,6 @@
 import { RedisClientType } from "redis";
 import { RecruitKeyManager } from "../key/recruitKeyManager";
 import type { RecruitData } from "@/crawlers/types";
-import type { CityEn } from "@/common/types";
 
 // #region Redis Functions...
 // #endregion
@@ -12,8 +11,8 @@ export class RecruitCacheStore {
     private readonly keyManager: RecruitKeyManager
   ) {}
 
-  private getRecruitCacheKey(city?: CityEn) {
-    return this.keyManager.getKeys().list(city);
+  private getRecruitCacheKey() {
+    return this.keyManager.getKeys().list;
   }
 
   async save(id: string, data: RecruitData, expiration: number): Promise<void> {
@@ -25,14 +24,6 @@ export class RecruitCacheStore {
 
   async getAll(): Promise<RecruitData[] | null> {
     const key = this.getRecruitCacheKey();
-    const result = await this.client.hGetAll(key);
-    return Object.keys(result).length > 0
-      ? Object.values(result).map((json) => JSON.parse(json))
-      : null;
-  }
-
-  async getByCity(city: string): Promise<RecruitData[] | null> {
-    const key = this.getRecruitCacheKey(city as CityEn);
     const result = await this.client.hGetAll(key);
     return Object.keys(result).length > 0
       ? Object.values(result).map((json) => JSON.parse(json))

@@ -1,6 +1,5 @@
 import crypto from "node:crypto";
 import { RecruitCacheStore, RecruitHashStore } from "../providers/redis/store";
-import type { CityEn } from "@/common/types/city.d";
 import type { Job, HashedString, JobDiffResult, JobHashes } from "@/common/types/job.d";
 import type { RecruitData } from "@/crawlers/types";
 
@@ -29,10 +28,9 @@ export class RecruitCacheService {
     private readonly hashStore: RecruitHashStore
   ) {}
 
-  async getRecruitList(city?: CityEn): Promise<RecruitData[] | null> {
-    return city
-      ? await this.cacheStore.getByCity(city)
-      : await this.cacheStore.getAll();
+  /** 전체 공고 조회. 도시 필터링은 호출 측(`filterListByCity`)에서 수행. */
+  async getRecruitList(): Promise<RecruitData[] | null> {
+    return this.cacheStore.getAll();
   }
 
   async setRecruitList(

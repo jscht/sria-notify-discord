@@ -7,6 +7,7 @@ import { redisConnection } from "../client/connection";
 
 export class RedisManager {
   private static instance: RedisManager;
+  private static initPromise: Promise<void> | null = null;
   private client: RedisClientType;
   
   public readonly store: {
@@ -30,6 +31,17 @@ export class RedisManager {
       return;
     }
 
+    // 동시 호출 시 진행 중인 초기화를 공유 — 연결 중복 생성 방지
+    if (!RedisManager.initPromise) {
+      RedisManager.initPromise = RedisManager.connect().catch((error) => {
+        RedisManager.initPromise = null; // 실패 시 재시도 허용
+        throw error;
+      });
+    }
+    return RedisManager.initPromise;
+  }
+
+  private static async connect() {
     const client = await redisConnection();
 
     if (!client) {

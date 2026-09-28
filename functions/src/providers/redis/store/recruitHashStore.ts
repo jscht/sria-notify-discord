@@ -1,6 +1,5 @@
 import { RedisClientType } from "redis";
 import { RecruitKeyManager } from "../key/recruitKeyManager";
-import type { CityEn } from "@/common/types";
 
 export class RecruitHashStore {
   constructor(
@@ -8,8 +7,8 @@ export class RecruitHashStore {
     private readonly keyManager: RecruitKeyManager
   ) {}
 
-  private getRecruitHashKey(city?: CityEn) {
-    return this.keyManager.getKeys().list_hash(city);
+  private getRecruitHashKey() {
+    return this.keyManager.getKeys().list_hash;
   }
 
   async save(id: string, hash: string, expiration: number) {
@@ -21,12 +20,6 @@ export class RecruitHashStore {
 
   async getAll(): Promise<Record<string, string> | null> {
     const key = this.getRecruitHashKey();
-    const result = await this.client.hGetAll(key);
-    return Object.keys(result).length > 0 ? result : null;
-  }
-
-  async getByCity(city: string) {
-    const key = this.getRecruitHashKey(city as CityEn);
     const result = await this.client.hGetAll(key);
     return Object.keys(result).length > 0 ? result : null;
   }
