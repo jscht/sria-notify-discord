@@ -1,7 +1,7 @@
 import "@/common/utils/systemLogger";
 import crypto from "node:crypto";
 import { RedisClientType } from "redis";
-import { RecruitCacheStore, RecruitHashStore, CrawlCacheStore } from "../store";
+import { RecruitCacheStore, RecruitHashStore, RequestLimitStore } from "../store";
 import { redisKeyManager } from "../key";
 import { redisConnection } from "../client/connection";
 
@@ -13,7 +13,7 @@ export class RedisManager {
   public readonly store: {
     recruit: RecruitCacheStore;
     recruit_hash: RecruitHashStore;
-    crawl: CrawlCacheStore;
+    requestLimit: RequestLimitStore;
   };
 
   private constructor(client: RedisClientType) {
@@ -21,7 +21,7 @@ export class RedisManager {
     this.store = {
       recruit: new RecruitCacheStore(client, redisKeyManager.recruit),
       recruit_hash: new RecruitHashStore(client, redisKeyManager.recruit),
-      crawl: new CrawlCacheStore(client, redisKeyManager.crawl),
+      requestLimit: new RequestLimitStore(client, redisKeyManager.requestLimit),
     };
   }
 
@@ -75,7 +75,7 @@ export class RedisManager {
 
   /**
    * 분산 락 획득 (SET key token NX PX). 획득 성공 시 해제용 토큰 반환, 실패(이미 잠김) 시 null.
-   * @param key 락 키 (예: "lock:recruit:crawlAndDiff")
+   * @param key 락 키 (예: "lock:recruit:sync:{source}")
    * @param ttlMs 락 자동 만료(ms) — 홀더 크래시 시 교착 방지
    */
   async acquireLock(key: string, ttlMs: number): Promise<string | null> {

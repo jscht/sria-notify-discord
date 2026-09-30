@@ -25,7 +25,7 @@ export const EVENT_BUS_CONFIG = {
  * 이벤트 도메인 상수
  * 
  * @description 주요 4개 도메인 (Recruit, Notification, SystemError, Admin)
- * - Recruit: 채용 공고 크롤링 및 변경 감지
+ * - Recruit: 채용 공고 수집 및 변경 감지
  * - Notification: 사용자 알림 구독 및 발송
  * - SystemError: 시스템 내부 에러 처리 (Discord 에러와 구분)
  * - Admin: 관리자 명령 및 공지사항
@@ -42,9 +42,9 @@ export const EVENT_DOMAIN = {
  */
 export const EVENT_ACTION = {
   // Recruit actions
-  CRAWL_STARTED: 'crawl.started',
-  CRAWL_COMPLETED: 'crawl.completed',
-  CRAWL_FAILED: 'crawl.failed',
+  SYNC_STARTED: 'sync.started',
+  SYNC_COMPLETED: 'sync.completed',
+  SYNC_FAILED: 'sync.failed',
   NEW: 'new',
   REQUESTED: 'requested',
   REQUEST_COMPLETED: 'request.completed',

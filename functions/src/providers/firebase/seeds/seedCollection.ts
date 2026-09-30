@@ -1,6 +1,5 @@
 import "@/common/utils/systemLogger";
 import { getFirestore } from "firebase-admin/firestore";
-import { initProxyCollection } from "./initProxyCollection";
 import { initConnectionCollection } from "./initConnectionCollection";
 import { initRecruitCollection } from "./initRecruitCollection";
 
@@ -9,7 +8,6 @@ export async function seedCollection(init: boolean = false) {
 
   try {
     await Promise.all([
-      initProxyCollection(db, init),
       initConnectionCollection(db, init),
       initRecruitCollection(db, init),
     ]);

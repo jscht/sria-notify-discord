@@ -12,7 +12,7 @@ import { formatDate } from "./formatDate";
  *
  * createLogger()에 전달할 수 있는 소스 식별자
  * - system: 시스템 전반 (기본값)
- * - crawler: 크롤러 관련
+ * - source: 공고 소스 수집 관련
  * - provider: 외부 서비스 연동 (Discord, Firebase 등)
  * - EventBus: 이벤트 버스 시스템
  * - SystemError: 에러 처리 시스템
@@ -20,7 +20,7 @@ import { formatDate } from "./formatDate";
  */
 export type LogSource =
   | "system"
-  | "crawler"
+  | "source"
   | "provider"
   | "EventBus"
   | "SystemError"
@@ -259,7 +259,7 @@ export const systemLogger = createLogger("system");
 /**
  * 프리셋 로거
  */
-export const crawlerLogger = createLogger("crawler");
+export const sourceLogger = createLogger("source");
 export const providerLogger = createLogger("provider");
 
 /**

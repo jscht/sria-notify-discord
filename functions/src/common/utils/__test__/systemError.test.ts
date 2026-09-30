@@ -13,7 +13,7 @@ import {
   normalizeError,
   allSettledWithErrors,
 } from "../errorHandler";
-import { CrawlerStrategy } from "@/crawlers";
+import { SourceStrategy } from "@/common/constants";
 
 console.log("\n=== SystemError 테스트 시작 ===\n");
 
@@ -37,12 +37,12 @@ try {
 // 2. 정적 팩토리 메서드 테스트
 console.log("\n✓ 테스트 2: 정적 팩토리 메서드");
 try {
-  const crawlerError = SystemError.crawlerFailed("크롤링 실패", {
-    strategy: CrawlerStrategy.RECRUIT,
+  const sourceError = SystemError.sourceFailed("공고 소스 수집 실패", {
+    strategy: SourceStrategy.RECRUIT,
     url: "https://example.com",
   });
-  console.log(`  크롤러 에러: ${crawlerError.message}`);
-  console.log(`  카테고리: ${crawlerError.category}`);
+  console.log(`  소스 에러: ${sourceError.message}`);
+  console.log(`  카테고리: ${sourceError.category}`);
 
   const firestoreError = SystemError.firestoreError(
     "Firestore 저장 실패",
@@ -112,7 +112,7 @@ console.log("\n✓ 테스트 5: withRetry");
       {
         maxRetries: 3,
         retryDelay: 100,
-        category: ErrorCategory.CRAWLER,
+        category: ErrorCategory.SOURCE,
         message: "재시도 테스트",
         emitEvent: false,
       }
@@ -139,10 +139,10 @@ try {
 
   const error4 = normalizeError(
     new SystemError("이미 SystemError", {
-      category: ErrorCategory.CRAWLER,
+      category: ErrorCategory.SOURCE,
     })
   );
-  console.log(`  SystemError 유지: ${error4.category === ErrorCategory.CRAWLER}`);
+  console.log(`  SystemError 유지: ${error4.category === ErrorCategory.SOURCE}`);
 } catch (error) {
   console.log("  ❌ normalizeError 실패:", error);
 }
@@ -174,9 +174,9 @@ console.log("\n✓ 테스트 7: allSettledWithErrors");
 // 8. JSON 직렬화 테스트
 console.log("\n✓ 테스트 8: JSON 직렬화");
 try {
-  const error = SystemError.crawlerFailed("프록시 크롤링 실패", {
-    strategy: CrawlerStrategy.PROXY,
-    proxyUrl: "http://proxy.example.com",
+  const error = SystemError.sourceFailed("공고 소스 수집 실패", {
+    strategy: SourceStrategy.RECRUIT,
+    source: "sria",
   });
 
   const json = error.toJSON() as any;

@@ -1,29 +1,17 @@
 import dotenv from "dotenv";
 dotenv.config();
 import "@/common/utils/systemLogger";
-import { registerGlobalErrorHandlers } from "./registerGlobalErrorHandlers";
+import { bootstrapGateway } from "./bootstrapGateway";
 import { initExpress } from "./express";
 import { firebaseDeploy } from "@/providers/firebase";
-import { initGatewayProviders } from "@/providers";
-import { registerAllEventHandlers } from "@/events";
 
-// 최후의 거름망(A): init 중 발생하는 미처리 rejection/예외도 잡도록 가장 먼저 등록한다.
-registerGlobalErrorHandlers();
-
-// 모듈 로드 시점에 즉시 init 시작 (로컬 emulator 부팅 / 프로덕션 cold start).
-// initGatewayProviders()는 메모이즈되어 있어 미들웨어가 다시 호출해도
-// 같은 promise를 await할 뿐 중복 실행되지 않는다.
-//
-// gateway 프로세스는 인터랙션 수신만 담당하며 스케줄러를 시작하지 않는다(C안).
-// 크롤·알림 tick은 함수 프로세스(app/scheduler.ts onSchedule)가 담당한다.
-// provider init 완료 후 EventBus 핸들러만 등록한다(멱등 가드 내장).
-initGatewayProviders()
-  .then(() => {
-    registerAllEventHandlers();
-  })
-  .catch((error) => {
-    globalLogger.error("Eager gateway provider initialization failed:", error);
-  });
+// ⚠️ E안(하이브리드) 전환 이후 — 이 모듈은 Firebase Functions에 **더 이상 배포되지 않는다**.
+//   package.json `main`이 `lib/app/scheduler.js`로 바뀌어, Functions는 스케줄 트리거
+//   (recruitSchedule_sria / recruitSchedule_temp)만 배포한다. 즉 기존 onRequest(`default`)
+//   HTTP 함수는 의도적으로 Functions에서 제거되었다(E안 설계상 정상).
+//   게이트웨이(인터랙션 수신)는 이제 standalone 엔트리 `app/gateway.ts`(pm2 + VM)가 담당한다.
+//   본 파일은 참조/로컬 호환 목적으로 유지한다. 부트스트랩은 `bootstrapGateway`로 공유.
+bootstrapGateway();
 
 const expressApp = initExpress();
 const appServer = firebaseDeploy(expressApp);

@@ -5,8 +5,8 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import { registerGlobalErrorHandlers } from "./registerGlobalErrorHandlers";
 import { initFunctionProviders } from "@/providers";
 import { registerAllEventHandlers } from "@/events";
-import { SchedulerManager } from "@/crawlers";
-import { CRAWL_MODE } from "@/common/constants";
+import { SchedulerManager } from "@/schedulers";
+import { sriaConfig, tempConfig } from "@/providers/recruit";
 
 // 최후의 거름망(A): init 중 발생하는 미처리 rejection/예외도 잡도록 가장 먼저 등록한다.
 registerGlobalErrorHandlers();
@@ -15,15 +15,27 @@ registerGlobalErrorHandlers();
 // 메모이즈된 ready promise를 각 트리거가 await한다.
 const ready = initFunctionProviders().then(() => registerAllEventHandlers());
 
-/** 프로덕션 크롤 트리거 (코드만 — 실발화·실 CRAWL·실배포는 Phase 1.10). */
-export const recruitSchedule = onSchedule("every 4 hours", async () => {
+/**
+ * 프로덕션 공고 갱신 트리거 — **사이트별** (소스 프로바이더 수집→소스별 diff→DM).
+ * 각 사이트 config의 schedule을 주기로 사용(배포 시점 확정 → 변경 시 redeploy).
+ */
+export const recruitSchedule_sria = onSchedule(sriaConfig.schedule, async () => {
   await ready;
-  await SchedulerManager.getInstance().runRecruitOnce(CRAWL_MODE.CRAWL);
+  await SchedulerManager.getInstance().runRecruitOnce("sria");
 });
 
-// 로컬 DUMMY E2E (1.9 auto-E2E 대체) — env 게이팅. 실행: RUN_SCHEDULER_ONCE=true
+export const recruitSchedule_temp = onSchedule(tempConfig.schedule, async () => {
+  await ready;
+  await SchedulerManager.getInstance().runRecruitOnce("temp");
+});
+
+// 로컬 E2E — env 게이팅. 실행: RUN_SCHEDULER_ONCE=true (양 소스 1회씩)
 if (process.env.RUN_SCHEDULER_ONCE === "true") {
   ready
-    .then(() => SchedulerManager.getInstance().runRecruitOnce(CRAWL_MODE.DUMMY))
+    .then(async () => {
+      const manager = SchedulerManager.getInstance();
+      await manager.runRecruitOnce("sria");
+      await manager.runRecruitOnce("temp");
+    })
     .catch((e) => globalLogger.error("로컬 스케줄러 1회 실행 실패:", e));
 }

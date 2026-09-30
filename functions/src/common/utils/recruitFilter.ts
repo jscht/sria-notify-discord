@@ -14,7 +14,7 @@ import { toKorean } from "@/common/utils/cityName";
  *
  * `filterListByCity`(common/utils/getCityFilteredList.ts)와 동일한
  * `title.includes(한글지명)` 정책을 Job[]·복수 지역으로 확장한 어댑터.
- * `filterListByCity`는 RecruitData[]·단일 city 시그니처라 Job[]에 직접 적용 시
+ * `filterListByCity`는 Recruit[]·단일 city 시그니처라 Job[]에 직접 적용 시
  * Job.id 손실 + 복수 지역 처리가 불가하여 별도 함수로 분리한다.
  * (정책 출처를 본 JSDoc에 명시하여 드리프트 방지)
  *

@@ -20,4 +20,3 @@ export {
   resetHandlerRegistration,
 } from './utils/registerEventHandlers';
 export { emitRecruitChangedEvent } from './utils/emitRecruitChangedEvent';
-export { emitProxyUnavailable } from './utils/emitProxyUnavailable';

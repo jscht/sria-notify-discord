@@ -40,10 +40,12 @@ export async function testEventBus(): Promise<void> {
     source: 'test',
     addedJobs: [
       {
-        id: 'test-job-1',
+        id: 'sria:12345',
         value: {
-          href: '/jobs/12345',
+          id: 'sria:12345',
+          source: 'sria',
           title: '테스트 공고',
+          url: 'https://example.com/jobs/12345',
           dDay: 'D-7',
           dayTxt: '2026.01.14',
           recruitmentStatus: '접수중',

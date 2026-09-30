@@ -124,8 +124,8 @@ export class EventBus extends EventEmitter {
    *
    * @example
    * ```typescript
-   * eventBus.onceEvent(EventType.RECRUIT_CRAWL_COMPLETED, () => {
-   *   console.log('Crawl completed');
+   * eventBus.onceEvent(EventType.RECRUIT_SYNC_COMPLETED, () => {
+   *   console.log('Sync completed');
    * });
    * ```
    */

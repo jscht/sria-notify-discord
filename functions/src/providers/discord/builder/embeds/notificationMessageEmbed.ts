@@ -4,7 +4,7 @@ import type { AlarmSubscription } from "@/common/types";
 import { AlertMode } from "@/common/types";
 import { CITIES } from "@/common/constants/city";
 import { ENV } from "@/common/utils";
-import { formatJobTitleLink } from "./jobLink";
+import { formatJobTitleLink, recruitField } from "./jobLink";
 
 /** 임베드 description에 상세 표시할 상위 공고 개수. 초과분은 오버플로 요약으로 처리. */
 const TOP_COUNT = 3;
@@ -86,9 +86,9 @@ export function notificationMessageEmbed(
 
   // 상위 3건: 번호+제목링크 / 날짜 / D-Day·상태 3줄 블록.
   const blocks = jobs.slice(0, TOP_COUNT).map((job, index) => {
-    const r = job.value; // Job.value: RecruitData
-    const titleLine = formatJobTitleLink(r.title, r.href, baseUrl);
-    return `${index + 1}. ${titleLine}\n📅 ${trimDate(r.dayTxt)}\n⏳ ${r.dDay} · 🏷️ ${r.recruitmentStatus}`;
+    const r = job.value; // Job.value: Recruit
+    const titleLine = formatJobTitleLink(r.title, recruitField(r, "url"));
+    return `${index + 1}. ${titleLine}\n📅 ${trimDate(recruitField(r, "dayTxt"))}\n⏳ ${recruitField(r, "dDay")} · 🏷️ ${recruitField(r, "recruitmentStatus")}`;
   });
 
   // 오버플로: 초과 건수 요약 + 전체 공고 링크(baseUrl 없으면 텍스트만).

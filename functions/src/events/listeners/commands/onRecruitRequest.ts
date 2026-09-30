@@ -1,7 +1,6 @@
 import "@/common/utils/systemLogger";
 import { CommandInteraction } from "discord.js";
 import { RecruitService } from "../../../services";
-import { CRAWL_MODE } from "@/common/constants";
 import { isValidCityName, chooseEunNeun } from "@/common/utils";
 import { recruitMessageEmbed } from "@/providers/discord/builder/embeds/recruitMessageEmbed";
 import { eventBus, EventType } from "@/events/bus";
@@ -31,7 +30,6 @@ export async function onRecruitRequest(interaction: CommandInteraction) {
       source: "onRecruitRequest",
       userId,
       region: region as CityEn | undefined,
-      mode: CRAWL_MODE.DUMMY,
     });
   } catch (e) {
     globalLogger.error("이벤트 발행 실패", e as Error, { event: EventType.RECRUIT_REQUESTED });
@@ -39,7 +37,7 @@ export async function onRecruitRequest(interaction: CommandInteraction) {
 
   try {
     const recruitService = new RecruitService();
-    const { data, tier, durationMs } = await recruitService.getRecruitList(CRAWL_MODE.DUMMY, region);
+    const { data, tier, durationMs } = await recruitService.getRecruitList(region);
 
     try {
       eventBus.emitEvent<RecruitRequestCompletedEvent>(EventType.RECRUIT_REQUEST_COMPLETED, {
@@ -47,7 +45,6 @@ export async function onRecruitRequest(interaction: CommandInteraction) {
         source: "onRecruitRequest",
         userId,
         region: region as CityEn | undefined,
-        mode: CRAWL_MODE.DUMMY,
         jobs: data ?? [],
         tier,
         durationMs,
@@ -69,7 +66,6 @@ export async function onRecruitRequest(interaction: CommandInteraction) {
         source: "onRecruitRequest",
         userId,
         region: region as CityEn | undefined,
-        mode: CRAWL_MODE.DUMMY,
         jobs: [],
         tier: "error",
         durationMs: Date.now() - startedAt,

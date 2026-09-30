@@ -5,7 +5,7 @@ import type { RecruitChangedEvent } from "../types";
 import type { JobDiffResult } from "@/common/types/job.d";
 
 /**
- * RECRUIT_CHANGED 발행 공용 헬퍼 — 두 발행부(사용자 백업 write·스케줄러 crawlAndDiff)가
+ * RECRUIT_CHANGED 발행 공용 헬퍼 — 두 발행부(사용자 백업 write·스케줄러 sync)가
  * 동일 payload 조립 + try-catch 방어(발행 실패가 캐시 성공을 막지 않음)를 공유.
  * CHANGED gating은 호출 측이 담당한다.
  *

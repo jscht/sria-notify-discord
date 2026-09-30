@@ -1,6 +1,6 @@
 import { RedisClientType } from "redis";
 import { RecruitKeyManager } from "../key/recruitKeyManager";
-import type { RecruitData } from "@/crawlers/types";
+import type { Recruit } from "@/common/types";
 
 // #region Redis Functions...
 // #endregion
@@ -15,14 +15,14 @@ export class RecruitCacheStore {
     return this.keyManager.getKeys().list;
   }
 
-  async save(id: string, data: RecruitData, expiration: number): Promise<void> {
+  async save(id: string, data: Recruit, expiration: number): Promise<void> {
     const key = this.getRecruitCacheKey();
     await this.client.hSet(key, id, JSON.stringify(data));
     await this.expire(expiration, key);
     globalLogger.info(`Saved data for ID: ${id}`);
   }
 
-  async getAll(): Promise<RecruitData[] | null> {
+  async getAll(): Promise<Recruit[] | null> {
     const key = this.getRecruitCacheKey();
     const result = await this.client.hGetAll(key);
     return Object.keys(result).length > 0
@@ -31,7 +31,7 @@ export class RecruitCacheStore {
   }
 
   // 테스트용 될 듯?
-  async getDataByKeyFromCache(key: string): Promise<RecruitData[] | null> {
+  async getDataByKeyFromCache(key: string): Promise<Recruit[] | null> {
     const result = await this.client.hGetAll(key);
     return Object.keys(result).length > 0
       ? Object.values(result).map((json) => JSON.parse(json))
