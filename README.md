@@ -312,14 +312,28 @@ AI를 활용하여 자연어로 명령을 처리합니다.
 
 ## 배포
 
-### Firebase Functions 배포
+> **E안 · 2-프로세스 토폴로지**: 봇은 **게이트웨이**(discord.js WS 로그인 + 인터랙션,
+> Oracle Cloud VM + pm2, 엔트리 `lib/app/gateway.js`)와 **스케줄러**(`onSchedule` → DM
+> 발송, Firebase Functions, `main` = `lib/app/scheduler.js`)로 분리 배포된다. 두 프로세스는
+> 공유 Redis(Upstash) + Firestore로만 협업한다. 상세 절차·환경변수 매트릭스는
+> [build-deploy.md](./.claude/docs/build-deploy.md) 참조.
+
+### 스케줄러 배포 (Firebase Functions)
 
 ```bash
 # 프로덕션 빌드
 npm run build
 
-# Firebase 배포
+# Firebase 배포 (recruitSchedule_sria / recruitSchedule_temp 스케줄 트리거만 배포)
 npm run deploy
+```
+
+### 게이트웨이 배포 (Oracle Cloud VM + pm2)
+
+```bash
+npm run build
+pm2 start lib/app/gateway.js --name sria-gateway
+pm2 startup && pm2 save   # 재부팅 시 자동 부활
 ```
 
 ### 환경 변수 설정 (Firebase)

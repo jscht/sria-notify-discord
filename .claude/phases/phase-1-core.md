@@ -19,10 +19,13 @@
 | Phase 1.7 | 자동 알림 시스템 | 0 | 0 | 4 |
 | Phase 1.8 | DM 발송 유틸리티 | 0 | 0 | 3 |
 | Phase 1.9 | 스케줄러 재활성화 | 0 | 0 | 4 |
-| Phase 1.10 | Proxy 통합 + IP 우회 스크래핑 + 실 CRAWL + 프로덕션 배포·E2E | 0 | 0 | 11 |
-| Phase 1.11 | DebugLogger 마이그레이션 | 0 | 0 | 4 |
-| Phase 1.12 | Events 아키텍처 통합 | 5 | 0 | 0 |
-| Phase 1.13 | 프로덕션 런타임 & 스케줄러 트리거 재설계 | 0 | 0 | 6 |
+| Phase 1.10 | mock 데이터 프로바이더 재정의 + E안 배포 토폴로지 (proxy·실CRAWL 폐기) | ✅ | 0 | 0 |
+| Phase 1.11 | DebugLogger 마이그레이션 | ✅ | 0 | 0 |
+| Phase 1.12 | Events 아키텍처 통합 | ✅ | 0 | 0 |
+| Phase 1.13 | 프로덕션 런타임 & 스케줄러 트리거 재설계 | ✅ | 0 | 0 |
+| Phase 1.14 | 프로덕션 배포·운영 (E안 실배포 + 운영 갭 O-3~O-9) | 0 | 0 | (신규) |
+
+> ⚠️ 위 완료/진행/대기 카운트는 참고용이며 **실제 상태 SoT는 `.claude/docs/pdca-status.json`**이다(이 표는 일부 stale). Phase 1.10에서 proxy·실 CRAWL은 **폐기**되고 mock 데이터 프로바이더로 재정의됐다(2026-09-28).
 
 ---
 
@@ -258,52 +261,21 @@
 
 ---
 
-## Phase 1.10: Proxy 통합 + 실 CRAWL 활성화 + 프로덕션 배포·E2E
+## Phase 1.10: mock 데이터 프로바이더 재정의 + E안 배포 토폴로지 ✅ (완료)
 **우선순위**: ⭐⭐⭐ (P0)
-**의존성**: Phase 1.2, 1.8, **1.13 완료**
-**스코프**: Phase 1.13의 런타임 재설계 코드를 전제로, 프록시(실제 IP 보호)를 갖춘 뒤 **실 CRAWL을 활성화하고 GCP(firebase)에 실배포하여 프로덕션 E2E까지 완결**한다. (Phase 1.9/1.13에서 이월된 프로덕션 실환경 검증을 본 Phase가 소유)
+**의존성**: Phase 1.2, 1.8 완료
+**완료일**: 2026-09-28 · 매치율 99.3% · 🔴 Critical 0
+**스코프 (2026-09 pivot)**: proxy·실 CRAWL·IP 우회를 **폐기**하고(ToS/법적 리스크 회피 + 포트폴리오는 아키텍처 시연이 목적), **mock 데이터 프로바이더 아키텍처**로 재정의. 최소 base 스키마 + 사이트별 union, 소스별 스케줄·diff, crawl/proxy→source/sync 명칭 통일. 배포 배선(C-1) 갭은 **E안(하이브리드 2-프로세스)**로 해소.
 
-### 1) Proxy 통합
-- [ ] ProxyScheduler 완성 (`crawlers/schedulers/ProxyScheduler.ts`)
-  - [ ] `saveProxyList()` 구현 + ProxyStore(`providers/firebase/store/proxy.ts`)와 연결하여 Firestore 저장 — 현재 수집 결과가 TODO 주석으로 미저장 상태
-  - [ ] 프록시 수집 실패 시 `error.critical` 이벤트 발행
-- [ ] ProxyService 구현 (`services/proxyService.ts`): `getAvailableProxy` / `markProxyAsUsed` / `markProxyAsFailed` / `releaseProxy` / `hasAvailableProxy`
-- [ ] SriaCrawler 프록시 통합 (`crawlers/strategies/recruit/sria/SriaCrawler.ts` — **Playwright 기반**)
-  - [ ] Playwright에 프록시 주입: `browser.newContext({ proxy })` 또는 `chromium.launch({ proxy })` — ※ 기존 seed의 "axios/https-proxy-agent"는 실제 크롤러(Playwright)와 불일치하여 정정
-  - [ ] 크롤 시작 전 `hasAvailableProxy()` 게이트 — 없으면 크롤 중단 + `proxy.unavailable` 발행
-  - [ ] 프록시 실패 시 다른 프록시로 재시도(최대 3회), 전부 실패 시 중단 + `proxy.unavailable`
-- [ ] Proxy 에러 처리 핸들러 (`features/proxyError/handlers/ProxyErrorHandler.ts`): `proxy.unavailable` 리스너 등록, 활성 구독자에 이용제한 안내 DM + 개발자 긴급 알림 DM
-- [ ] DM 메시지 템플릿 (`features/proxyError/messages/templates.ts`)
-  - 사용자용: "현재 서비스 이용에 일시적인 문제가 발생했습니다. 빠른 시일 내 복구하겠습니다."
-  - 개발자용: "🚨 프록시 서버 전체 불가 - 크롤링 중단됨. 즉시 확인 필요"
+- [x] 타입: `RecruitBase` + `SriaRecruit | TempRecruit` union, 다운스트림(~11파일) 치환
+- [x] 프로바이더 계층: 레지스트리(`getProvider`) + sria 스냅샷 생성기 + temp 규칙엔진(stateless PRNG, 결정적 시뮬레이션)
+- [x] 소스별 스케줄(`recruitSchedule_sria/_temp` onSchedule) + 소스별 diff 파티션(`{source}:` 접두사) + Redis 락(`lock:recruit:sync:{source}`)
+- [x] 명칭 통일: `RECRUIT_SYNC_*`, `ErrorCategory.SOURCE`, `sourceLogger` (crawl/proxy 활성 심볼 0)
+- [x] **C-1 해소 (E안)**: `package.json` main→`lib/app/scheduler.js`(트리거 배포 노출) + 게이트웨이 `app/gateway.ts`(**WS-only**, Oracle x86 Micro VM + pm2) 분리 + `bootstrapGateway` 공통화
+- [x] 배포 설정: `.eslintrc.js` ESM→CJS, predeploy는 build만 게이팅(lint 분리), `build-deploy.md`·README에 E안 토폴로지·env 매트릭스 반영
+- [x] 정적 검증: `tsc --noEmit` 0, `npm run build` 0, 스케줄 트리거 export 노출 확인
 
-### 2) IP 우회 스크래핑 전략 (차단 위험 완화)
-프록시로 IP를 바꾸는 것만으로는 rate/fingerprint 기반 탐지를 못 피한다. 프록시 로테이션 + stealth 유지 + 차단 감지·백오프를 함께 계획해 실 CRAWL 중 IP 차단을 예방한다.
-- [ ] 프록시 로테이션 정책 확정: 세션당 고정(기본) vs 요청마다 교체 vs 실패 시만 교체 — 사람인 세션/쿠키 일관성과 탐지 회피의 트레이드오프 평가 후 결정
-- [ ] stealth 유지: 현재 `SriaCrawler`의 `playwright-extra` + `puppeteer-extra-plugin-stealth`(UA/핑거프린트 위장)를 프록시 컨텍스트에서도 유지. 프록시 geo와 `locale`/`timezoneId`/UA 정합성 확보 (불일치 시 오히려 탐지 위험 ↑)
-- [ ] 요청 간 지터(jitter)·throttle: 고정 주기 대신 랜덤 지연으로 봇 패턴 완화. 기존 요청제한(`isRequestAllowed` 10분 쿨다운)과 정합
-- [ ] 차단 감지·대응: 429 / CAPTCHA / 블록 페이지 / 비정상 응답(빈 목록·리다이렉트) 감지 → 해당 프록시 `markProxyAsFailed` + 다른 프록시 교체 + 지수 백오프 재시도, 연속 차단 시 `proxy.unavailable` 발행
-- [ ] (선택) 차단율 로깅: 프록시별 성공/차단 카운트를 남겨 저품질 프록시 조기 배제
-
-### 3) 실 CRAWL 활성화
-- [ ] `app/index.ts` `initializeSchedulers({ recruitMode: CRAWL_MODE.CRAWL, enableProxy: true })`로 전환 (프록시 게이트가 IP 보호를 보장한 뒤에만)
-- [ ] 실 CRAWL ToS/robots·개인정보 재확인 (License/Compliance)
-
-### 4) 프로덕션 배포 & E2E (Phase 1.9/1.13 이월 검증 포함)
-- [ ] `firebase deploy --only functions`로 GCP 실배포 (Blaze 요금제 전제; onSchedule → Cloud Scheduler 잡 자동 프로비저닝)
-- [ ] 프로덕션 E2E: 실제 스케줄 주기에서 크롤(프록시 경유)→diff→DM 전체 플로우 검증. 진입 시 review-process 0단계처럼 체크리스트를 동적 생성:
-  - [ ] R4 — ready race 해소: 첫 크롤이 ready보다 빨라도 DM 유실 없음 (실 타이밍 재현)
-  - [ ] R5 — ready 로그 / HTTP 비결합 음성검증 / graceful shutdown 동작
-  - [ ] DM 에러분기 — 50007(DM 차단/공유 길드 없음) graceful skip, rate limit(429) 대기·재시도
-  - [ ] 부하·스트레스 — 구독자 수를 늘려가며 처리량·타임아웃 한계·429 발생 지점 측정. 순차 발송 시 `setTimeout`/`sleep` 블로킹이 실행시간·비용에 주는 영향 포함
-  - [ ] 로그 수집 — `console.*`(providerLogger/systemLogger)가 Cloud Logging에 전 레벨(info/warn/error) 누락 없이 적재되는지, 심각도 매핑(error→ERROR, warn→WARNING), 핵심 이벤트(크롤 시작·완료, RECRUIT_NEW, NOTIFICATION_SEND/SENT, DM 성공/skip/실패) 추적, `firebase functions:log`/GCP 콘솔 조회 확인
-
-**완료 기준**:
-- [ ] SriaCrawler가 반드시 프록시를 통해서만 크롤링 수행 (프록시 없이는 크롤 절대 수행 안 함 — 실제 IP 보호)
-- [ ] 프록시 1개 실패 시 다른 프록시로 자동 전환(최대 3회), 전부 불가 시 사용자·개발자 알림
-- [ ] ProxyScheduler가 6시간마다 프록시 목록 갱신 및 Firestore 저장
-- [ ] 프록시 로테이션 + stealth 유지 + 차단 감지·백오프로 실 CRAWL 중 IP 차단 없이 지속 수집
-- [ ] GCP 실배포 후 실제 스케줄 주기에서 크롤→diff→DM 전체 파이프라인이 완결된다
+> **이월 (mock 스코프 밖)**: 실배포·실환경 E2E·운영 갭(O-3 Redis재연결·O-4 Secret Manager·O-5 seedCollection·O-6/O-9 구독자시드·슬래시커맨드 등록·E안 실배포 검증)은 **Phase 1.14(프로덕션 배포·운영)**로 귀속. 모니터링(A/B·MonitoringService)은 **Phase 2.1/2.2**. lint-cleanup·factory refactor·시간기반 백업은 `todo.md`. 문서드리프트 D-1·Code #1/#3은 본 사이클 정리에서 병합.
 
 ---
 
@@ -406,10 +378,14 @@
 
 ---
 
-## Phase 1.13: 프로덕션 런타임 & 스케줄러 트리거 재설계 (미착수)
+## Phase 1.13: 프로덕션 런타임 & 스케줄러 트리거 재설계 ✅ (완료)
 **우선순위**: ⭐⭐⭐ (P0)
 **의존성**: Phase 1.9 완료
-**스코프**: 런타임 재설계 **코드까지 + 로컬 검증**. 실배포·실 CRAWL 활성화·프로덕션 E2E는 **Phase 1.10으로 이월**(프록시 IP 보호가 갖춰진 뒤 수행). onSchedule은 본 Phase에서 코드로 작성·정적검증하고, 실제 발화 검증만 1.10 배포에서 한다.
+**완료일**: 2026-08-07 · 매치율 100% (archived, `docs/archive/phase-1-13/`)
+
+> ⚠️ **아래 본문은 착수 당시 시드**다. 실제로는 완료됐고(C안 하이브리드: 인터랙션 gateway 상시 / onSchedule serverless, `setTimeout`→`onSchedule`, dmSender REST 전환, 틱 완결 파이프라인, `crawlAndDiff` 분리, RECRUIT_NEW→RECRUIT_CHANGED), 아래에서 **"실 CRAWL·프록시·Phase 1.10 이월"** 언급은 **mock pivot(2026-09)으로 폐기**됐다 — 실배포·실환경 E2E·운영 갭은 이제 **Phase 1.14**가 소유한다. `crawlService.ts` DUMMY 버그 등 크롤 잔재 항목도 mock 전환으로 무의미. SoT는 `pdca-status.json`.
+
+**스코프(당시)**: 런타임 재설계 **코드까지 + 로컬 검증**. onSchedule은 본 Phase에서 코드로 작성·정적검증하고, 실제 발화 검증만 배포에서 한다.
 
 **배경**: 배포 타깃이 `onRequest` cold-start Cloud Functions라, 아래 두 가지가 프로덕션에서 동작하지 않는다. Phase 1.9는 이 때문에 "로컬 검증 한정"으로 축소되었고(startup wiring + 로컬 DUMMY 스케줄러 + ready 게이트 + env rename + emulator DM E2E), 실 CRAWL·프로덕션 구동은 Phase 1.10으로 이월됐다.
 - `BaseScheduler`의 in-process `setTimeout` 스케줄러 → 응답 후 CPU 동결로 4시간 타이머가 발화하지 않는다.
@@ -437,6 +413,32 @@
 
 ---
 
-*최종 수정: 2026-01-31*
+## Phase 1.14: 프로덕션 배포·운영 (미착수)
+**우선순위**: ⭐⭐⭐ (P0)
+**의존성**: Phase 1.10, 1.13 완료
+**스코프**: E안(하이브리드 2-프로세스)을 **실제 프로덕션에 배포하고 실환경에서 검증**한다. Phase 1.10/1.13에서 이월된 운영 갭(CTO 운영감사 O-3~O-9)과 실배포 런타임 검증(U-1~U-4)을 소유. 대부분 **사용자 운영(U)** 항목이고 코드 수정은 소수.
+
+### 코드 (Claude)
+- [ ] **O-3 Redis 재연결**: Redis client에 `on("error")` + reconnectStrategy 추가 (상시 게이트웨이가 Upstash idle 끊김 시 크래시/플래핑 방지)
+- [ ] **O-5 seedCollection**: `initFirebaseApp`가 cold init 실패 시 `process.exit(1)`로 인스턴스를 죽이는 경로 재검토
+- [ ] (선택) lint predeploy 복구: lint-cleanup(todo) 완료 후 `firebase.json` predeploy에 `npm run lint` 재추가
+- [ ] (선택) **O-7 timeZone**: onSchedule을 시각 기반 cron으로 바꿀 경우 `Asia/Seoul` 지정
+
+### 운영 (사용자 · U)
+- [ ] **O-4 Secret Manager** 🔴: Functions 프로덕션 시크릿(`FB_PRIVATE_KEY`/`DISCORD_BOT_TOKEN`)을 Firebase/GCP Secret Manager로 주입 (dotenv 무효). **미해결 시 실배포 런타임 실패**
+- [ ] **O-6/O-9**: 게이트웨이 live 후 `npm run register:commands`(슬래시커맨드 prod 등록) → 구독 인터랙션으로 구독자 시드 확보 (DM 대상 존재 보장)
+- [ ] **E안 실배포**: 스케줄러 = `firebase deploy`(Functions, Blaze) / 게이트웨이 = Oracle x86 Micro VM 프로비저닝 + pm2 상주(`pm2 start lib/app/gateway.js` + startup/save)
+- [ ] **실환경 검증(U)**: U-3 실 onSchedule 트리거 발화 / U-1·U-2 게이트웨이 인터랙션 왕복 / U-4 에뮬·실 2-run E2E 실 DM (todo R4/R5)
+
+**완료 기준**:
+- [ ] 두 프로세스가 프로덕션에서 상시 가동, 실 스케줄 주기에서 sync→diff→DM 완결
+- [ ] 인터랙션(슬래시/버튼)이 실 게이트웨이에서 왕복
+- [ ] 시크릿·구독자 시드·Redis 재연결이 실환경에서 안정
+
+> 모니터링(A/B·MonitoringService+채널)은 본 Phase가 아니라 **Phase 2.1/2.2**. 배포가 선행돼야 모니터 대상이 존재하므로 2.1이 1.14에 의존.
+
+---
+
+*최종 수정: 2026-09-28 (mock pivot + 1.13 완료 + Phase 1.14 신설 반영)*
 *상위 문서: [TODO.md](./PROGRESS.md)*
-*상태: Phase 1.1, 1.3, 1.12 완료 / Phase 1.2 진행 중 / Phase 1.4 대기*
+*상태 SoT: `.claude/docs/pdca-status.json` (이 시드의 카운트는 참고용)*
