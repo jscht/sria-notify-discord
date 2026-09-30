@@ -2,7 +2,7 @@
  * Recruit Request Feature Types
  */
 
-export interface RecruitData {
+export interface Recruit {
   id: string;
   title: string;
   company: string;

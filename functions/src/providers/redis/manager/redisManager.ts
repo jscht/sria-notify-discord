@@ -1,18 +1,19 @@
 import "@/common/utils/systemLogger";
 import crypto from "node:crypto";
 import { RedisClientType } from "redis";
-import { RecruitCacheStore, RecruitHashStore, CrawlCacheStore } from "../store";
+import { RecruitCacheStore, RecruitHashStore, RequestLimitStore } from "../store";
 import { redisKeyManager } from "../key";
 import { redisConnection } from "../client/connection";
 
 export class RedisManager {
   private static instance: RedisManager;
+  private static initPromise: Promise<void> | null = null;
   private client: RedisClientType;
   
   public readonly store: {
     recruit: RecruitCacheStore;
     recruit_hash: RecruitHashStore;
-    crawl: CrawlCacheStore;
+    requestLimit: RequestLimitStore;
   };
 
   private constructor(client: RedisClientType) {
@@ -20,7 +21,7 @@ export class RedisManager {
     this.store = {
       recruit: new RecruitCacheStore(client, redisKeyManager.recruit),
       recruit_hash: new RecruitHashStore(client, redisKeyManager.recruit),
-      crawl: new CrawlCacheStore(client, redisKeyManager.crawl),
+      requestLimit: new RequestLimitStore(client, redisKeyManager.requestLimit),
     };
   }
 
@@ -30,6 +31,17 @@ export class RedisManager {
       return;
     }
 
+    // 동시 호출 시 진행 중인 초기화를 공유 — 연결 중복 생성 방지
+    if (!RedisManager.initPromise) {
+      RedisManager.initPromise = RedisManager.connect().catch((error) => {
+        RedisManager.initPromise = null; // 실패 시 재시도 허용
+        throw error;
+      });
+    }
+    return RedisManager.initPromise;
+  }
+
+  private static async connect() {
     const client = await redisConnection();
 
     if (!client) {
@@ -63,7 +75,7 @@ export class RedisManager {
 
   /**
    * 분산 락 획득 (SET key token NX PX). 획득 성공 시 해제용 토큰 반환, 실패(이미 잠김) 시 null.
-   * @param key 락 키 (예: "lock:recruit:crawlAndDiff")
+   * @param key 락 키 (예: "lock:recruit:sync:{source}")
    * @param ttlMs 락 자동 만료(ms) — 홀더 크래시 시 교착 방지
    */
   async acquireLock(key: string, ttlMs: number): Promise<string | null> {
@@ -78,5 +90,24 @@ export class RedisManager {
   async releaseLock(key: string, token: string): Promise<void> {
     const lua = `if redis.call("get", KEYS[1]) == ARGV[1] then return redis.call("del", KEYS[1]) else return 0 end`;
     await this.client.eval(lua, { keys: [key], arguments: [token] });
+  }
+
+  /**
+   * 값이 없을 때만 세팅한다 (SET key value NX [PX]). 새로 세팅되면 true. (Phase 1.10 incident용)
+   */
+  async setIfAbsent(key: string, value: string, ttlMs?: number): Promise<boolean> {
+    const options = ttlMs ? { NX: true as const, PX: ttlMs } : { NX: true as const };
+    const res = await this.client.set(key, value, options);
+    return res === "OK";
+  }
+
+  /** 문자열 값 조회. */
+  async getValue(key: string): Promise<string | null> {
+    return this.client.get(key);
+  }
+
+  /** 키 삭제. */
+  async deleteKey(key: string): Promise<void> {
+    await this.client.del(key);
   }
 };

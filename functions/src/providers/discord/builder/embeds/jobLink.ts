@@ -1,37 +1,25 @@
 /**
- * 공고 링크 공용 헬퍼 (DRY 추출)
+ * 공고 링크·표시 필드 공용 헬퍼. (Phase 1.10 재정의)
  *
- * recruitMessageEmbed / notificationMessageEmbed가 공유하는 순수 함수.
- * 기존 recruitMessageEmbed의 인라인 표현을 동작 변경 없이 캡슐화한다.
+ * recruitMessageEmbed / notificationMessageEmbed가 공유한다.
+ * `Recruit`는 사이트별 union(temp는 동적 스키마)이라, base가 아닌 표시 필드는
+ * `recruitField`로 방어적으로(있으면 표시, 없으면 빈 문자열) 읽는다.
  */
 
+import type { Recruit } from "@/common/types";
+
 /**
- * href("/jobs/12345")에서 jobId("12345")를 추출한다.
- *
- * @param path 공고 상세 경로 (예: "/jobs/12345")
- * @returns 추출된 jobId 문자열. 매치 실패 시 빈 문자열("").
- * @example extractJobId("/jobs/12345") // "12345"
+ * 공고 제목을 마크다운 링크로 포맷한다. url이 없으면 제목만 반환.
  */
-export function extractJobId(path: string): string {
-  const match = path.match(/\/jobs\/(\d+)/);
-  return match ? match[1] : "";
+export function formatJobTitleLink(title: string, url?: string): string {
+  return url ? `[${title}](${url})` : title;
 }
 
 /**
- * 공고 제목을 마크다운 링크로 포맷한다.
- *
- * baseUrl이 없으면 링크 없이 제목만 반환한다
- * (기존 recruitMessageEmbed의 baseUrl 분기 동작과 동일).
- *
- * @param title 공고 제목
- * @param href 공고 상세 경로 (예: "/jobs/12345")
- * @param baseUrl 공고 페이지 base URL (없으면 링크 미생성)
- * @returns `[title](baseUrl{jobId})` 또는 title
+ * Recruit(union·동적 temp 포함)에서 표시 필드를 안전하게 문자열로 읽는다.
+ * 값이 없으면 빈 문자열.
  */
-export function formatJobTitleLink(
-  title: string,
-  href: string,
-  baseUrl?: string
-): string {
-  return baseUrl ? `[${title}](${baseUrl}${extractJobId(href)})` : title;
+export function recruitField(r: Recruit, key: string): string {
+  const v = (r as Record<string, unknown>)[key];
+  return v == null ? "" : String(v);
 }

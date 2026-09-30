@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   root: true,
   env: {
     es6: true,
@@ -24,6 +24,10 @@ export default {
   ],
   plugins: ['@typescript-eslint', 'import'],
   rules: {
+    // eslint-config-google가 강제하는 `linebreak-style: ['error', 'unix']`(LF)와
+    // Windows 체크아웃(CRLF)이 충돌해 전 파일에서 오탐이 발생한다(개행은 코드 품질이
+    // 아닌 체크아웃 아티팩트 — .gitattributes/git autocrlf가 소유). 플랫폼 무관하게 off.
+    'linebreak-style': 'off',
     quotes: ['error', 'double'],
     'import/no-unresolved': 0,
     indent: ['error', 2],

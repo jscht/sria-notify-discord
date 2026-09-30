@@ -1,9 +1,9 @@
 import { APIEmbed, EmbedBuilder } from "discord.js";
-import type { RecruitData } from "@/crawlers/types";
+import type { Recruit } from "@/common/types";
 import { ENV } from "@/common/utils";
-import { formatJobTitleLink } from "./jobLink";
+import { formatJobTitleLink, recruitField } from "./jobLink";
 
-export function recruitMessageEmbed(list: RecruitData[], region?: string): APIEmbed {
+export function recruitMessageEmbed(list: Recruit[], region?: string): APIEmbed {
   const baseUrl = ENV.SRIA_URL;
   const title = `📢 ${region ?? "전체"} 지역 공고`;
   const topCount = 3;
@@ -21,13 +21,13 @@ export function recruitMessageEmbed(list: RecruitData[], region?: string): APIEm
     .setTimestamp();
 
   list.slice(0, topCount).forEach((item, index) => {
-    const titleLine = formatJobTitleLink(item.title, item.href, baseUrl);
+    const titleLine = formatJobTitleLink(item.title, recruitField(item, "url"));
     embed
       .addFields({
         name: `\n`,
         value: `
           ${index + 1}. ${titleLine}
-          \n📅 ${item.dayTxt} | ⏱ ${item.dDay} | 🏷️ 상태: ${item.recruitmentStatus}
+          \n📅 ${recruitField(item, "dayTxt")} | ⏱ ${recruitField(item, "dDay")} | 🏷️ 상태: ${recruitField(item, "recruitmentStatus")}
         `,
       })
   });

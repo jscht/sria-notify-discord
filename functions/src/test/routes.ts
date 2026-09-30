@@ -1,21 +1,20 @@
 import "@/common/utils/systemLogger";
 import { Router } from "express";
-import { CRAWL_MODE } from "@/common/constants";
-import { RecruitService, CrawlService } from "../services";
+import { RecruitService } from "../services";
 import { scanKeys } from "../providers/redis/client/scanKeys";
 import { SERVICE_NAME } from "../providers/redis/constants/serviceName";
 import { RedisManager } from "../providers/redis/manager/redisManager";
-import { ProxyStore, RecruitStore } from "../providers/firebase/store";
+import { RecruitStore } from "../providers/firebase/store";
 
 const testRouter = Router();
 
-// OK
+// OK — 3-tier 조회(도시 필터)
 testRouter.get("/recruit", async (req, res, next) => {
   try {
     const { city } = req.query;
 
     const recruitService = new RecruitService();
-    const { data: recruitList } = await recruitService.getRecruitList(CRAWL_MODE.DUMMY, city as string | undefined);
+    const { data: recruitList } = await recruitService.getRecruitList(city as string | undefined);
 
     const logMessage = `${!city ? "전체" : city} 지역 공고 정상 반환`;
     globalLogger.info(logMessage);
@@ -32,7 +31,7 @@ testRouter.get("/redis-stores", async (req, res) => {
 
   const keys: string[] = await scanKeys(pattern);
   globalLogger.info(`🚀 ~ testRouter.get ~ found keys: ${keys.length}`);
-  
+
   const redisValues: Record<string, any> = {};
   const recruit_cacheStore = RedisManager.getInstance().store.recruit;
 
@@ -56,46 +55,6 @@ testRouter.get("/firestore-recruit", async (req, res) => {
   const result = await recruit_firestore.getRecruitList();
 
   res.json({ result });
-});
-
-// OK
-testRouter.get("/firestore-proxy", async (req, res) => {
-  const proxy_firestore = new ProxyStore();
-  const result = await proxy_firestore.getProxyList();
-
-  res.json({ result });
-});
-
-// 최근 갱신 시각이 1시간 이내일 시 건너뛰기 firestore에 갱신 시간 기록
-testRouter.get("/playwright-scraper", async (req, res) => {
-  const mode = req.query.mode || "dummy";
-  const scrapMode = mode === "crawl" ? CRAWL_MODE.CRAWL : CRAWL_MODE.DUMMY;
-  globalLogger.info(`route /playwright-scraper with mode: ${scrapMode}`);
-
-  const crawlService = new CrawlService();
-  const crawlData = await crawlService.sriagent(scrapMode);
-  let result = null;
-
-  result = !crawlData ? crawlData : "No recruitment data";
-  res.json({ result });
-});
-
-// OK
-testRouter.get("/proxy-scraper", async (req, res) => {
-  const crawlService = new CrawlService();
-  const result = await crawlService.proxy();
-
-  // ProxyData → ProxyDoc 변환 (available/used 기본값). Phase 1.5+ 에서 별도 마이그레이션 예정.
-  const docs = result.map(p => ({ ...p, available: true, used: false }));
-
-  const proxy_firestore = new ProxyStore();
-  proxy_firestore.saveProxyList(docs);
-
-  res.json({ result });
-});
-
-testRouter.get("/discord", async (req, res) => {
-  
 });
 
 export { testRouter };

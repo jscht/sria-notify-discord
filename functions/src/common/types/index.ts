@@ -6,8 +6,16 @@
 // City Types
 export type { CityEn, CityKo } from "./city.d";
 
-// Crawler Types
-export type { Crawler, Scheduler } from "./crawler.d";
+// Recruit Domain Types (최소 공용 base + 사이트별 타입 + union)
+export type {
+  Recruit,
+  RecruitBase,
+  RecruitSource,
+  SriaRecruit,
+  TempRecruit,
+  Dday,
+  RecruitmentStatus,
+} from "./recruit.d";
 
 // Job Types
 export type { Job, HashedString, JobHashes, JobDiffResult } from "./job.d";

@@ -1,7 +1,7 @@
 import { RecruitKeyManager } from "./recruitKeyManager";
-import { CrawlKeyManager } from "./crawlKeyManager";
+import { RequestLimitKeyManager } from "./requestLimitKeyManager";
 
 export const redisKeyManager = {
   recruit: new RecruitKeyManager(),
-  crawl: new CrawlKeyManager(),
+  requestLimit: new RequestLimitKeyManager(),
 };

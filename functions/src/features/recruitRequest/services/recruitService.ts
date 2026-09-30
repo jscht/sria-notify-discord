@@ -1,5 +1,4 @@
-import { CRAWL_MODE } from "@/common/constants";
-import type { RecruitData } from "../types";
+import type { Recruit } from "../types";
 
 /**
  * Recruit Request Service
@@ -10,38 +9,38 @@ export class RecruitRequestService {
    * 특정 지역의 공고 목록 조회
    * - Redis 캐시 확인
    * - Firestore 확인
-   * - 크롤링 (필요시)
+   * - 소스 수집 (필요시)
    */
-  async getRecruitList(city?: string): Promise<RecruitData[] | null> {
+  async getRecruitList(city?: string): Promise<Recruit[] | null> {
     // TODO: 다음 순서로 조회
     // 1. Redis 캐시에서 조회
     // 2. Firestore에서 조회
-    // 3. 크롤링 (10분 제한)
+    // 3. 소스 수집 (10분 제한)
     // 4. 캐시 및 Firestore에 저장
-    
+
     return null;
   }
 
   /**
    * 전체 공고 목록 조회
    */
-  async getAllRecruits(): Promise<RecruitData[] | null> {
+  async getAllRecruits(): Promise<Recruit[] | null> {
     // TODO: 모든 지역의 공고 조회
     return null;
   }
 
   /**
-   * 공고 데이터 크롤링
+   * 공고 데이터 소스 수집
    */
-  async crawlRecruits(city?: string): Promise<RecruitData[] | null> {
-    // TODO: CrawlService 또는 기존 RecruitService 사용
+  async fetchRecruits(city?: string): Promise<Recruit[] | null> {
+    // TODO: RecruitSourceService 또는 기존 RecruitService 사용
     return null;
   }
 
   /**
    * 공고 캐시 업데이트
    */
-  async updateCache(recruits: RecruitData[]): Promise<void> {
+  async updateCache(recruits: Recruit[]): Promise<void> {
     // TODO: Redis와 Firestore에 데이터 저장
   }
 }

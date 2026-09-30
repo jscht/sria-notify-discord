@@ -6,7 +6,7 @@
  */
 
 import { createLogger } from "./systemLogger";
-import type { CrawlerStrategyType } from "@/crawlers";
+import type { SourceStrategyType } from "@/common/constants";
 import { HttpError } from "./httpError";
 
 const logger = createLogger("SystemError");
@@ -28,8 +28,8 @@ export enum ErrorLevel {
  */
 export enum ErrorCategory {
   // Application Layer
-  /** 크롤러 관련 에러 */
-  CRAWLER = "crawler",
+  /** 공고 소스 관련 에러 */
+  SOURCE = "source",
   /** 이벤트 버스 관련 에러 */
   EVENT_BUS = "event_bus",
   /** 인증/권한 관련 에러 */
@@ -65,19 +65,17 @@ export interface ErrorContext {
 }
 
 /**
- * 크롤러 에러 컨텍스트
+ * 공고 소스 에러 컨텍스트
  */
-export interface CrawlerErrorContext extends ErrorContext {
-  /** 크롤링 전략 (CrawlerStrategy 사용) */
-  strategy: CrawlerStrategyType;
-  /** 크롤링 제공자 (saramin, jobkorea 등) */
+export interface SourceErrorContext extends ErrorContext {
+  /** 수집 전략 (SourceStrategy 사용) */
+  strategy: SourceStrategyType;
+  /** 공고 소스 제공자 (sria, temp 등) */
   provider?: string;
-  /** 크롤링 URL */
+  /** 소스 URL */
   url?: string;
   /** HTTP 상태 코드 */
   statusCode?: number;
-  /** 프록시 정보 */
-  proxyUrl?: string;
   /** 재시도 횟수 */
   retryCount?: number;
   /** 타임아웃 시간 (ms) */
@@ -108,8 +106,8 @@ interface SystemErrorOptions {
  * @example
  * ```typescript
  * // 기본 사용
- * throw new SystemError("크롤링 실패", {
- *   category: ErrorCategory.CRAWLER,
+ * throw new SystemError("공고 소스 수집 실패", {
+ *   category: ErrorCategory.SOURCE,
  *   level: ErrorLevel.FAILURE,
  *   context: { url: "https://example.com" }
  * });
@@ -124,11 +122,11 @@ interface SystemErrorOptions {
  * }
  *
  * // 정적 팩토리 메서드 사용 (Provider별)
- * import { CrawlerStrategy } from "@/crawlers";
+ * import { SourceStrategy } from "@/common/constants";
  *
- * throw SystemError.crawlerFailed("사람인 크롤링 실패", {
- *   strategy: CrawlerStrategy.RECRUIT,  // 필수
- *   provider: "saramin",
+ * throw SystemError.sourceFailed("sria 소스 수집 실패", {
+ *   strategy: SourceStrategy.RECRUIT,  // 필수
+ *   provider: "sria",
  *   url: "https://example.com",
  *   statusCode: 503
  * });
@@ -232,12 +230,12 @@ export class SystemError extends Error {
   }
 
   /**
-   * 크롤러 에러 생성
+   * 공고 소스 에러 생성
    */
-  static crawlerFailed(message: string, context?: CrawlerErrorContext): SystemError {
+  static sourceFailed(message: string, context?: SourceErrorContext): SystemError {
     return new SystemError(message, {
       level: ErrorLevel.FAILURE,
-      category: ErrorCategory.CRAWLER,
+      category: ErrorCategory.SOURCE,
       context,
       recoverable: true,
     });

@@ -1,5 +1,5 @@
 import { CommandInteraction } from "discord.js";
-import type { RecruitData } from "../types";
+import type { Recruit } from "../types";
 
 /**
  * Slash Command Handler: /recruit-request

@@ -7,17 +7,16 @@
 import type { Job, JobDiffResult } from "@/common/types/job.d";
 import type { CityEn } from "@/common/types/city.d";
 import type { AlarmSubscription } from "@/common/types";
-import type { CRAWL_MODE } from "@/common/constants";
-import type { RecruitData } from "@/crawlers/types";
+import type { Recruit } from "@/common/types";
 
 /**
  * 이벤트 타입 열거형
  */
 export enum EventType {
   // Recruit Domain
-  RECRUIT_CRAWL_STARTED = "recruit:crawl:started",
-  RECRUIT_CRAWL_COMPLETED = "recruit:crawl:completed",
-  RECRUIT_CRAWL_FAILED = "recruit:crawl:failed",
+  RECRUIT_SYNC_STARTED = "recruit:sync:started",
+  RECRUIT_SYNC_COMPLETED = "recruit:sync:completed",
+  RECRUIT_SYNC_FAILED = "recruit:sync:failed",
   RECRUIT_CHANGED = "recruit:changed",
   RECRUIT_REQUESTED = "recruit:requested",
   RECRUIT_REQUEST_COMPLETED = "recruit:request:completed",
@@ -50,20 +49,20 @@ export interface BaseEvent {
  * Recruit Domain 이벤트 페이로드
  */
 
-// 크롤링 시작 이벤트
-export interface RecruitCrawlStartedEvent extends BaseEvent {
+// 동기화 시작 이벤트
+export interface RecruitSyncStartedEvent extends BaseEvent {
   schedulerName: string;
 }
 
-// 크롤링 완료 이벤트
-export interface RecruitCrawlCompletedEvent extends BaseEvent {
+// 동기화 완료 이벤트
+export interface RecruitSyncCompletedEvent extends BaseEvent {
   schedulerName: string;
   totalCount: number;
   duration: number; // milliseconds
 }
 
-// 크롤링 실패 이벤트
-export interface RecruitCrawlFailedEvent extends BaseEvent {
+// 동기화 실패 이벤트
+export interface RecruitSyncFailedEvent extends BaseEvent {
   schedulerName: string;
   error: Error;
   duration: number; // milliseconds
@@ -80,17 +79,15 @@ export interface RecruitChangedEvent extends BaseEvent, JobDiffResult {}
 export interface RecruitRequestedEvent extends BaseEvent {
   userId: string;
   region?: CityEn;
-  mode: CRAWL_MODE;
 }
 
-export type RecruitTier = "redis" | "firestore" | "crawler" | "empty" | "error";
+export type RecruitTier = "redis" | "firestore" | "source" | "empty" | "error";
 
 // 사용자 공고 요청 완료 이벤트
 export interface RecruitRequestCompletedEvent extends BaseEvent {
   userId: string;
   region?: CityEn;
-  mode: CRAWL_MODE;
-  jobs: RecruitData[];
+  jobs: Recruit[];
   tier: RecruitTier;
   durationMs: number;
 }
@@ -171,9 +168,9 @@ export interface AdminBroadcastSentEvent extends BaseEvent {
  */
 export interface EventPayloadMap {
   // Recruit Domain
-  [EventType.RECRUIT_CRAWL_STARTED]: RecruitCrawlStartedEvent;
-  [EventType.RECRUIT_CRAWL_COMPLETED]: RecruitCrawlCompletedEvent;
-  [EventType.RECRUIT_CRAWL_FAILED]: RecruitCrawlFailedEvent;
+  [EventType.RECRUIT_SYNC_STARTED]: RecruitSyncStartedEvent;
+  [EventType.RECRUIT_SYNC_COMPLETED]: RecruitSyncCompletedEvent;
+  [EventType.RECRUIT_SYNC_FAILED]: RecruitSyncFailedEvent;
   [EventType.RECRUIT_CHANGED]: RecruitChangedEvent;
   [EventType.RECRUIT_REQUESTED]: RecruitRequestedEvent;
   [EventType.RECRUIT_REQUEST_COMPLETED]: RecruitRequestCompletedEvent;

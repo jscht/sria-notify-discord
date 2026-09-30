@@ -18,4 +18,4 @@ export { interpretRecruitMessage } from "./ai/interpreter";
 export { RECRUIT_INTENTS } from "./ai/intents";
 
 // Types
-export type { RecruitData, RecruitRequest } from "./types";
+export type { Recruit, RecruitRequest } from "./types";

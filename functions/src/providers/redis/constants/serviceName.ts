@@ -1,4 +1,4 @@
 export enum SERVICE_NAME {
-  CRAWL = "crawl",
+  REQUEST_LIMIT = "request_limit",
   RECRUIT = "recruit"
 };
