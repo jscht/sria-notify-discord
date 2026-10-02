@@ -1,7 +1,7 @@
 /**
  * City Name Converter Utility
  * 영어 <-> 한국어 도시명 변환
- * 
+ *
  * 순환 참조 방지: constants에서 직접 import하지 않고 함수 내부에서 import
  */
 
@@ -12,6 +12,7 @@ export function toKorean(cityName?: string | undefined): string | undefined {
   if (!cityName) return;
 
   // 동적 import로 순환 참조 방지
+  // eslint-disable-next-line @typescript-eslint/no-var-requires -- 순환참조 방지용 지연 require(파일 상단 주석 참조)
   const { CITIES } = require("@/common/constants");
 
   if (typeof cityName === "string" && Object.keys(CITIES).includes(cityName)) {
@@ -28,6 +29,7 @@ export function toEnglish(cityName?: string | undefined): string | undefined {
   if (!cityName) return;
 
   // 동적 import로 순환 참조 방지
+  // eslint-disable-next-line @typescript-eslint/no-var-requires -- 순환참조 방지용 지연 require(파일 상단 주석 참조)
   const { CITIES } = require("@/common/constants");
 
   if (typeof cityName === "string" && Object.values(CITIES).includes(cityName)) {
@@ -54,6 +56,7 @@ export function isValidCityName(cityName: any): boolean {
   }
 
   // 동적 import로 순환 참조 방지
+  // eslint-disable-next-line @typescript-eslint/no-var-requires -- 순환참조 방지용 지연 require(파일 상단 주석 참조)
   const { CITIES } = require("@/common/constants");
 
   const isKorean = (str: string) => /^[가-힣]+$/.test(str);

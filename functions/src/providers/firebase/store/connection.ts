@@ -22,18 +22,14 @@ export class ConnectionStore {
   }
 
   async getRecruitList() {
-    try {
-      const docRef = this.getFirebaseConnectionRef().doc(ConnectionStore.INIT_DOC_ID);
-      const snapshot = await docRef.get();
+    const docRef = this.getFirebaseConnectionRef().doc(ConnectionStore.INIT_DOC_ID);
+    const snapshot = await docRef.get();
 
-      if (!snapshot.exists) {
-        globalLogger.warn("No recruit list found in Firestore.");
-        return null;
-      }
-
-      return snapshot.data();
-    } catch (error) {
-      throw error;
+    if (!snapshot.exists) {
+      globalLogger.warn("No recruit list found in Firestore.");
+      return null;
     }
+
+    return snapshot.data();
   }
 }

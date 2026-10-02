@@ -1,6 +1,6 @@
-import "@/common/utils/systemLogger";
-import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { providerLogger } from "@/common/utils/systemLogger";
+import { getFirestore, Timestamp } from "firebase-admin/firestore";
+
 import type {
   AlarmSubscription,
   AlarmSubscriptionInput,
@@ -74,9 +74,9 @@ export class SubscriptionStore {
     const now = Timestamp.now();
     const snap = await ref.get();
 
-    const docData = snap.exists
-      ? { ...input, updatedAt: now }
-      : { ...input, createdAt: now, updatedAt: now };
+    const docData = snap.exists ?
+      { ...input, updatedAt: now } :
+      { ...input, createdAt: now, updatedAt: now };
 
     await ref.set(docData, { merge: true });
     providerLogger.info("Notification settings saved", {
@@ -125,8 +125,8 @@ export class SubscriptionStore {
       .get();
 
     return snapshot.docs
-      .filter(doc => doc.id === SETTINGS_DOC_ID)
-      .map(doc => {
+      .filter((doc) => doc.id === SETTINGS_DOC_ID)
+      .map((doc) => {
         const userId = doc.ref.parent.parent!.id;
         return toAlarmSubscription(userId, doc.data());
       });

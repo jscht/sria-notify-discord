@@ -3,7 +3,9 @@ import { onRegionGroupSelect } from "../../listeners/selectMenus/onRegionGroupSe
 import { onRegionCitySelect } from "../../listeners/selectMenus/onRegionCitySelect";
 import { onRegionRemoveSelect } from "../../listeners/selectMenus/onRegionRemoveSelect";
 
-export type SelectMenuHandler = (interaction: StringSelectMenuInteraction) => unknown | Promise<unknown>;
+export type SelectMenuHandler = (
+  interaction: StringSelectMenuInteraction
+) => unknown | Promise<unknown>;
 
 /**
  * StringSelectMenu 제출 핸들러 맵.

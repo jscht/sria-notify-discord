@@ -20,18 +20,18 @@ export async function dispatchAIMessage(
 
   // 2. Feature에 따라 처리 (동적 import로 순환 참조 방지)
   switch (feature) {
-    case "alarmSubscribe": {
-      const { handleAlarmAI } = await import("@/features/alarmSubscribe/ai/handler");
-      return await handleAlarmAI(message, userText);
-    }
+  case "alarmSubscribe": {
+    const { handleAlarmAI } = await import("@/features/alarmSubscribe/ai/handler");
+    return await handleAlarmAI(message, userText);
+  }
 
-    case "recruitRequest": {
-      const { handleRecruitAI } = await import("@/features/recruitRequest/ai/handler");
-      return await handleRecruitAI(message, userText);
-    }
+  case "recruitRequest": {
+    const { handleRecruitAI } = await import("@/features/recruitRequest/ai/handler");
+    return await handleRecruitAI(message, userText);
+  }
 
-    default:
-      return "죄송하지만 도움을 드릴 수 없습니다. 명령어를 사용해주세요.";
+  default:
+    return "죄송하지만 도움을 드릴 수 없습니다. 명령어를 사용해주세요.";
   }
 }
 
@@ -41,7 +41,7 @@ export async function dispatchAIMessage(
 async function classifyFeature(userText: string): Promise<FeatureType> {
   // TODO: LLM을 사용하여 feature 분류
   // 또는 키워드 기반 분류
-  
+
   const lowerText = userText.toLowerCase();
 
   // 간단한 키워드 기반 분류 (향후 LLM으로 개선)

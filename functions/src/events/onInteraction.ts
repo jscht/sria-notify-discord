@@ -1,6 +1,6 @@
 import {
   Events, Interaction, CommandInteraction, MessageFlags,
-  ButtonInteraction, ModalSubmitInteraction, StringSelectMenuInteraction
+  ButtonInteraction, ModalSubmitInteraction, StringSelectMenuInteraction,
 } from "discord.js";
 import { DiscordEventHandler } from "./discordEventHandler";
 import { commandHandlers } from "./handlers/commands";
@@ -75,7 +75,7 @@ export const onInteraction = (): DiscordEventHandler => ({
       if (interaction.isRepliable()) {
         const payload = {
           content: "⚠️ 처리 중 오류가 발생했습니다. 다시 시도해 주세요.",
-          flags: MessageFlags.Ephemeral as const
+          flags: MessageFlags.Ephemeral as const,
         };
         if (interaction.deferred || interaction.replied) {
           // defer/reply 이후 reply()는 InteractionAlreadyReplied → followUp으로 안내

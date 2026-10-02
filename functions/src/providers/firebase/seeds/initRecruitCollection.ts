@@ -3,7 +3,7 @@ import { Firestore } from "firebase-admin/firestore";
 import { RecruitStore } from "../store";
 import { FirebaseCollection } from "../constants/collections";
 
-export async function initRecruitCollection(db: Firestore, init: boolean = false) {
+export async function initRecruitCollection(db: Firestore, init = false) {
   const recruitStore = new RecruitStore();
   const snapshot = await db.collection(FirebaseCollection.RECRUIT).limit(1).get();
 

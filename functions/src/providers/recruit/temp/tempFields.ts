@@ -9,8 +9,8 @@
  *   { key: "pay",   required: true,                value: { kind: "fixed", value: "시급 협의" } }
  */
 export type TempValue =
-  | { kind: "fixed"; value: unknown }      // 항상 이 값
-  | { kind: "pick"; pool: unknown[] };     // 풀에서 랜덤(시드)
+  | { kind: "fixed"; value: unknown } // 항상 이 값
+  | { kind: "pick"; pool: unknown[] }; // 풀에서 랜덤(시드)
 
 export interface TempField {
   /** 속성 이름(공고 객체의 key). */

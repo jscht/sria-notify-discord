@@ -46,20 +46,21 @@ export class RecruitScheduler extends BaseScheduler {
         endTime,
         durationMs,
         message,
-        totalCount
+        totalCount,
       };
     } catch (error) {
       const endTime = new Date();
       const durationMs = endTime.getTime() - startTime.getTime();
 
-      throw {
+      const failure = new Error(`Recruit sync failed: ${(error as Error).message}`);
+      Object.assign(failure, {
         success: false,
         startTime,
         endTime,
         durationMs,
         error: error as Error,
-        message: `Recruit sync failed: ${(error as Error).message}`,
-      };
+      });
+      throw failure;
     }
   }
 }

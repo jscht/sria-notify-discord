@@ -89,17 +89,17 @@ export function emitSystemErrorEvent(error: SystemError): void {
   let eventType: EventType;
 
   switch (error.level) {
-    case ErrorLevel.CRITICAL:
-      eventType = EventType.SYSTEM_ERROR_CRITICAL;
-      break;
-    case ErrorLevel.FAILURE:
-      eventType = EventType.SYSTEM_ERROR_FAILURE;
-      break;
-    case ErrorLevel.WARNING:
-      eventType = EventType.SYSTEM_ERROR_WARNING;
-      break;
-    default:
-      eventType = EventType.SYSTEM_ERROR_FAILURE;
+  case ErrorLevel.CRITICAL:
+    eventType = EventType.SYSTEM_ERROR_CRITICAL;
+    break;
+  case ErrorLevel.FAILURE:
+    eventType = EventType.SYSTEM_ERROR_FAILURE;
+    break;
+  case ErrorLevel.WARNING:
+    eventType = EventType.SYSTEM_ERROR_WARNING;
+    break;
+  default:
+    eventType = EventType.SYSTEM_ERROR_FAILURE;
   }
 
   try {
@@ -119,7 +119,7 @@ export function emitSystemErrorEvent(error: SystemError): void {
  */
 export function normalizeError(
   error: unknown,
-  defaultMessage: string = "알 수 없는 에러 발생"
+  defaultMessage = "알 수 없는 에러 발생"
 ): SystemError {
   if (error instanceof SystemError) {
     return error;

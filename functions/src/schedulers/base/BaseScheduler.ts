@@ -86,9 +86,9 @@ export abstract class BaseScheduler {
 
       // performWork가 던지는 객체는 WorkResult 유사 형태(error/message 포함) — 안전 변환
       const err =
-        thrown instanceof Error
-          ? thrown
-          : (thrown as { error?: Error })?.error ??
+        thrown instanceof Error ?
+          thrown :
+          (thrown as { error?: Error })?.error ??
             new Error(String((thrown as { message?: string })?.message ?? thrown));
       const message = (thrown as { message?: string })?.message ?? err.message;
 

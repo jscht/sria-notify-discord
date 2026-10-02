@@ -8,5 +8,5 @@ export const subscribeOptionHandlers = {
   [fullActionId.SUBSCRIBE_OPTION_ENABLE]: onShowSubscribeEnable,
   [fullActionId.SUBSCRIBE_OPTION_MANAGE]: onShowSubscribeManage,
   [fullActionId.SUBSCRIBE_OPTION_DISABLE]: onDisableSubscribe,
-  [fullActionId.SUBSCRIBE_OPTION_BACK]: onSubscribeBack
-} as const
+  [fullActionId.SUBSCRIBE_OPTION_BACK]: onSubscribeBack,
+} as const;

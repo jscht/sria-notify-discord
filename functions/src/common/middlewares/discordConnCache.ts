@@ -5,7 +5,7 @@
 
 import type { Request, Response, NextFunction } from "express";
 
-let discordLastCheckTime: number | null = null;
+const discordLastCheckTime: number | null = null;
 
 /**
  * Discord 연결 상태를 캐시하는 미들웨어

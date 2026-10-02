@@ -1,7 +1,7 @@
 /**
  * Global AI - LLM Module
  * LLM API 호출 통합
- * 
+ *
  * 지원: OpenAI, Claude, Gemini 등
  */
 
@@ -28,7 +28,7 @@ export async function askLLM(
   // - OpenAI API 또는 다른 LLM 클라이언트 사용
   // - Rate limiting 적용
   // - 비용 추적
-  
+
   return {
     content: "",
     tokens: { input: 0, output: 0 },
@@ -45,7 +45,7 @@ export async function askLLMForJSON<T = Record<string, any>>(
 ): Promise<T> {
   // TODO: JSON 스키마 지정하여 LLM 호출
   // - JSON 파싱 및 검증
-  
+
   return {} as T;
 }
 

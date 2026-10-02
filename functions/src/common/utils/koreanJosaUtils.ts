@@ -16,7 +16,7 @@ function hasFinalConsonant(koreanChar: string): boolean {
  */
 export function chooseEunNeun(word: string): string {
   const lastChar = word[word.length - 1];
-  return hasFinalConsonant(lastChar) ? '은' : '는';
+  return hasFinalConsonant(lastChar) ? "은" : "는";
 }
 
 /**
@@ -26,5 +26,5 @@ export function chooseEunNeun(word: string): string {
  */
 export function chooseEulReul(word: string): string {
   const lastChar = word[word.length - 1];
-  return hasFinalConsonant(lastChar) ? '을' : '를';
+  return hasFinalConsonant(lastChar) ? "을" : "를";
 }

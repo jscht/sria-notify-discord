@@ -7,12 +7,12 @@ export function recruitMessageEmbed(list: Recruit[], region?: string): APIEmbed 
   const baseUrl = ENV.SRIA_URL;
   const title = `📢 ${region ?? "전체"} 지역 공고`;
   const topCount = 3;
-  const description = list.length
-    ? `총 ${list.length}건의 공고가 검색되었어요. 상위 ${topCount}개를 먼저 보여드릴게요.`
-    : `📭 ${region ?? "해당"} 지역 공고가 없어요.`;
-  const footer = baseUrl
-    ? `🔗 전체 공고는 [웹에서 확인해 보세요.](${baseUrl})`
-    : `🔗 공고 페이지 URL이 설정되지 않아 링크를 표시할 수 없어요.`;
+  const description = list.length ?
+    `총 ${list.length}건의 공고가 검색되었어요. 상위 ${topCount}개를 먼저 보여드릴게요.` :
+    `📭 ${region ?? "해당"} 지역 공고가 없어요.`;
+  const footer = baseUrl ?
+    `🔗 전체 공고는 [웹에서 확인해 보세요.](${baseUrl})` :
+    "🔗 공고 페이지 URL이 설정되지 않아 링크를 표시할 수 없어요.";
 
   const embed = new EmbedBuilder()
     .setTitle(title)
@@ -24,18 +24,18 @@ export function recruitMessageEmbed(list: Recruit[], region?: string): APIEmbed 
     const titleLine = formatJobTitleLink(item.title, recruitField(item, "url"));
     embed
       .addFields({
-        name: `\n`,
+        name: "\n",
         value: `
           ${index + 1}. ${titleLine}
           \n📅 ${recruitField(item, "dayTxt")} | ⏱ ${recruitField(item, "dDay")} | 🏷️ 상태: ${recruitField(item, "recruitmentStatus")}
         `,
-      })
+      });
   });
 
   embed.addFields({
     name: "\n",
-    value: `${footer}`
-  })
+    value: `${footer}`,
+  });
 
   return embed.toJSON();
 }

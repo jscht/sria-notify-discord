@@ -21,20 +21,20 @@ export async function handleAlarmAI(message: Message, userText: string): Promise
   // 2. Intent에 따라 처리
   try {
     switch (result.intent) {
-      case ALARM_INTENTS.SUBSCRIBE:
-        return await handleSubscribe(userId, result.entities.regions);
+    case ALARM_INTENTS.SUBSCRIBE:
+      return await handleSubscribe(userId, result.entities.regions);
 
-      case ALARM_INTENTS.UNSUBSCRIBE:
-        return await handleUnsubscribe(userId);
+    case ALARM_INTENTS.UNSUBSCRIBE:
+      return await handleUnsubscribe(userId);
 
-      case ALARM_INTENTS.UPDATE:
-        return await handleUpdate(userId, result.entities);
+    case ALARM_INTENTS.UPDATE:
+      return await handleUpdate(userId, result.entities);
 
-      case ALARM_INTENTS.CHECK_STATUS:
-        return await handleCheckStatus(userId);
+    case ALARM_INTENTS.CHECK_STATUS:
+      return await handleCheckStatus(userId);
 
-      default:
-        return "알 수 없는 요청입니다.";
+    default:
+      return "알 수 없는 요청입니다.";
     }
   } catch (error) {
     console.error("Error in handleAlarmAI:", error);

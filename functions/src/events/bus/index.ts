@@ -5,18 +5,18 @@
  */
 
 // Core EventBus
-export { EventBus, eventBus } from './EventBus';
+export { EventBus, eventBus } from "./EventBus";
 
 // Types
-export * from './types';
+export * from "./types";
 
 // Constants
-export * from './constants';
+export * from "./constants";
 
 // Utils
 export {
   registerAllEventHandlers,
   areHandlersRegistered,
   resetHandlerRegistration,
-} from './utils/registerEventHandlers';
-export { emitRecruitChangedEvent } from './utils/emitRecruitChangedEvent';
+} from "./utils/registerEventHandlers";
+export { emitRecruitChangedEvent } from "./utils/emitRecruitChangedEvent";

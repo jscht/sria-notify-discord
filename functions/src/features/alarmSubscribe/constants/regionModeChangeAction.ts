@@ -9,5 +9,5 @@ export enum RegionModeChangeAction {
 export const regionModeChangeActionId = {
   CONFIRM: `${REGION_MODE_CHANGE_PREFIX}:${RegionModeChangeAction.CONFIRM}`,
   CANCEL: `${REGION_MODE_CHANGE_PREFIX}:${RegionModeChangeAction.CANCEL}`,
-  OPEN: `${REGION_MODE_CHANGE_PREFIX}:${RegionModeChangeAction.OPEN}`
-} as const
+  OPEN: `${REGION_MODE_CHANGE_PREFIX}:${RegionModeChangeAction.OPEN}`,
+} as const;

@@ -121,7 +121,7 @@ export const eventLogger = {
    * 핸들러 등록 완료 로그
    */
   handlersRegistered(handlerCount: number): void {
-    logger.success(`🎉 All event handlers registered successfully`, {
+    logger.success("🎉 All event handlers registered successfully", {
       totalHandlers: handlerCount,
     });
   },
@@ -130,14 +130,14 @@ export const eventLogger = {
    * 핸들러 등록 스킵 로그
    */
   handlersAlreadyRegistered(): void {
-    logger.info(`⏭️  Event handlers already registered, skipping...`);
+    logger.info("⏭️  Event handlers already registered, skipping...");
   },
 
   /**
    * EventBus 초기화 로그
    */
   busInitialized(): void {
-    logger.info(`🚌 EventBus initialized`);
+    logger.info("🚌 EventBus initialized");
   },
 
   /**

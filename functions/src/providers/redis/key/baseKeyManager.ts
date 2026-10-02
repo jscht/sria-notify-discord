@@ -12,4 +12,4 @@ export abstract class BaseKeyManager {
   }
 
   abstract getKeys(): Record<string, string | ((...args: any[]) => string)>;
-};
+}

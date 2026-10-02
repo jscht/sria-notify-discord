@@ -9,7 +9,7 @@ export class RedisManager {
   private static instance: RedisManager;
   private static initPromise: Promise<void> | null = null;
   private client: RedisClientType;
-  
+
   public readonly store: {
     recruit: RecruitCacheStore;
     recruit_hash: RecruitHashStore;
@@ -88,7 +88,7 @@ export class RedisManager {
    * 분산 락 해제 — 토큰이 일치할 때만 삭제(다른 홀더 락 오삭제 방지). CAS는 Lua로 원자 처리.
    */
   async releaseLock(key: string, token: string): Promise<void> {
-    const lua = `if redis.call("get", KEYS[1]) == ARGV[1] then return redis.call("del", KEYS[1]) else return 0 end`;
+    const lua = "if redis.call(\"get\", KEYS[1]) == ARGV[1] then return redis.call(\"del\", KEYS[1]) else return 0 end";
     await this.client.eval(lua, { keys: [key], arguments: [token] });
   }
 
@@ -110,4 +110,4 @@ export class RedisManager {
   async deleteKey(key: string): Promise<void> {
     await this.client.del(key);
   }
-};
+}

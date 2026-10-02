@@ -13,15 +13,15 @@ import { subscribeOptionActionId } from "@/features/alarmSubscribe/constants";
  * @param sub 사용자 알림 구독 정보 (없으면 null)
  */
 export function showSubscribeOptionButtons(sub: AlarmSubscription | null) {
-  const leftButton = sub?.enabled
-    ? new ButtonBuilder()
-        .setCustomId(subscribeOptionActionId.DISABLE)
-        .setLabel("🔕 알림 끄기")
-        .setStyle(ButtonStyle.Secondary)
-    : new ButtonBuilder()
-        .setCustomId(subscribeOptionActionId.ENABLE)
-        .setLabel("🔔 알림 켜기")
-        .setStyle(ButtonStyle.Primary);
+  const leftButton = sub?.enabled ?
+    new ButtonBuilder()
+      .setCustomId(subscribeOptionActionId.DISABLE)
+      .setLabel("🔕 알림 끄기")
+      .setStyle(ButtonStyle.Secondary) :
+    new ButtonBuilder()
+      .setCustomId(subscribeOptionActionId.ENABLE)
+      .setLabel("🔔 알림 켜기")
+      .setStyle(ButtonStyle.Primary);
 
   return new ActionRowBuilder<ButtonBuilder>().addComponents(
     leftButton,

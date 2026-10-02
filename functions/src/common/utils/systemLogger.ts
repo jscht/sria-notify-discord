@@ -64,14 +64,14 @@ interface StructuredLogEntry {
  * 로그 색상 코드
  */
 const LogColors = {
-  DEBUG: "\x1b[35m",   // Magenta
-  INFO: "\x1b[36m",    // Cyan
+  DEBUG: "\x1b[35m", // Magenta
+  INFO: "\x1b[36m", // Cyan
   SUCCESS: "\x1b[32m", // Green
-  WARN: "\x1b[33m",    // Yellow
-  ERROR: "\x1b[31m",   // Red
-  RESET: "\x1b[0m",    // Reset
-  DIM: "\x1b[2m",      // Dim
-  BOLD: "\x1b[1m",     // Bold
+  WARN: "\x1b[33m", // Yellow
+  ERROR: "\x1b[31m", // Red
+  RESET: "\x1b[0m", // Reset
+  DIM: "\x1b[2m", // Dim
+  BOLD: "\x1b[1m", // Bold
 } as const;
 
 /**
@@ -143,16 +143,16 @@ export class SystemLogger {
    */
   private getLevelColor(level: LogLevel): string {
     switch (level) {
-      case LogLevel.DEBUG:
-        return LogColors.DEBUG;
-      case LogLevel.INFO:
-        return LogColors.INFO;
-      case LogLevel.WARN:
-        return LogColors.WARN;
-      case LogLevel.ERROR:
-        return LogColors.ERROR;
-      default:
-        return LogColors.RESET;
+    case LogLevel.DEBUG:
+      return LogColors.DEBUG;
+    case LogLevel.INFO:
+      return LogColors.INFO;
+    case LogLevel.WARN:
+      return LogColors.WARN;
+    case LogLevel.ERROR:
+      return LogColors.ERROR;
+    default:
+      return LogColors.RESET;
     }
   }
 
@@ -163,18 +163,18 @@ export class SystemLogger {
     const formatted = this.formatLogEntry(entry);
 
     switch (entry.level) {
-      case LogLevel.DEBUG:
-        console.debug(formatted);
-        break;
-      case LogLevel.INFO:
-        console.info(formatted);
-        break;
-      case LogLevel.WARN:
-        console.warn(formatted);
-        break;
-      case LogLevel.ERROR:
-        console.error(formatted);
-        break;
+    case LogLevel.DEBUG:
+      console.debug(formatted);
+      break;
+    case LogLevel.INFO:
+      console.info(formatted);
+      break;
+    case LogLevel.WARN:
+      console.warn(formatted);
+      break;
+    case LogLevel.ERROR:
+      console.error(formatted);
+      break;
     }
   }
 
