@@ -11,7 +11,9 @@ export class RecruitScheduler extends BaseScheduler {
   private recruitService: RecruitService;
   private readonly source: RecruitSource;
 
-  constructor(source: RecruitSource, workIntervalMs: number = 4 * 60 * 60 * 1000 /* 4시간 */) {
+  // workIntervalMs는 필수 — 소스 config(intervalMinutes) 단일 출처에서 파생해 주입한다
+  // (createRecruitScheduler). 하드코딩 기본값을 두지 않아 주기 드리프트를 막는다.
+  constructor(source: RecruitSource, workIntervalMs: number) {
     const config: SchedulerConfig = {
       name: `RecruitScheduler:${source}`,
       workIntervalMs,
