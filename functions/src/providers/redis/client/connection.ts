@@ -1,5 +1,30 @@
 import { createClient, RedisClientType } from "redis";
-import { ENV } from "@/common/utils";
+import { ENV, SystemError } from "@/common/utils";
+
+// ──────────────────────────────────────────────────────────────
+// O-3: Redis 재연결 전략 상수 (지수 백오프 + 상한 + jitter)
+// ──────────────────────────────────────────────────────────────
+const RECONNECT_BASE_DELAY_MS = 200;
+const RECONNECT_MAX_DELAY_MS = 10_000; // 재시도 간격 상한 10초
+const RECONNECT_MAX_RETRIES = 20; // 상한 도달 시 포기(누적 약 3분)
+
+/**
+ * node-redis v4 `socket.reconnectStrategy` 팩토리.
+ * retries 회차별로 지수 백오프(base * 2^retries, 상한 10초)에 ±20% jitter를 적용한
+ * 대기시간(ms)을 반환한다. RECONNECT_MAX_RETRIES를 초과하면 Error를 반환해
+ * 재연결을 포기시킨다(무한 재시도 방지).
+ */
+function buildReconnectStrategy(): (retries: number) => number | Error {
+  return (retries: number) => {
+    if (retries > RECONNECT_MAX_RETRIES) {
+      return new Error("Redis reconnect attempts exhausted");
+    }
+    const exp = RECONNECT_BASE_DELAY_MS * 2 ** retries;
+    const jittered = exp * (0.8 + Math.random() * 0.4); // ±20% jitter
+    // 상한(10초)은 jitter 적용 "후"에 걸어 실제 대기시간이 RECONNECT_MAX_DELAY_MS를 넘지 않도록 한다.
+    return Math.floor(Math.min(RECONNECT_MAX_DELAY_MS, jittered));
+  };
+}
 
 export async function redisConnection() {
   try {
@@ -18,6 +43,14 @@ export async function redisConnection() {
     // ──────────────────────────────────────────────────────────────
     const client: RedisClientType = createClient({
       url: ENV.REDIS_URL,
+      socket: { reconnectStrategy: buildReconnectStrategy() },
+    });
+
+    // on("error") 리스너는 반드시 connect() 이전에 등록 — 리스너가 없으면
+    // node-redis v4가 emit하는 error 이벤트를 Node가 unhandled로 간주해 프로세스를 크래시시킨다.
+    // 흡수만 하고 절대 throw/rethrow 하지 않는다(SystemError 생성자가 자동 로깅).
+    client.on("error", (err: Error) => {
+      SystemError.redisError("Redis client error (auto-recovering)", err, { phase: "runtime" });
     });
 
     client.on("ready", () => {
@@ -33,4 +66,4 @@ export async function redisConnection() {
     }
     return null;
   }
-};
+}

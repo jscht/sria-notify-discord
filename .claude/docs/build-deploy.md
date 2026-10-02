@@ -75,6 +75,26 @@ pm2 save               # 현재 프로세스 목록 스냅샷 → 재부팅 후 
 npm run register:commands
 ```
 
+## 프로덕션 최초 배포 파이프라인
+
+처음 실배포 시 순서. **코드 준비(C)는 완료 후 dev 머지**, 그 위에서 **운영 실행(U)**을 순서대로 진행한다. 각 단계는 앞 단계 완료를 전제로만 진행한다.
+
+### 코드 준비 (C · dev 머지까지)
+1. 배포 대상 코드(O-3 Redis 재연결 · O-5 seed exit 완화 등)를 dev에 머지
+2. lint-cleanup → scheduler refactor를 dev 기준 각 PR로 머지 (todo.md)
+3. 합친 dev에서 통합 스모크 1회: `npm run build` + 재연결/seed 하네스 + 로컬 DUMMY E2E(`RUN_SCHEDULER_ONCE=true node lib/app/scheduler.js`)
+
+### 운영 실행 (U · 사용자)
+4. **🔴 Secret Manager 주입 (선행 필수)** — `firebase functions:secrets:set FB_PRIVATE_KEY` / `DISCORD_BOT_TOKEN` + 함수 바인딩. 미실행 시 이후 deploy가 런타임 실패
+5. **Blaze 종량제 전환** — onSchedule/egress에 필수 (과금 노출)
+6. **스케줄러 배포** — `npm run deploy` (프로세스 B, Functions)
+7. **게이트웨이 상주** — Oracle VM: `pm2 start lib/app/gateway.js` + `pm2 startup` + `pm2 save` (프로세스 A)
+8. **슬래시커맨드 등록** — `npm run register:commands` (게이트웨이 live 후)
+9. **구독자 시드** — 실 Discord 구독 인터랙션으로 DM 대상 확보
+10. **실환경 검증** — 슬래시·버튼 왕복 / 실 onSchedule 발화 / 2-run E2E 실 DM 수신
+
+> 사전요건(계정·리소스): Firebase Blaze · GCP Secret Manager · Oracle Cloud x86 Micro VM · Upstash Redis(`rediss://`). 코드 의존이 없어 1~3단계와 병렬 준비 가능.
+
 ## 환경 변수 매트릭스
 
 프로세스별 필요한 환경변수. 코드 실제 사용 기준(CTO 감사 반영)이며,
@@ -92,8 +112,7 @@ CLAUDE.md의 일부 표기(`FIREBASE_PROJECT_ID`)는 오기다 — 코드는 아
 | `FB_*` (그 외) | ✅ | ✅ | `FB_TYPE`, `FB_PRIVATE_KEY_ID`, `FB_CLIENT_ID`, `FB_AUTH_URI`, `FB_TOKEN_URI`, `FB_AUTH_PROVIDER_X509_CERT_URL`, `FB_CLIENT_X509_CERT_URL`, `FB_UNIVERSE_DOMAIN` |
 | `HUGGINGFACE_API_KEY` | — | — | Phase 4 AI (미도입) |
 
-> ⚠️ **후속(Phase 1.13 · 사용자 실행) — Secret Manager**: Functions 프로덕션에서
+> ⚠️ **Secret Manager (Phase 1.14 U-P1 · 사용자 실행)**: Functions 프로덕션에서
 > `FB_PRIVATE_KEY` / `DISCORD_BOT_TOKEN` 같은 시크릿은 dotenv(`.env`)가 아니라
-> **Firebase/GCP Secret Manager**로 주입해야 한다. `.env`는 로컬·VM용이며, Functions
-> 프로덕션 시크릿 주입은 이번 iterate 범위가 아니다(문서 경고만). VM(게이트웨이)은
-> `.env` 파일 또는 pm2 ecosystem env로 관리 가능하다.
+> **Firebase/GCP Secret Manager**로 주입해야 한다(위 파이프라인 4단계, 🔴 선행 필수).
+> `.env`는 로컬·VM용이며, VM(게이트웨이)은 `.env` 파일 또는 pm2 ecosystem env로 관리 가능하다.
