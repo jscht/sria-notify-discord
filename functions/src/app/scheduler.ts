@@ -5,8 +5,8 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import { registerGlobalErrorHandlers } from "./registerGlobalErrorHandlers";
 import { initFunctionProviders } from "@/providers";
 import { registerAllEventHandlers } from "@/events";
-import { SchedulerManager } from "@/schedulers";
-import { sriaConfig, tempConfig } from "@/providers/recruit";
+import { createRecruitScheduler, toScheduleExpression } from "@/schedulers";
+import { getSourceConfig } from "@/providers/recruit";
 
 // 최후의 거름망(A): init 중 발생하는 미처리 rejection/예외도 잡도록 가장 먼저 등록한다.
 registerGlobalErrorHandlers();
@@ -20,24 +20,29 @@ const ready = initFunctionProviders().then(() => registerAllEventHandlers());
  * 각 사이트 config의 schedule을 주기로 사용(배포 시점 확정 → 변경 시 redeploy).
  */
 // eslint-disable-next-line camelcase -- 배포되는 Firebase Function 이름(함수 ID). 리네임 시 스케줄 함수가 교체됨.
-export const recruitSchedule_sria = onSchedule(sriaConfig.schedule, async () => {
-  await ready;
-  await SchedulerManager.getInstance().runRecruitOnce("sria");
-});
+export const recruitSchedule_sria = onSchedule(
+  toScheduleExpression(getSourceConfig("sria").intervalMinutes),
+  async () => {
+    await ready;
+    await createRecruitScheduler("sria").runOnce();
+  }
+);
 
 // eslint-disable-next-line camelcase -- 배포되는 Firebase Function 이름(함수 ID). 리네임 시 스케줄 함수가 교체됨.
-export const recruitSchedule_temp = onSchedule(tempConfig.schedule, async () => {
-  await ready;
-  await SchedulerManager.getInstance().runRecruitOnce("temp");
-});
+export const recruitSchedule_temp = onSchedule(
+  toScheduleExpression(getSourceConfig("temp").intervalMinutes),
+  async () => {
+    await ready;
+    await createRecruitScheduler("temp").runOnce();
+  }
+);
 
 // 로컬 E2E — env 게이팅. 실행: RUN_SCHEDULER_ONCE=true (양 소스 1회씩)
 if (process.env.RUN_SCHEDULER_ONCE === "true") {
   ready
     .then(async () => {
-      const manager = SchedulerManager.getInstance();
-      await manager.runRecruitOnce("sria");
-      await manager.runRecruitOnce("temp");
+      await createRecruitScheduler("sria").runOnce();
+      await createRecruitScheduler("temp").runOnce();
     })
     .catch((e) => globalLogger.error("로컬 스케줄러 1회 실행 실패:", e));
 }
