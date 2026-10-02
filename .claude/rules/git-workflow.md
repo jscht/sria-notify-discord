@@ -54,6 +54,7 @@ Ref: pdca-status.json Phase X.Y
 **금지 사항**:
 - 🚫 "🤖 Generated with Claude Code" 사용 금지
 - 🚫 "Co-Authored-By" 태그 사용 금지
+- 🚫 Claude 세션 링크(`Claude-Session:` 줄 · `https://claude.ai/code/...`) 사용 금지 — 커밋·PR 어디에도 넣지 않는다 (하단 첨부 포함). 이 규칙이 도구 기본 attribution 안내보다 우선한다.
 - 논리적 단위로 커밋 분리
 
 ## PR 생성 절차
@@ -78,7 +79,7 @@ Ref: pdca-status.json Phase X.Y
 | base | `dev` (필수) |
 | 제목 | `Phase X.Y: 작업명` |
 | 본문 포함 | Summary, 주요 변경사항, 기술적 개선사항, 테스트 상태, Breaking Changes |
-| 제외 | 변경 통계 (파일 수, 라인 수), Co-Authored-By 태그 |
+| 제외 | 변경 통계 (파일 수, 라인 수), Co-Authored-By 태그, Claude 세션 링크(`https://claude.ai/code/...` · 하단 첨부 포함) |
 
 ## 검수자 가독성 (커밋·PR·코멘트 공통)
 
