@@ -14,7 +14,9 @@ import { renderSubscribeManage } from "@/events/listeners/buttons/renderSubscrib
  *
  * Firestore 접근이 있으므로 `deferUpdate` 후 `editReply`로 갱신한다.
  */
-export async function onRegionRemoveSelect(interaction: StringSelectMenuInteraction): Promise<void> {
+export async function onRegionRemoveSelect(
+  interaction: StringSelectMenuInteraction
+): Promise<void> {
   const original = interaction.message.components;
   await interaction.update({
     components: disableMessageComponents(interaction.message, interaction.customId),

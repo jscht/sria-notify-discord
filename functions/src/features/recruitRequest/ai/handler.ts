@@ -21,20 +21,20 @@ export async function handleRecruitAI(message: Message, userText: string): Promi
   // 2. Intent에 따라 처리
   try {
     switch (result.intent) {
-      case RECRUIT_INTENTS.REQUEST:
-        return await handleRequest(result.entities.locations);
+    case RECRUIT_INTENTS.REQUEST:
+      return await handleRequest(result.entities.locations);
 
-      case RECRUIT_INTENTS.SEARCH_BY_LOCATION:
-        return await handleSearchByLocation(result.entities.locations);
+    case RECRUIT_INTENTS.SEARCH_BY_LOCATION:
+      return await handleSearchByLocation(result.entities.locations);
 
-      case RECRUIT_INTENTS.SEARCH_LATEST:
-        return await handleSearchLatest();
+    case RECRUIT_INTENTS.SEARCH_LATEST:
+      return await handleSearchLatest();
 
-      case RECRUIT_INTENTS.FILTER:
-        return await handleFilter(result.entities);
+    case RECRUIT_INTENTS.FILTER:
+      return await handleFilter(result.entities);
 
-      default:
-        return "알 수 없는 요청입니다.";
+    default:
+      return "알 수 없는 요청입니다.";
     }
   } catch (error) {
     console.error("Error in handleRecruitAI:", error);

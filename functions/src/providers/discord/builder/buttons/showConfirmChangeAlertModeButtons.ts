@@ -12,4 +12,4 @@ export function showConfirmChangeAlertModeButtons() {
       .setLabel("네, 변경할래요")
       .setStyle(ButtonStyle.Primary),
   );
-};
+}

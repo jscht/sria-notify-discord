@@ -40,9 +40,9 @@ export function registerNotificationSendHandlers(): void {
         jobCount: payload.jobs.length,
         success: result.ok,
         // skip은 정상 상태이므로 error 미부여. 진짜 실패(ok=false && !skipped)일 때만 부여.
-        ...(!result.ok && !result.skipped
-          ? { error: new Error(result.reason ?? "DM 전송 실패") }
-          : {}),
+        ...(!result.ok && !result.skipped ?
+          { error: new Error(result.reason ?? "DM 전송 실패") } :
+          {}),
       });
     } catch (error) {
       // emitter 안정성 — 재throw 금지(1.7 패턴 동일).

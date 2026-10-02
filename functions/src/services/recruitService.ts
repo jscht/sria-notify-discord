@@ -25,6 +25,7 @@ export class RecruitService {
   private readonly recruitSource: RecruitSourceService;
 
   constructor() {
+    // eslint-disable-next-line camelcase -- store 레지스트리 속성명(Redis 서비스 키 관례)
     const { recruit, recruit_hash } = RedisManager.getInstance().store;
     this.cacheService = new RecruitCacheService(recruit, recruit_hash);
     this.firestore = new RecruitStore();
@@ -140,7 +141,7 @@ export class RecruitService {
         })
         .catch(() => {
           globalLogger.warn("Redis 저장 실패");
-        })
+        }),
     ]);
 
     return list;

@@ -16,4 +16,4 @@ export class RecruitKeyManager extends BaseKeyManager {
       list_hash: this.generateKey(["hash", "city:all"]),
     };
   }
-};
+}

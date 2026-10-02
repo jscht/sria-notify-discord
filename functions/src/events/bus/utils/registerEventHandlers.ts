@@ -5,10 +5,10 @@
  * Firebase Functions의 Cold Start 특성을 고려하여 모듈 레벨에서 1회만 실행되도록 설계되었습니다.
  */
 
-import { eventBus } from '../EventBus';
-import { eventLogger } from './eventLogger';
-import { registerNotificationHandlers } from '../handlers/NotificationEventHandler';
-import { registerNotificationSendHandlers } from '../handlers/NotificationSendHandler';
+import { eventBus } from "../EventBus";
+import { eventLogger } from "./eventLogger";
+import { registerNotificationHandlers } from "../handlers/NotificationEventHandler";
+import { registerNotificationSendHandlers } from "../handlers/NotificationSendHandler";
 
 /**
  * 핸들러 등록 상태 추적
@@ -40,7 +40,7 @@ export function registerAllEventHandlers(): void {
     return;
   }
 
-  eventLogger.custom('🔧 Registering event handlers...');
+  eventLogger.custom("🔧 Registering event handlers...");
 
   // Phase 1.3: RecruitCacheService 핸들러 (TODO)
   // registerRecruitHandlers();
@@ -85,5 +85,5 @@ export function areHandlersRegistered(): boolean {
 export function resetHandlerRegistration(): void {
   handlersRegistered = false;
   eventBus.removeAllListeners();
-  eventLogger.custom('🔄 Handler registration reset');
+  eventLogger.custom("🔄 Handler registration reset");
 }

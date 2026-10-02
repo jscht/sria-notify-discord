@@ -1,7 +1,7 @@
 import { AlertMode } from "@/common/types";
 import {
   fullActionId,
-  RegionEditActionId
+  RegionEditActionId,
 } from "../constants/fullActionId";
 
 /**

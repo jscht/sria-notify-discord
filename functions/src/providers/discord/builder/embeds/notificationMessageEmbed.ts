@@ -96,9 +96,9 @@ export function notificationMessageEmbed(
   if (hasOverflow) {
     const overflowCount = jobs.length - TOP_COUNT;
     blocks.push(
-      baseUrl
-        ? `▸ 이 외 ${overflowCount}건 더 있어요 · [전체 공고 확인하러 가기](${baseUrl})`
-        : `▸ 이 외 ${overflowCount}건 더 있어요`
+      baseUrl ?
+        `▸ 이 외 ${overflowCount}건 더 있어요 · [전체 공고 확인하러 가기](${baseUrl})` :
+        `▸ 이 외 ${overflowCount}건 더 있어요`
     );
   }
 

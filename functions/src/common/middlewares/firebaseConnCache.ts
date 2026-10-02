@@ -31,7 +31,7 @@ export async function firebaseConnCache(
 
     const conn = new ConnectionStore();
     const firestoreReady = await conn.getRecruitList();
-    
+
     if (typeof firestoreReady === "string" && firestoreReady === conn.getConnectionCheckMessage()) {
       fbLastCheckTime = currentTime;
       providerLogger.debug("Firestore connection is alive.");

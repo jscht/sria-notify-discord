@@ -5,20 +5,20 @@
 
 // Alert Mode Select
 export {
-  ALERT_MODE_SELECT_PREFIX, alertModeSelectActionId
+  ALERT_MODE_SELECT_PREFIX, alertModeSelectActionId,
 } from "./alertModeSelectAction";
 
 // Alert Region Edit
-export { 
-  ALERT_REGION_EDIT_PREFIX, AlertRegionEditAction, alertRegionEditActionId 
+export {
+  ALERT_REGION_EDIT_PREFIX, AlertRegionEditAction, alertRegionEditActionId,
 } from "./alertRegionEditAction";
 
 // Region Mode Change
-export { 
-  REGION_MODE_CHANGE_PREFIX, RegionModeChangeAction, regionModeChangeActionId 
+export {
+  REGION_MODE_CHANGE_PREFIX, RegionModeChangeAction, regionModeChangeActionId,
 } from "./regionModeChangeAction";
 
 // Subscribe Option
 export {
-  SUBSCRIBE_OPTION_PREFIX, SubscribeOptionAction, subscribeOptionActionId
+  SUBSCRIBE_OPTION_PREFIX, SubscribeOptionAction, subscribeOptionActionId,
 } from "./subscribeOptionAction";

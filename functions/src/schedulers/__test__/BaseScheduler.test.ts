@@ -167,11 +167,15 @@ export async function testBaseSchedulerEvents(): Promise<void> {
 
   eventBus.onEvent<RecruitSyncStartedEvent>(
     EventType.RECRUIT_SYNC_STARTED,
-    (payload) => { failEvents.started = payload; }
+    (payload) => {
+      failEvents.started = payload;
+    }
   );
   eventBus.onEvent<RecruitSyncFailedEvent>(
     EventType.RECRUIT_SYNC_FAILED,
-    (payload) => { failEvents.failed = payload; }
+    (payload) => {
+      failEvents.failed = payload;
+    }
   );
 
   const failScheduler = new FailScheduler();

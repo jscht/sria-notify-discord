@@ -12,7 +12,7 @@ const serviceAccount: ServiceAccount = {
   token_uri: process.env.FB_TOKEN_URI,
   auth_provider_x509_cert_url: process.env.FB_AUTH_PROVIDER_X509_CERT_URL,
   client_x509_cert_url: process.env.FB_CLIENT_X509_CERT_URL,
-  universe_domain: process.env.FB_UNIVERSE_DOMAIN
+  universe_domain: process.env.FB_UNIVERSE_DOMAIN,
 };
 
 export function initFirebaseApp() {

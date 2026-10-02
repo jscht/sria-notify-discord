@@ -1,7 +1,7 @@
-import { EventEmitter } from 'node:events';
-import type { EventType } from './types';
-import { EVENT_BUS_CONFIG } from './constants';
-import { eventLogger } from './utils/eventLogger';
+import { EventEmitter } from "node:events";
+import type { EventType } from "./types";
+import { EVENT_BUS_CONFIG } from "./constants";
+import { eventLogger } from "./utils/eventLogger";
 
 /**
  * EventBus - Singleton 패턴으로 구현된 중앙 이벤트 허브

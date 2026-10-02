@@ -45,7 +45,7 @@ export function filterByRegion(jobs: Job[], regions: CityEn[]): Job[] {
  * @returns 모드에 따라 필터링된 공고 목록
  */
 export function filterByMode(jobs: Job[], subscription: AlarmSubscription): Job[] {
-  return subscription.alertMode === AlertMode.ALL
-    ? jobs
-    : filterByRegion(jobs, subscription.regions);
+  return subscription.alertMode === AlertMode.ALL ?
+    jobs :
+    filterByRegion(jobs, subscription.regions);
 }

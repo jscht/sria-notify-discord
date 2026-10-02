@@ -13,6 +13,6 @@ export function isValidFullActionId(id: unknown): id is FullActionId {
 
   // 2. 정의된 객체의 값들에 포함되어 있는지 확인
   const validIds = Object.values(fullActionId) as readonly string[];
-  
+
   return validIds.includes(id);
 }

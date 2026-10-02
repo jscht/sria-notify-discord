@@ -96,9 +96,9 @@ function getRateLimitWaitMs(error: unknown): number | undefined {
 function toApiEmbeds(embeds: DmPayload["embeds"]): APIEmbed[] | undefined {
   if (!embeds) return undefined;
   return embeds.map((e) =>
-    typeof (e as { toJSON?: unknown }).toJSON === "function"
-      ? (e as { toJSON(): APIEmbed }).toJSON()
-      : (e as APIEmbed)
+    typeof (e as { toJSON?: unknown }).toJSON === "function" ?
+      (e as { toJSON(): APIEmbed }).toJSON() :
+      (e as APIEmbed)
   );
 }
 

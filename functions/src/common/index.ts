@@ -1,7 +1,7 @@
 /**
  * Common Module
  * 앱 전체에서 사용되는 공통 기능 통합
- * 
+ *
  * 순환 참조 방지를 위한 import 순서:
  * 1. types (다른 것에 의존하지 않음)
  * 2. constants (types만 의존)

@@ -25,17 +25,17 @@ export class RecruitCacheStore {
   async getAll(): Promise<Recruit[] | null> {
     const key = this.getRecruitCacheKey();
     const result = await this.client.hGetAll(key);
-    return Object.keys(result).length > 0
-      ? Object.values(result).map((json) => JSON.parse(json))
-      : null;
+    return Object.keys(result).length > 0 ?
+      Object.values(result).map((json) => JSON.parse(json)) :
+      null;
   }
 
   // 테스트용 될 듯?
   async getDataByKeyFromCache(key: string): Promise<Recruit[] | null> {
     const result = await this.client.hGetAll(key);
-    return Object.keys(result).length > 0
-      ? Object.values(result).map((json) => JSON.parse(json))
-      : null;
+    return Object.keys(result).length > 0 ?
+      Object.values(result).map((json) => JSON.parse(json)) :
+      null;
   }
 
   async delete(id: string): Promise<void> {

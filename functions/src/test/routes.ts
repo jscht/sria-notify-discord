@@ -33,11 +33,11 @@ testRouter.get("/redis-stores", async (req, res) => {
   globalLogger.info(`🚀 ~ testRouter.get ~ found keys: ${keys.length}`);
 
   const redisValues: Record<string, any> = {};
-  const recruit_cacheStore = RedisManager.getInstance().store.recruit;
+  const recruitCacheStore = RedisManager.getInstance().store.recruit;
 
   for (const key of keys) {
     try {
-      redisValues[key] = await recruit_cacheStore.getDataByKeyFromCache(key);
+      redisValues[key] = await recruitCacheStore.getDataByKeyFromCache(key);
     } catch (error) {
       if (error instanceof Error) {
         globalLogger.error(`Error fetching key "${key}" from Redis:`, error);
@@ -51,8 +51,8 @@ testRouter.get("/redis-stores", async (req, res) => {
 
 // OK
 testRouter.get("/firestore-recruit", async (req, res) => {
-  const recruit_firestore = new RecruitStore();
-  const result = await recruit_firestore.getRecruitList();
+  const recruitFirestore = new RecruitStore();
+  const result = await recruitFirestore.getRecruitList();
 
   res.json({ result });
 });

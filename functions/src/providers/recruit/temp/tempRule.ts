@@ -103,9 +103,9 @@ export function generateTempRecruits(now: number, cfg: TempRuleConfig): TempRecr
 
       const age = t - s;
       const remaining = lifespan - age; // 남은 틱(>=1)
-      const title = cfg.titles.length
-        ? String(cfg.titles[Math.floor(rand(id, "title") * cfg.titles.length)])
-        : "무제 공고";
+      const title = cfg.titles.length ?
+        String(cfg.titles[Math.floor(rand(id, "title") * cfg.titles.length)]) :
+        "무제 공고";
 
       const posting: TempRecruit = {
         id,

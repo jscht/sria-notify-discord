@@ -48,11 +48,11 @@ export class RecruitCacheService {
     // 소스 지정 시 diff 기준선을 그 소스 파티션으로만 한정.
     const allCurrent = await this.hashStore.getAll();
     const currentHashes: JobHashes | null =
-      source && allCurrent
-        ? Object.fromEntries(
-            Object.entries(allCurrent).filter(([id]) => id.startsWith(`${source}:`))
-          )
-        : allCurrent;
+      source && allCurrent ?
+        Object.fromEntries(
+          Object.entries(allCurrent).filter(([id]) => id.startsWith(`${source}:`))
+        ) :
+        allCurrent;
 
     const baselineExists = !!currentHashes && Object.keys(currentHashes).length > 0;
 
@@ -68,33 +68,33 @@ export class RecruitCacheService {
     } else {
       diffJobs = this.diffJobs(newJobs, newHashes, currentHashes as JobHashes);
       const { addedJobs, updatedJobs, deletedIds } = diffJobs;
-      status = addedJobs.length || updatedJobs.length || deletedIds.length
-        ? CacheUpdateStatus.CHANGED
-        : CacheUpdateStatus.UNCHANGED;
+      status = addedJobs.length || updatedJobs.length || deletedIds.length ?
+        CacheUpdateStatus.CHANGED :
+        CacheUpdateStatus.UNCHANGED;
     }
 
     switch (status) {
-      case CacheUpdateStatus.NO_DATA:
-        await this.saveAll(newJobs, newHashes, expiration);
-        // NOTE: 기준선 부재로 diff 비교 불가 → RECRUIT_CHANGED 미발행(의도된 동작).
-        globalLogger.warn(
-          `No baseline${source ? ` for '${source}'` : ""}. Cached (6h). (기준선 부재로 RECRUIT_CHANGED 미발행)`
-        );
-        break;
+    case CacheUpdateStatus.NO_DATA:
+      await this.saveAll(newJobs, newHashes, expiration);
+      // NOTE: 기준선 부재로 diff 비교 불가 → RECRUIT_CHANGED 미발행(의도된 동작).
+      globalLogger.warn(
+        `No baseline${source ? ` for '${source}'` : ""}. Cached (6h). (기준선 부재로 RECRUIT_CHANGED 미발행)`
+      );
+      break;
 
-      case CacheUpdateStatus.CHANGED: {
-        const { addedJobs, updatedJobs, deletedIds } = diffJobs;
-        await this.syncChanges(addedJobs, updatedJobs, deletedIds, newHashes, expiration);
-        globalLogger.info(
-          `Redis cache updated${source ? ` [${source}]` : ""}. added: ${addedJobs.length}, deleted: ${deletedIds.length}, updated: ${updatedJobs.length}`
-        );
-        break;
-      }
+    case CacheUpdateStatus.CHANGED: {
+      const { addedJobs, updatedJobs, deletedIds } = diffJobs;
+      await this.syncChanges(addedJobs, updatedJobs, deletedIds, newHashes, expiration);
+      globalLogger.info(
+        `Redis cache updated${source ? ` [${source}]` : ""}. added: ${addedJobs.length}, deleted: ${deletedIds.length}, updated: ${updatedJobs.length}`
+      );
+      break;
+    }
 
-      case CacheUpdateStatus.UNCHANGED:
-        await this.extendExpiration(expiration);
-        globalLogger.info("No changes. Expiration extended.");
-        break;
+    case CacheUpdateStatus.UNCHANGED:
+      await this.extendExpiration(expiration);
+      globalLogger.info("No changes. Expiration extended.");
+      break;
     }
 
     return { status, diff: diffJobs };

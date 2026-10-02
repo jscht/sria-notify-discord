@@ -8,7 +8,7 @@ export class RequestLimitKeyManager extends BaseKeyManager {
 
   getKeys() {
     return {
-      request_allowed: this.generateKey(["request_allowed"])
-    }
+      request_allowed: this.generateKey(["request_allowed"]),
+    };
   }
-};
+}

@@ -19,11 +19,13 @@ const ready = initFunctionProviders().then(() => registerAllEventHandlers());
  * 프로덕션 공고 갱신 트리거 — **사이트별** (소스 프로바이더 수집→소스별 diff→DM).
  * 각 사이트 config의 schedule을 주기로 사용(배포 시점 확정 → 변경 시 redeploy).
  */
+// eslint-disable-next-line camelcase -- 배포되는 Firebase Function 이름(함수 ID). 리네임 시 스케줄 함수가 교체됨.
 export const recruitSchedule_sria = onSchedule(sriaConfig.schedule, async () => {
   await ready;
   await SchedulerManager.getInstance().runRecruitOnce("sria");
 });
 
+// eslint-disable-next-line camelcase -- 배포되는 Firebase Function 이름(함수 ID). 리네임 시 스케줄 함수가 교체됨.
 export const recruitSchedule_temp = onSchedule(tempConfig.schedule, async () => {
   await ready;
   await SchedulerManager.getInstance().runRecruitOnce("temp");

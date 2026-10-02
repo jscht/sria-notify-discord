@@ -3,7 +3,7 @@ import { Firestore } from "firebase-admin/firestore";
 import { ConnectionStore } from "../store";
 import { FirebaseCollection } from "../constants/collections";
 
-export async function initConnectionCollection(db: Firestore, init: boolean = false) {
+export async function initConnectionCollection(db: Firestore, init = false) {
   const connStore = new ConnectionStore();
   const snapshot = await db.collection(FirebaseCollection.CONNECTION).limit(1).get();
 

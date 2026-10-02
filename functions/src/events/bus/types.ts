@@ -6,8 +6,8 @@
 
 import type { Job, JobDiffResult } from "@/common/types/job.d";
 import type { CityEn } from "@/common/types/city.d";
-import type { AlarmSubscription } from "@/common/types";
-import type { Recruit } from "@/common/types";
+import type { AlarmSubscription, Recruit } from "@/common/types";
+
 
 /**
  * 이벤트 타입 열거형

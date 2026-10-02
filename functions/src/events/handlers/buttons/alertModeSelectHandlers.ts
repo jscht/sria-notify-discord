@@ -4,5 +4,5 @@ import { onEnableSelectedRegionAlert } from "../../listeners/buttons/onEnableSel
 
 export const alertModeSelectHandlers = {
   [fullActionId.ALERT_MODE_ALL]: onEnableAllRegionAlert,
-  [fullActionId.ALERT_MODE_SELECTED]: onEnableSelectedRegionAlert
+  [fullActionId.ALERT_MODE_SELECTED]: onEnableSelectedRegionAlert,
 } as const;

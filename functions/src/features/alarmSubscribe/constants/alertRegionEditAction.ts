@@ -9,5 +9,5 @@ export enum AlertRegionEditAction {
 export const alertRegionEditActionId = {
   ADD: `${ALERT_REGION_EDIT_PREFIX}:${AlertRegionEditAction.ADD}`,
   REMOVE: `${ALERT_REGION_EDIT_PREFIX}:${AlertRegionEditAction.REMOVE}`,
-  CLEAR: `${ALERT_REGION_EDIT_PREFIX}:${AlertRegionEditAction.CLEAR}`
-} as const
+  CLEAR: `${ALERT_REGION_EDIT_PREFIX}:${AlertRegionEditAction.CLEAR}`,
+} as const;

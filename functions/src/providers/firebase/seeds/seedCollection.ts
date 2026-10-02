@@ -4,7 +4,7 @@ import { SystemError } from "@/common/utils";
 import { initConnectionCollection } from "./initConnectionCollection";
 import { initRecruitCollection } from "./initRecruitCollection";
 
-export async function seedCollection(init: boolean = false) {
+export async function seedCollection(init = false) {
   const db = getFirestore();
 
   try {

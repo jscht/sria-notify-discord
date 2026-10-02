@@ -11,7 +11,7 @@ export async function extractEntity(text: string) {
   // - 숫자 추출 (정규표현식)
   // - 날짜 추출
   // - 지역명 추출
-  
+
   return {
     numbers: extractNumbers(text),
     dates: extractDates(text),

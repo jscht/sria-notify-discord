@@ -199,17 +199,17 @@ export class SystemError extends Error {
     };
 
     switch (this.level) {
-      case ErrorLevel.CRITICAL:
-        logger.error(`🚨 CRITICAL: ${this.message}`, this.originalError || this, logContext);
-        break;
-      case ErrorLevel.FAILURE:
-        logger.error(`❌ ${this.message}`, this.originalError || this, logContext);
-        break;
-      case ErrorLevel.WARNING:
-        logger.warn(`⚠️ ${this.message}`, logContext);
-        break;
-      default:
-        logger.error(`❌ ${this.message}`, this.originalError || this, logContext);
+    case ErrorLevel.CRITICAL:
+      logger.error(`🚨 CRITICAL: ${this.message}`, this.originalError || this, logContext);
+      break;
+    case ErrorLevel.FAILURE:
+      logger.error(`❌ ${this.message}`, this.originalError || this, logContext);
+      break;
+    case ErrorLevel.WARNING:
+      logger.warn(`⚠️ ${this.message}`, logContext);
+      break;
+    default:
+      logger.error(`❌ ${this.message}`, this.originalError || this, logContext);
     }
   }
 
@@ -339,44 +339,44 @@ export class SystemError extends Error {
 
     // 알려진 HTTP 상태 코드에 대한 HttpError 생성
     switch (statusCode) {
-      case 400:
-        return HttpError.BadRequest(message);
-      case 401:
-        return HttpError.Unauthorized(message);
-      case 403:
-        return HttpError.Forbidden(message);
-      case 404:
-        return HttpError.NotFound(message);
-      case 405:
-        return HttpError.MethodNotAllowed(message);
-      case 408:
-        return HttpError.RequestTimeout(message);
-      case 409:
-        return HttpError.Conflict(message);
-      case 422:
-        return HttpError.UnprocessableContent(message);
-      case 429:
-        return HttpError.TooManyRequests(message);
-      case 503:
-        return HttpError.ServiceUnavailable(message);
-      case 500:
+    case 400:
+      return HttpError.BadRequest(message);
+    case 401:
+      return HttpError.Unauthorized(message);
+    case 403:
+      return HttpError.Forbidden(message);
+    case 404:
+      return HttpError.NotFound(message);
+    case 405:
+      return HttpError.MethodNotAllowed(message);
+    case 408:
+      return HttpError.RequestTimeout(message);
+    case 409:
+      return HttpError.Conflict(message);
+    case 422:
+      return HttpError.UnprocessableContent(message);
+    case 429:
+      return HttpError.TooManyRequests(message);
+    case 503:
+      return HttpError.ServiceUnavailable(message);
+    case 500:
+      return HttpError.InternalServerError(message);
+    default:
+      // 알 수 없는 상태 코드이거나 statusCode가 없는 경우
+      // 4xx 범위면 400, 5xx 범위면 500, 그 외는 500
+      if (statusCode && statusCode >= 400 && statusCode < 500) {
+        return new HttpError(statusCode, message);
+      } else if (statusCode && statusCode >= 500 && statusCode < 600) {
+        return new HttpError(statusCode, message);
+      } else {
+        // statusCode가 없거나 HTTP 범위 밖이면 500으로 처리
+        logger.warn(`⚠️ 알 수 없는 상태 코드: ${statusCode}, 500으로 처리`, {
+          statusCode,
+          message,
+          originalError: error?.message,
+        });
         return HttpError.InternalServerError(message);
-      default:
-        // 알 수 없는 상태 코드이거나 statusCode가 없는 경우
-        // 4xx 범위면 400, 5xx 범위면 500, 그 외는 500
-        if (statusCode && statusCode >= 400 && statusCode < 500) {
-          return new HttpError(statusCode, message);
-        } else if (statusCode && statusCode >= 500 && statusCode < 600) {
-          return new HttpError(statusCode, message);
-        } else {
-          // statusCode가 없거나 HTTP 범위 밖이면 500으로 처리
-          logger.warn(`⚠️ 알 수 없는 상태 코드: ${statusCode}, 500으로 처리`, {
-            statusCode,
-            message,
-            originalError: error?.message,
-          });
-          return HttpError.InternalServerError(message);
-        }
+      }
     }
   }
 
@@ -454,13 +454,13 @@ export class SystemError extends Error {
       timestamp: this.timestamp.toISOString(),
       context: this.context,
       stack: this.stack,
-      originalError: this.originalError
-        ? {
-            name: this.originalError.name,
-            message: this.originalError.message,
-            stack: this.originalError.stack,
-          }
-        : undefined,
+      originalError: this.originalError ?
+        {
+          name: this.originalError.name,
+          message: this.originalError.message,
+          stack: this.originalError.stack,
+        } :
+        undefined,
     };
   }
 }

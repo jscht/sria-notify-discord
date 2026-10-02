@@ -15,8 +15,8 @@ export { interpretAlarmMessage } from "./ai/interpreter";
 export { ALARM_INTENTS } from "./ai/intents";
 
 // Types
-export type { 
-  SubscribeCommand, AlarmSubscribeAction, AlarmSubscription, AlarmSubscriptionInput, 
+export type {
+  SubscribeCommand, AlarmSubscribeAction, AlarmSubscription, AlarmSubscriptionInput,
 } from "./types";
 
 // Constants
