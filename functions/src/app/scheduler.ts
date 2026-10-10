@@ -11,6 +11,14 @@ import { getSourceConfig } from "@/providers/recruit";
 // 최후의 거름망(A): init 중 발생하는 미처리 rejection/예외도 잡도록 가장 먼저 등록한다.
 registerGlobalErrorHandlers();
 
+// 비밀값(토큰·키·비밀번호)은 .env가 아니라 Google Cloud Secret Manager에 저장하고,
+// 아래 목록에 이름을 적어야 배포된 함수가 실행될 때 process.env로 받을 수 있다.
+// 목록에서 빠지면 배포 환경에서 값이 undefined가 되어 Firebase 인증과 DM 전송이 실패한다.
+// 값 저장: firebase functions:secrets:set <이름>
+// REDIS_URL은 접속 주소 안에 비밀번호가 들어 있어(rediss://user:pw@host) 비밀값으로 취급한다.
+// 로컬 실행(RUN_SCHEDULER_ONCE)은 .env를 그대로 읽으므로 이 설정과 무관하다.
+const FUNCTION_SECRETS = ["FB_PRIVATE_KEY", "DISCORD_BOT_TOKEN", "REDIS_URL"];
+
 // 함수 프로세스 부트스트랩: REST 전용 provider init 후 EventBus 핸들러 등록.
 // 메모이즈된 ready promise를 각 트리거가 await한다.
 const ready = initFunctionProviders().then(() => registerAllEventHandlers());
@@ -21,7 +29,10 @@ const ready = initFunctionProviders().then(() => registerAllEventHandlers());
  */
 // eslint-disable-next-line camelcase -- 배포되는 Firebase Function 이름(함수 ID). 리네임 시 스케줄 함수가 교체됨.
 export const recruitSchedule_sria = onSchedule(
-  toScheduleExpression(getSourceConfig("sria").intervalMinutes),
+  {
+    schedule: toScheduleExpression(getSourceConfig("sria").intervalMinutes),
+    secrets: FUNCTION_SECRETS,
+  },
   async () => {
     await ready;
     await createRecruitScheduler("sria").runOnce();
@@ -30,7 +41,10 @@ export const recruitSchedule_sria = onSchedule(
 
 // eslint-disable-next-line camelcase -- 배포되는 Firebase Function 이름(함수 ID). 리네임 시 스케줄 함수가 교체됨.
 export const recruitSchedule_temp = onSchedule(
-  toScheduleExpression(getSourceConfig("temp").intervalMinutes),
+  {
+    schedule: toScheduleExpression(getSourceConfig("temp").intervalMinutes),
+    secrets: FUNCTION_SECRETS,
+  },
   async () => {
     await ready;
     await createRecruitScheduler("temp").runOnce();
