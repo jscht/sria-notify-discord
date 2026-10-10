@@ -5,6 +5,7 @@
 ### .claude/rules/ — 현재 구현 기준 문서 (Implementation Reference)
 - Update together with code changes
 - Always reflects current codebase state
+- `writing-style.md` — 모든 문서·주석·커밋의 글쓰기 규칙
 
 ### .claude/phases/ — Phase 시드 문서 (Phase Seeds)
 - Active phase planning documents
