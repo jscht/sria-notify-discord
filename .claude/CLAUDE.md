@@ -59,5 +59,6 @@ Slash commands are shortcuts for users who want to explicitly trigger specific s
 - README.md — 프로젝트 개요
 - .claude/docs/ARCHITECTURE.md — 시스템 아키텍처, 계층 구조, 데이터 흐름
 - .claude/docs/build-deploy.md — 빌드, 배포, 실행 명령어
+- .claude/docs/review-process.md — PDCA 검토 단계 상세 절차 (런타임 검증, archive, 커밋·PR 순서)
 - .claude/docs/pdca-status.json — Phase별 PDCA 상태
 - .claude/agents/README.md — 에이전트 계층, 협업, 출력 포맷

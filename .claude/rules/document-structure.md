@@ -14,7 +14,7 @@
 ### .claude/docs/ — Claude 참조용 상태·설정 파일
 - `pdca-status.json` — PDCA 전체 상태 DB
 - `pdca-memory.json` — 현재 작업 포인터
-- `ARCHITECTURE.md`, `coding-conventions.md`, `tech-stack.md`, `build-deploy.md`
+- `ARCHITECTURE.md`, `coding-conventions.md`, `tech-stack.md`, `build-deploy.md`, `review-process.md`
 
 ### .claude/agents/ — 에이전트 정의
 - 12개 에이전트 파일 (YAML frontmatter + 마크다운)
