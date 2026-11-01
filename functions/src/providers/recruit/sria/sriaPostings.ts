@@ -4,7 +4,7 @@ import type { Dday, RecruitmentStatus } from "@/common/types";
  * sria 스냅샷 공고 데이터(사용자 편집). (Phase 1.10)
  *
  * sria는 규칙 없이 "소스가 준 데이터를 반영"하는 사이트라, 여기 항목이 곧 스냅샷 전체 내용이다.
- * (temp와 달리 제목만이 아니라 마감·기간·상태까지 직접 적는다.)
+ * (elias와 달리 제목만이 아니라 마감·기간·상태까지 직접 적는다.)
  */
 export interface SriaSeed {
   title: string;

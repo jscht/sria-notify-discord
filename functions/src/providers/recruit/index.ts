@@ -1,20 +1,20 @@
 import type { RecruitSource } from "@/common/types";
 import type { RecruitProvider } from "./RecruitProvider";
 import { SriaMockProvider } from "./sria/SriaMockProvider";
-import { TempMockProvider } from "./temp/TempMockProvider";
+import { EliasMockProvider } from "./elias/EliasMockProvider";
 import { sriaConfig } from "./sria/sriaMockConfig";
-import { tempConfig } from "./temp/tempMockConfig";
+import { eliasConfig } from "./elias/eliasMockConfig";
 
 export type { RecruitProvider } from "./RecruitProvider";
 export { SriaMockProvider } from "./sria/SriaMockProvider";
-export { TempMockProvider } from "./temp/TempMockProvider";
+export { EliasMockProvider } from "./elias/EliasMockProvider";
 export { sriaConfig } from "./sria/sriaMockConfig";
-export { tempConfig } from "./temp/tempMockConfig";
+export { eliasConfig } from "./elias/eliasMockConfig";
 
 /** 스케줄 주기의 단일 출처 — 소스별 config에서 분(minute) 단위로 노출. */
 const SOURCE_CONFIGS: Record<RecruitSource, { intervalMinutes: number }> = {
   sria: sriaConfig,
-  temp: tempConfig,
+  elias: eliasConfig,
 };
 
 /** 소스별 스케줄 config 조회 (스케줄러 팩토리/엔트리용). `getProvider(source)` 관례. */
@@ -24,12 +24,12 @@ export function getSourceConfig(source: RecruitSource): { intervalMinutes: numbe
 
 /**
  * 프로바이더 레지스트리. (Phase 1.10)
- * 사이트 2곳(sria/temp). 소스별 스케줄러가 `getProvider(source)`로 하나만 선택 가능.
+ * 사이트 2곳(sria/elias). 소스별 스케줄러가 `getProvider(source)`로 하나만 선택 가능.
  */
 let registry: RecruitProvider[] | null = null;
 function getRegistry(): RecruitProvider[] {
   if (!registry) {
-    registry = [new SriaMockProvider(), new TempMockProvider()];
+    registry = [new SriaMockProvider(), new EliasMockProvider()];
   }
   return registry;
 }

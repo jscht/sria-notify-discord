@@ -12,7 +12,7 @@ export type {
   RecruitBase,
   RecruitSource,
   SriaRecruit,
-  TempRecruit,
+  EliasRecruit,
   Dday,
   RecruitmentStatus,
 } from "./recruit.d";

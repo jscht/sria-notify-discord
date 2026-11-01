@@ -4,7 +4,7 @@ import { createRecruitScheduler } from "../factory";
 import type { RecruitSource } from "@/common/types";
 
 /** 상시 루프로 기동할 소스 목록. */
-const RECRUIT_SOURCES: RecruitSource[] = ["sria", "temp"];
+const RECRUIT_SOURCES: RecruitSource[] = ["sria", "elias"];
 
 /**
  * 모든 스케줄러 초기화. (scheduler Factory refactor — 팩토리 생성 후 매니저 주입)

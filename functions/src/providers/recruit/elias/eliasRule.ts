@@ -1,14 +1,14 @@
-import type { TempRecruit } from "@/common/types";
-import type { TempField, TempValue } from "./tempFields";
+import type { EliasRecruit } from "@/common/types";
+import type { EliasField, EliasValue } from "./eliasFields";
 
 /**
- * temp 규칙 엔진 — stateless 결정적 시뮬레이션. (Phase 1.10)
+ * elias 규칙 엔진 — stateless 결정적 시뮬레이션. (Phase 1.10)
  *
  * 시각 `now`의 공고 세계 = `now`의 순수 함수. serverless(상태 비저장)에서도
  * diff 엔진이 직전 저장분과 비교해 규칙대로 added/updated/deleted를 발화시킨다.
  * 난수는 전부 시드 PRNG(문자열→[0,1)) — Math.random/외부 상태 미사용.
  */
-export interface TempRuleConfig {
+export interface EliasRuleConfig {
   /** 경계 간격(ms). 시간 한 칸(틱). */
   unitMs: number;
   /** 모집기간(틱 수). 실제 시간 = unitMs × lifespanTicks. */
@@ -22,7 +22,7 @@ export interface TempRuleConfig {
   /** 제목 후보(필수 속성 값 풀). */
   titles: string[];
   /** 추가 속성 규칙. */
-  fields: TempField[];
+  fields: EliasField[];
 }
 
 /** FNV-1a 문자열 해시. */
@@ -51,7 +51,7 @@ function rand(...parts: Array<string | number>): number {
 }
 
 /** 경계 s에서 스폰 개수(누적 확률). */
-function spawnCount(s: number, probs: TempRuleConfig["spawnProbs"]): number {
+function spawnCount(s: number, probs: EliasRuleConfig["spawnProbs"]): number {
   const r = rand("spawn", s);
   if (r < probs[1]) return 1;
   if (r < probs[1] + probs[2]) return 2;
@@ -75,25 +75,25 @@ function firstDeathTick(
   return null;
 }
 
-function resolveValue(v: TempValue, id: string, key: string): unknown {
+function resolveValue(v: EliasValue, id: string, key: string): unknown {
   if (v.kind === "fixed") return v.value;
   if (!v.pool.length) return undefined;
   return v.pool[Math.floor(rand(id, "val", key) * v.pool.length)];
 }
 
 /**
- * 시각 `now`에 살아있는 temp 공고 목록을 결정적으로 산출한다.
+ * 시각 `now`에 살아있는 elias 공고 목록을 결정적으로 산출한다.
  */
-export function generateTempRecruits(now: number, cfg: TempRuleConfig): TempRecruit[] {
+export function generateEliasRecruits(now: number, cfg: EliasRuleConfig): EliasRecruit[] {
   const t = Math.floor(now / cfg.unitMs);
   const lifespan = cfg.lifespanTicks;
-  const out: TempRecruit[] = [];
+  const out: EliasRecruit[] = [];
 
   // 후보 = [t-lifespan, t] 경계에서 스폰된 공고(유계 순회).
   for (let s = Math.max(0, t - lifespan); s <= t; s++) {
     const n = spawnCount(s, cfg.spawnProbs);
     for (let idx = 0; idx < n; idx++) {
-      const id = `temp:${s}-${idx}`;
+      const id = `elias:${s}-${idx}`;
 
       // 확정 삭제: 모집기간 종료.
       if (t >= s + lifespan) continue;
@@ -107,9 +107,9 @@ export function generateTempRecruits(now: number, cfg: TempRuleConfig): TempRecr
         String(cfg.titles[Math.floor(rand(id, "title") * cfg.titles.length)]) :
         "무제 공고";
 
-      const posting: TempRecruit = {
+      const posting: EliasRecruit = {
         id,
-        source: "temp",
+        source: "elias",
         title,
         // 확정 수정(진행도): 경과에 따라 결정적으로 변함 → 매 경계 updated.
         dDay: remaining <= 1 ? "오늘마감" : `D-${remaining - 1}`,

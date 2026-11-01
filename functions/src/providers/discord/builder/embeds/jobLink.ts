@@ -2,7 +2,7 @@
  * 공고 링크·표시 필드 공용 헬퍼. (Phase 1.10 재정의)
  *
  * recruitMessageEmbed / notificationMessageEmbed가 공유한다.
- * `Recruit`는 사이트별 union(temp는 동적 스키마)이라, base가 아닌 표시 필드는
+ * `Recruit`는 사이트별 union(elias는 동적 스키마)이라, base가 아닌 표시 필드는
  * `recruitField`로 방어적으로(있으면 표시, 없으면 빈 문자열) 읽는다.
  */
 
@@ -16,7 +16,7 @@ export function formatJobTitleLink(title: string, url?: string): string {
 }
 
 /**
- * Recruit(union·동적 temp 포함)에서 표시 필드를 안전하게 문자열로 읽는다.
+ * Recruit(union·동적 elias 포함)에서 표시 필드를 안전하게 문자열로 읽는다.
  * 값이 없으면 빈 문자열.
  */
 export function recruitField(r: Recruit, key: string): string {

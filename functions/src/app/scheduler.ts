@@ -40,14 +40,14 @@ export const recruitSchedule_sria = onSchedule(
 );
 
 // eslint-disable-next-line camelcase -- 배포되는 Firebase Function 이름(함수 ID). 리네임 시 스케줄 함수가 교체됨.
-export const recruitSchedule_temp = onSchedule(
+export const recruitSchedule_elias = onSchedule(
   {
-    schedule: toScheduleExpression(getSourceConfig("temp").intervalMinutes),
+    schedule: toScheduleExpression(getSourceConfig("elias").intervalMinutes),
     secrets: FUNCTION_SECRETS,
   },
   async () => {
     await ready;
-    await createRecruitScheduler("temp").runOnce();
+    await createRecruitScheduler("elias").runOnce();
   }
 );
 
@@ -56,7 +56,7 @@ if (process.env.RUN_SCHEDULER_ONCE === "true") {
   ready
     .then(async () => {
       await createRecruitScheduler("sria").runOnce();
-      await createRecruitScheduler("temp").runOnce();
+      await createRecruitScheduler("elias").runOnce();
     })
     .catch((e) => globalLogger.error("로컬 스케줄러 1회 실행 실패:", e));
 }

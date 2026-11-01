@@ -70,7 +70,7 @@ export interface ErrorContext {
 export interface SourceErrorContext extends ErrorContext {
   /** 수집 전략 (SourceStrategy 사용) */
   strategy: SourceStrategyType;
-  /** 공고 소스 제공자 (sria, temp 등) */
+  /** 공고 소스 제공자 (sria, elias 등) */
   provider?: string;
   /** 소스 URL */
   url?: string;

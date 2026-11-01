@@ -1,14 +1,14 @@
-# temp 공고 작성 가이드
+# elias 공고 작성 가이드
 
-이 폴더(`temp/`)는 데모용 **가짜 공고**를 만드는 곳입니다.
+이 폴더(`elias/`)는 데모용 **가짜 공고**를 만드는 곳입니다.
 당신이 할 일은 **제목 후보를 정해두는 것**뿐입니다. 나머지는 생성기가 알아서 만듭니다.
 
 ## 1. 공고 제목 추가하기
 
-`tempTitles.ts`를 열고 배열에 **제목 한 줄**을 추가하세요:
+`eliasTitles.ts`를 열고 배열에 **제목 한 줄**을 추가하세요:
 
 ```ts
-export const tempTitles: string[] = [
+export const eliasTitles: string[] = [
   "[서울] 카페 주말 단기 스태프",
   "[부산] 필기시험 감독 보조 단기",   // ← 이렇게 추가
 ];
@@ -20,7 +20,7 @@ export const tempTitles: string[] = [
 
 생성기가 정해진 주기마다 돌면서 이 **제목 목록에서 골라** 공고를 만듭니다.
 
-- ✅ **당신이 정하는 것** : 제목 후보 목록(`tempTitles`)
+- ✅ **당신이 정하는 것** : 제목 후보 목록(`eliasTitles`)
 - 🤖 **자동으로 채워짐** : 어떤 제목을 쓸지 선택 · 공고번호(id) · 마감(D-day) · 모집기간 · 상태(접수중 등)
 
 규칙 엔진이 시간에 맞춰 생성·수정하고, 모집기간이 끝나면 공고가 스스로 사라집니다.
@@ -32,8 +32,8 @@ export const tempTitles: string[] = [
 
 ## 4. 제목 빼기 / 주기·확률 바꾸기
 
-- **제목 빼기**: `tempTitles.ts`에서 그 줄을 지우면 됩니다.
-- **주기·확률**(`tempMockConfig.ts`):
+- **제목 빼기**: `eliasTitles.ts`에서 그 줄을 지우면 됩니다.
+- **주기·확률**(`eliasMockConfig.ts`):
   | 항목 | 뜻 |
   |------|-----|
   | `schedule` | 공고를 갱신하는 주기 (예: `"every 30 minutes"`) |
@@ -44,11 +44,11 @@ export const tempTitles: string[] = [
 
 ## 5. (고급) 속성 추가하기
 
-제목 외 다른 속성(예: 배지·급여 표시)을 넣고 싶으면 `tempFields.ts`에 규칙을 추가합니다.
+제목 외 다른 속성(예: 배지·급여 표시)을 넣고 싶으면 `eliasFields.ts`에 규칙을 추가합니다.
 각 속성은 **포함 규칙**(무조건/확률)과 **값 규칙**(고정/풀에서 랜덤)을 가집니다:
 
 ```ts
-export const tempFields: TempField[] = [
+export const eliasFields: EliasField[] = [
   { key: "badge", required: false, chance: 0.3, value: { kind: "pick", pool: ["급구", "우대"] } },
   { key: "pay",   required: true,                value: { kind: "fixed", value: "시급 협의" } },
 ];
