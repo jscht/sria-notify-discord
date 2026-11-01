@@ -69,6 +69,8 @@ export interface RecruitDisplay {
 
 ### 3. temp 인터페이스 트리밍
 
+> 이 절의 `period` 변동 설계는 대체되었다. 최종 설계는 `docs/phase-1-15/02-design.md` §2.6을 따른다.
+
 temp의 `dDay`/`dayTxt`/`recruitmentStatus`는 sria 흉내 파생값이고 **존재 목적은 "틱마다 해시가 바뀌어 updated diff를 유발"**(`tempRule.ts:114` 주석). `period` 1개만 시변 필드로 남겨 diff churn을 유지하고 나머지는 제거.
 
 ```ts
