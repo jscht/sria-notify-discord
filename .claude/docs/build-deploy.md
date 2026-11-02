@@ -37,7 +37,7 @@ Phase 1.10부터 봇은 **두 개의 독립 프로세스**로 나뉘어 배포�
 | 프로세스 | 역할 | 실행 대상 | 엔트리 | 트리거 |
 |----------|------|-----------|--------|--------|
 | **A · 게이트웨이** | discord.js WS 로그인 + 인터랙션(슬래시 커맨드·버튼 등) 수신 | Oracle Cloud x86 Micro VM (무료 티어) + pm2 상주 | `lib/app/gateway.js` | WS 상주 (HTTP 리슨 없음 · WS-only) |
-| **B · 스케줄러** | `onSchedule` → `syncRecruits` → REST DM 발송 (알림 체인 전체가 이 프로세스 안에서 완결) | Firebase Functions (`asia-northeast3`) | `lib/app/scheduler.js` (`package.json` `main`) | `recruitSchedule_sria` / `recruitSchedule_temp` |
+| **B · 스케줄러** | `onSchedule` → 사이트 갱신(`syncRecruits`) 또는 알림(`runNotification` → REST DM 발송). 알림 체인 전체가 이 프로세스 안에서 완결 | Firebase Functions (`asia-northeast3`) | `lib/app/scheduler.js` (`package.json` `main`) | `recruitSchedule_sria` / `recruitSchedule_elias` / `notificationScheduler` |
 
 > **설계 근거**: DM 발송은 `providers/discord/dmSender.ts`가 REST(`rest.post`)를 사용하므로
 > 알림 체인 전체가 스케줄러/Functions 프로세스 내부에서 완결된다. WS 게이트웨이는 구독
@@ -53,7 +53,14 @@ Phase 1.10부터 봇은 **두 개의 독립 프로세스**로 나뉘어 배포�
 cd functions
 npm run deploy   # firebase deploy --only functions
 ```
-배포되는 함수: `recruitSchedule_sria`, `recruitSchedule_temp` (스케줄 트리거만).
+배포되는 함수는 스케줄 트리거 3개다. 작업은 `schedulers/jobs.ts`의 `SCHEDULED_JOBS` 한 곳에만 적는다. 운영 함수, 로컬 1회 실행, 로컬 계속 실행이 모두 이 목록을 읽기 때문이다.
+
+| 함수 | 일정 (한국 시간) | 제한 시간 | 하는 일 |
+|------|------------------|-----------|---------|
+| `recruitSchedule_sria` | 2시간마다 | 120초 | sria 공고 갱신 |
+| `recruitSchedule_elias` | 30분마다 | 120초 | elias 공고 갱신 |
+| `notificationScheduler` | 매일 06~20시 짝수 정시 | 300초 | 사이트 갱신 뒤 구독자별 판정과 DM 발송 |
+
 `firebase.json`의 predeploy는 `npm run build`만 강제한다(lint는 repo-wide 스타일 debt로 별도 lint-cleanup 태스크로 분리 — todo.md).
 
 ### A · 게이트웨이 배포 (Oracle Cloud VM + pm2)
@@ -87,7 +94,7 @@ npm run register:commands
 ### 운영 실행 (U · 사용자)
 4. **🔴 비밀값을 Secret Manager에 저장 (가장 먼저)** — `firebase functions:secrets:set`으로 `FB_PRIVATE_KEY` / `DISCORD_BOT_TOKEN` / `REDIS_URL` 세 값을 저장한다. 함수가 받을 값 목록은 `scheduler.ts`의 `FUNCTION_SECRETS`에 이미 적혀 있다. 저장하지 않으면 배포된 함수가 실행 중 실패한다
 5. **Blaze 종량제 전환** — onSchedule/egress에 필수 (과금 노출)
-6. **스케줄러 배포** — `npm run deploy` (프로세스 B, Functions)
+6. **스케줄러 배포** — `npm run deploy` (프로세스 B, Functions). 배포 뒤 Cloud Scheduler 작업 목록에 3개가 보이는지 확인한다
 7. **게이트웨이 상주** — Oracle VM: `pm2 start lib/app/gateway.js` + `pm2 startup` + `pm2 save` (프로세스 A)
 8. **슬래시커맨드 등록** — `npm run register:commands` (게이트웨이 live 후)
 9. **구독자 시드** — 실 Discord 구독 인터랙션으로 DM 대상 확보

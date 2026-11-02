@@ -267,9 +267,9 @@
 **완료일**: 2026-09-28 · 매치율 99.3% · 🔴 Critical 0
 **스코프 (2026-09 pivot)**: proxy·실 CRAWL·IP 우회를 **폐기**하고(ToS/법적 리스크 회피 + 포트폴리오는 아키텍처 시연이 목적), **mock 데이터 프로바이더 아키텍처**로 재정의. 최소 base 스키마 + 사이트별 union, 소스별 스케줄·diff, crawl/proxy→source/sync 명칭 통일. 배포 배선(C-1) 갭은 **E안(하이브리드 2-프로세스)**로 해소.
 
-- [x] 타입: `RecruitBase` + `SriaRecruit | TempRecruit` union, 다운스트림(~11파일) 치환
-- [x] 프로바이더 계층: 레지스트리(`getProvider`) + sria 스냅샷 생성기 + temp 규칙엔진(stateless PRNG, 결정적 시뮬레이션)
-- [x] 소스별 스케줄(`recruitSchedule_sria/_temp` onSchedule) + 소스별 diff 파티션(`{source}:` 접두사) + Redis 락(`lock:recruit:sync:{source}`)
+- [x] 타입: `RecruitBase` + `SriaRecruit | EliasRecruit` union, 다운스트림(~11파일) 치환
+- [x] 프로바이더 계층: 레지스트리(`getProvider`) + sria 스냅샷 생성기 + elias 규칙엔진(stateless PRNG, 결정적 시뮬레이션)
+- [x] 소스별 스케줄(`recruitSchedule_sria/_elias` onSchedule) + 소스별 diff 파티션(`{source}:` 접두사) + Redis 락(`lock:recruit:sync:{source}`)
 - [x] 명칭 통일: `RECRUIT_SYNC_*`, `ErrorCategory.SOURCE`, `sourceLogger` (crawl/proxy 활성 심볼 0)
 - [x] **C-1 해소 (E안)**: `package.json` main→`lib/app/scheduler.js`(트리거 배포 노출) + 게이트웨이 `app/gateway.ts`(**WS-only**, Oracle x86 Micro VM + pm2) 분리 + `bootstrapGateway` 공통화
 - [x] 배포 설정: `.eslintrc.js` ESM→CJS, predeploy는 build만 게이팅(lint 분리), `build-deploy.md`·README에 E안 토폴로지·env 매트릭스 반영
@@ -439,6 +439,6 @@
 
 ---
 
-*최종 수정: 2026-09-28 (mock pivot + 1.13 완료 + Phase 1.14 신설 반영)*
+*최종 수정: 2026-11-01*
 *상위 문서: [TODO.md](./PROGRESS.md)*
 *상태 SoT: `.claude/docs/pdca-status.json` (이 시드의 카운트는 참고용)*

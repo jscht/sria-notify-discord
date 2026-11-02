@@ -32,9 +32,9 @@
 
 ### 핵심 가치
 
-- **실시간 알림**: 4시간 주기로 새로운 채용 공고를 즉시 알림
-- **개인화된 설정**: 지역별 필터링, 알림 모드 설정 (전체/선택)
-- **높은 안정성**: 3-tier 캐싱 전략 (Redis → Firestore → Crawling)
+- **정기 알림**: 매일 06~20시 2시간마다 새 공고와 바뀐 공고를 알림
+- **개인화된 설정**: 지역별·사이트별 필터링 (각각 전체/선택)
+- **높은 안정성**: 3-tier 캐싱 전략 (Redis → 사이트 갱신 → Firestore)
 - **확장 가능**: Event-Driven Architecture로 기능 추가 용이
 - **AI 지원**: Hugging Face 무료 AI 모델 활용
 
@@ -44,18 +44,20 @@
 
 ### 1. 공고 요청 (`/recruit-request`)
 - 즉시 채용 공고 조회
-- 3-tier 캐싱 전략 (Redis → Firestore → Crawling)
+- 3-tier 캐싱 전략 (Redis → 사이트 갱신 → Firestore)
 - Discord 임베드 형식 제공
 
 ### 2. 알림 설정 (`/alarm-subscribe`)
 - 개인 맞춤형 알림 설정
-- 알림 모드: 전체 공고 / 특정 지역만
+- 지역: 전체 공고 / 특정 지역만
+- 사이트: 모든 사이트 / 고른 사이트만
 - 지역 선택 및 알림 ON/OFF
 
-### 3. 자동 알림 (4시간 주기)
-- 새 공고 감지 및 알림
+### 3. 자동 알림 (매일 06~20시, 2시간마다)
+- 새 공고와 내용이 바뀐 공고 감지 및 알림
 - SHA-256 해시 기반 변경 감지
-- 구독자 필터링 및 DM 발송
+- 구독자별 사이트·지역 필터링 및 DM 발송
+- 22~04시 사이 바뀐 공고는 06시에 알림
 
 ### 4. 에러 자동 리포팅
 - 시스템 에러 자동 감지 및 관리자 알림
@@ -83,7 +85,7 @@
 ### Database & Cache
 - **Primary DB**: Firebase Firestore
 - **Cache Layer**: Redis 4.7
-- **Caching Strategy**: 3-tier (Redis → Firestore → Crawling)
+- **Caching Strategy**: 3-tier (Redis → 사이트 갱신 → Firestore)
 
 ### External APIs
 - **Discord**: discord.js 14.17
@@ -106,7 +108,7 @@ Firebase Functions (asia-northeast3)
 ├── Entry Points
 │   ├── HTTP (Express)
 │   ├── Discord Events
-│   └── Schedulers (4h/6h)
+│   └── Schedulers (사이트 갱신, 알림)
 │
 ├── Presentation Layer (events/)
 │   └── Discord 이벤트 라우팅
@@ -133,9 +135,9 @@ External Services
 
 ```typescript
 // 타입 안전 이벤트 시스템
-eventBus.emitEvent('RECRUIT_NEW', { addedJobs, updatedJobs, deletedIds });
-eventBus.onEvent('RECRUIT_NEW', async (data) => {
-  await notificationService.notifyNewRecruits(data);
+await eventBus.emitEventAndSettle<NotificationSendEvent>(EventType.NOTIFICATION_SEND, payload);
+eventBus.onEvent<NotificationSendEvent>(EventType.NOTIFICATION_SEND, async (payload) => {
+  await sendNotificationDM(payload.userId, { content, embeds: [embed] });
 });
 ```
 
@@ -154,7 +156,7 @@ Discord User
 events/ (Presentation)
   ↓
 services/ (Application)
-  ↓ Redis → Firestore → Crawling
+  ↓ Redis → 사이트 갱신 → Firestore
 providers/ (Integration)
   ↓
 Discord Response (Embed)
@@ -162,18 +164,22 @@ Discord Response (Embed)
 
 #### 자동 알림 플로우
 ```
-RecruitScheduler (4시간)
+notificationScheduler (매일 06~20시 짝수 정시)
   ↓
-recruitCacheService.setRecruitList()
-  ↓ SHA-256 hash comparison
-diffJobs() → { addedJobs, updatedJobs, deletedIds }
+notificationService.runNotification()
+  ↓ 사이트마다 syncRecruits()
+최신 공고 목록 ↔ 지난 알림 때 목록 (SHA-256 hash comparison)
   ↓
-eventBus.emit('recruit.new')
+notificationService.notifyRecruits()
+  ↓ filter by source & region
+eventBus.emit(NOTIFICATION_SEND)
   ↓
-notificationService.on('recruit.new')
-  ↓ filter by region & mode
+NotificationSendHandler
+  ↓
 사용자별 Discord DM 발송
 ```
+
+사이트 갱신은 알림과 따로 돈다 (`recruitSchedule_sria` 2시간마다, `recruitSchedule_elias` 30분마다). 사이트 갱신은 DM을 보내지 않는다.
 
 ## 프로젝트 구조
 
@@ -286,8 +292,11 @@ npm run register:commands
 옵션:
   - 전체 공고 알림 (ALL)
   - 특정 지역 알림 (SELECTED)
+  - 사이트 선택 (모든 사이트 / 고른 사이트)
   - 알림 켜기/끄기
 ```
+
+지역과 사이트는 [⚙️ 설정 관리] 화면의 [📍 지역 설정]과 [🌐 사이트 설정]에서 바꿉니다.
 
 #### `/admin-broadcast` (관리자 전용)
 모든 구독자에게 공지를 발송합니다.
@@ -387,7 +396,7 @@ pm2 save      # 지금 실행 중인 목록을 저장 → 재부팅 후 그대�
 # 프로덕션 빌드
 npm run build
 
-# Firebase 배포 (recruitSchedule_sria / recruitSchedule_temp 스케줄 트리거만 배포)
+# Firebase 배포 (recruitSchedule_sria / recruitSchedule_elias / notificationScheduler 스케줄 트리거만 배포)
 npm run deploy
 ```
 

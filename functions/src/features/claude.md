@@ -31,7 +31,7 @@ features/
 ```
 alarmSubscribe/
 ├── commands/            # /alarm-subscribe 명령어 정의 (slashCommand.ts, MAX_REGION_COUNT)
-├── constants/           # customId 상수 (alertModeSelect/alertRegionEdit/regionModeChange/subscribeOption/alarmSubscribeModal)
+├── constants/           # customId 상수 (alertModeSelect/alertRegionEdit/regionModeChange/subscribeOption/sourceSelect/alarmSubscribeModal)
 ├── services/            # 구독 비즈니스 로직
 │   └── subscriptionService.ts  # AlarmSubscriptionService (CQS 오케스트레이션)
 ├── ai/                  # 자연어 처리 (Phase 4)
@@ -42,6 +42,24 @@ alarmSubscribe/
 > - Slash 진입점: `events/listeners/commands/onAlarmSubscribe.ts`
 > - 버튼/모달 핸들러: `events/listeners/buttons/`, `events/handlers/{buttons,modals}/`
 > - UI 빌더(버튼/모달/Embed): `providers/discord/builder/`
+
+**알림 설정 화면 구조**:
+
+```
+진입 화면 (/alarm-subscribe)
+├── 🔔 알림 켜기 / 🔕 알림 끄기
+│   └── 첫 구독: 지역 모드 선택 → 사이트 질문 (🌐 사이트 고르기 / 모두 받기)
+└── ⚙️ 설정 관리 (SUBSCRIBE_OPTION:MANAGE) → 설정 관리 화면
+    ├── 📍 지역 설정 (SUBSCRIBE_OPTION:REGION) → 지역 화면
+    │   └── ⬅️ 뒤로 (SUBSCRIBE_OPTION:MANAGE) → 설정 관리 화면
+    ├── 🌐 사이트 설정 (SOURCE_SELECT:OPEN) → 사이트 메뉴
+    │   └── ⬅️ 뒤로 (SUBSCRIBE_OPTION:MANAGE) → 설정 관리 화면
+    └── ⬅️ 뒤로 (SUBSCRIBE_OPTION:BACK) → 진입 화면
+```
+
+- 지역 화면은 설정 관리 화면 아래에 있다. 그래서 `subscribeManageButtons`의 뒤로 버튼은 진입 화면이 아니라 MANAGE를 가리킨다.
+- 첫 구독은 사이트 질문을 띄우기 전에 `sources: { mode: 'ALL' }`로 저장한다. 질문 메시지를 닫아도 모든 사이트의 공고를 받는다. 지역을 고르는 구독자는 사이트 단계를 마친 뒤 지역 화면으로 간다.
+- 사이트를 전부 고르면 `ALL`로 저장한다. 메뉴에 "모든 사이트" 칸이 따로 없어서, 일부만 고른 구독자가 `ALL`로 돌아갈 방법이 이것뿐이다. 0개 저장은 `updateSources`가 막는다.
 
 **작업 내용 (Phase 1.5)**:
 - `subscriptionService.ts`(`AlarmSubscriptionService`) 6개 메서드 구현 (CQS + 이벤트 발행)
@@ -64,18 +82,18 @@ export async function handleNaturalLanguageSubscribe(message: string, userId: st
   if (intent.action === 'subscribe') {
     // "경기도 공고만 받을래" → 알림 설정 변경 (setNotificationSettings는 void)
     await subscriptionStore.setNotificationSettings(userId, {
-      alertMode: 'SELECTED',
-      regions: intent.regions || [],
-      enabled: true
+      enabled: true,
+      regions: { mode: 'SELECTED', values: intent.regions || [] },
+      sources: { mode: 'ALL' }
     });
 
     return { success: true, regions: intent.regions };
   } else if (intent.action === 'unsubscribe') {
     // "알림 끄기" → 알림 비활성화
     await subscriptionStore.setNotificationSettings(userId, {
-      alertMode: 'ALL',
-      regions: [],
-      enabled: false
+      enabled: false,
+      regions: { mode: 'ALL' },
+      sources: { mode: 'ALL' }
     });
 
     return { success: true, disabled: true };
@@ -316,4 +334,4 @@ import { NotificationService } from '@/features/notification';
 
 ---
 
-*최종 수정: 2026-01-05*
+*최종 수정: 2026-11-01*

@@ -13,7 +13,7 @@ graph TD
     subgraph Firebase Functions - asia-northeast3
         HTTP[HTTP Express] --> EventBus[EventBus Core - Node.js EventEmitter]
         Discord[Discord Events] --> EventBus
-        Schedulers[Schedulers 4h/6h] --> EventBus
+        Schedulers[Schedulers 사이트 갱신/알림] --> EventBus
         EventBus --> Services
         EventBus --> Features
         EventBus --> Providers
@@ -151,13 +151,15 @@ crawlers/
 graph TD
     T1[Discord Command] --> PL[Presentation Layer - commandHandler.ts]
     T2[Discord Interaction] --> PL
-    T3[Scheduler 4시간] --> PL
     PL --> AL[Application Layer - recruitRequest handler]
     AL --> RS[recruitService.getRecruitList]
-    RS --> Cache[Redis → Firestore → Crawling 3-tier]
-    AL --> EB[eventBus.emit recruit.requested]
-    EB --> NS[notificationService]
-    NS --> DM[Discord DM 발송]
+    RS --> Cache[Redis → 사이트 갱신 → Firestore 3-tier]
+    T3[사이트 갱신 스케줄러] --> Sync[recruitService.syncRecruits]
+    T4[알림 스케줄러] --> RN[notificationService.runNotification]
+    RN --> Sync
+    RN --> EB[eventBus NOTIFICATION_SEND]
+    EB --> NH[NotificationSendHandler]
+    NH --> DM[Discord DM 발송]
 ```
 
 ### 이벤트 목록
@@ -175,20 +177,49 @@ graph TD
 
 ### 3-Tier Caching Strategy
 
+공고 조회(`recruitService.getRecruitList`)는 아래 순서로 읽는다.
+
 ```mermaid
 graph TD
-    Req[User Request] -->|1st - 5분 TTL| Redis[Redis Cache]
-    Redis -->|Cache Miss| FS[Firestore Cache - 30분 TTL]
-    FS -->|Cache Miss| Crawl[Web Crawling - Playwright]
+    Req[User Request] -->|1st| Redis[Redis 최신 공고 목록 - 6시간 만료, 갱신마다 연장]
+    Redis -->|비어 있음| Sync[사이트 갱신 - syncRecruits]
+    Sync -->|갱신 뒤에도 비어 있음| FS[Firestore 공고 목록 - 읽기만]
 ```
+
+- Redis 최신 공고 목록에 쓰는 곳은 `syncRecruits` 하나다. 사이트 락과 사이트별 비교를 모든 경로가 똑같이 따르게 하기 위해서다.
+- Firestore 목록은 보여 주기만 하고 Redis에 쓰지 않는다. 오래된 목록이 Redis에 섞이지 않게 하기 위해서다.
+- Firestore 공고 목록은 알림 실행이 저장한다. 사이트 갱신은 갱신 시각만 저장한다.
 
 ### 공고 변경 감지
 
-SHA-256 해시 비교로 공고 목록 변경 감지 후 이벤트 발행
+SHA-256 해시 비교로 사이트별 공고 변경을 감지한 뒤 `RECRUIT_CHANGED`를 발행한다. 이 이벤트를 구독하는 핸들러는 없고, DM은 아래 알림 흐름이 보낸다.
+
+### 알림 흐름
+
+사이트 갱신과 알림은 따로 돈다. 사이트 갱신은 공고 조회가 최신 목록을 읽도록 밤에도 돌고, 알림은 낮 시간에만 돈다. 작업 목록은 `schedulers/jobs.ts`의 `SCHEDULED_JOBS` 한 곳이다.
+
+| 작업 | 일정 (한국 시간) | 하는 일 |
+|------|------------------|---------|
+| `recruitSchedule_sria` | 2시간마다 | sria 공고 갱신 |
+| `recruitSchedule_elias` | 30분마다 | elias 공고 갱신 |
+| `notificationScheduler` | 매일 06~20시 짝수 정시 | 사이트 갱신 뒤 구독자별 판정과 발송 |
+
+알림 1회의 순서:
+
+1. 알림 락을 잡고 사이트마다 갱신한다. 최근 5분 안에 갱신했으면 건너뛰고, 진행 중인 갱신은 기다린다.
+2. 최신 공고 목록을 지난 알림 때 목록과 비교해 새 공고와 내용이 바뀐 공고를 찾는다.
+3. 구독자별로 판정해 `NOTIFICATION_SEND`를 발행한다. 숨긴 사이트를 빼고 정렬한 뒤 구독자의 `sources`·`regions`로 거르고, 바뀐 공고가 있는 구독자에게 조건에 맞는 공고 전체를 보낸다.
+4. 발송이 끝난 뒤 지난 알림 때 목록과 Firestore 공고 목록을 저장한다. 발송 중 멈추면 다음 알림이 다시 보낸다.
+
+| Redis 키 | 용도 | 만료 |
+|----------|------|------|
+| `recruit:notified:all` | 지난 알림 때 목록 (공고 ID → 비교값) | 없음 |
+| `recruit:lastSync:{source}` | 사이트별 마지막 갱신 성공 시각 | 1일 |
+| `lock:notification` | 알림 락 | 5분 |
 
 ### Firestore 컬렉션
 
-- **users/{userId}/notifications/settings** — 알림 설정 (지역, 모드)
+- **users/{userId}/notifications/settings** — 알림 설정 (켜짐 여부, 지역, 사이트)
 - **errors/{errorId}** — 에러 로그
 - **broadcasts/{broadcastId}** — 공지 이력
 - **ai_nlp_cache/{cacheId}** — AI 의도 분석 캐시 (7일 TTL)

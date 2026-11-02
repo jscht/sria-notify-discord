@@ -89,25 +89,29 @@ export interface RecruitChangedEvent extends BaseEvent {
 
 ---
 
-### handlers/ (Phase 1.7)
+### handlers/ (Phase 1.8)
 **이벤트 핸들러 등록**
 
 ```
 handlers/
-├── NotificationEventHandler.ts  # recruit:changed → 알림 발송
-├── ErrorEventHandler.ts          # error.critical → 관리자 알림
-└── index.ts                      # 전체 핸들러 export
+└── NotificationSendHandler.ts  # NOTIFICATION_SEND → DM 발송 → NOTIFICATION_SENT 발행
 ```
 
-**예시: NotificationEventHandler.ts**
-```typescript
-import { eventBus } from '../EventBus';
-import { EventType, RecruitChangedEvent } from '../types';
-import { notificationService } from '@/services/notificationService';
+`RECRUIT_CHANGED`를 구독하는 핸들러는 없다. 사이트 갱신은 DM을 보내지 않고, 알림 스케줄러(`notificationService.runNotification`)가 `NOTIFICATION_SEND`를 발행한다.
 
-export function registerNotificationHandlers() {
-  eventBus.onEvent<RecruitChangedEvent>(EventType.RECRUIT_CHANGED, async (payload) => {
-    await notificationService.notifyNewRecruits(payload.data);
+**예시: NotificationSendHandler.ts**
+```typescript
+import { eventBus, EventType } from '@/events/bus';
+import type { NotificationSendEvent } from '@/events/bus';
+
+export function registerNotificationSendHandlers(): void {
+  eventBus.onEvent<NotificationSendEvent>(EventType.NOTIFICATION_SEND, async (payload) => {
+    try {
+      // payload.displays(RecruitDisplay[])로 배너 문구와 embed를 만들어 DM을 보낸다
+      // 결과는 NOTIFICATION_SENT로 발행한다
+    } catch (error) {
+      // 발행한 쪽으로 다시 던지지 않는다
+    }
   });
 }
 ```
@@ -118,23 +122,19 @@ export function registerNotificationHandlers() {
 **핸들러 자동 등록**
 
 ```typescript
-import { registerNotificationHandlers } from '../handlers/NotificationEventHandler';
-import { registerErrorHandlers } from '../handlers/ErrorEventHandler';
+import { registerNotificationSendHandlers } from '../handlers/NotificationSendHandler';
 
-export function registerAllEventHandlers() {
-  registerNotificationHandlers();
-  registerErrorHandlers();
+export function registerAllEventHandlers(): void {
+  if (handlersRegistered) return;  // 중복 등록 방지
 
-  console.log('[EventBus] All event handlers registered');
+  registerNotificationSendHandlers();
+  handlersRegistered = true;
 }
 ```
 
-**app/index.ts에서 호출**:
-```typescript
-import { registerAllEventHandlers } from '@/eventBus/utils/registerEventHandlers';
-
-registerAllEventHandlers();  // 모듈 레벨에서 1회만 실행
-```
+**호출 위치**: Firebase·Redis 초기화가 끝난 뒤 부른다.
+- 스케줄러: `app/scheduler.ts`의 `ready()`
+- 게이트웨이: `app/bootstrapGateway.ts`
 
 ---
 
@@ -187,4 +187,4 @@ export const myFunction = https.onRequest((req, res) => {
 
 ---
 
-*최종 수정: 2026-01-05*
+*최종 수정: 2026-11-01*
