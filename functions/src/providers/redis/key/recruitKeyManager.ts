@@ -1,3 +1,4 @@
+import type { RecruitSource } from "@/common/types";
 import { SERVICE_NAME } from "../constants/serviceName";
 import { BaseKeyManager } from "./baseKeyManager";
 
@@ -14,6 +15,10 @@ export class RecruitKeyManager extends BaseKeyManager {
     return {
       list: this.generateKey(["city:all"]),
       list_hash: this.generateKey(["hash", "city:all"]),
+      /** 지난 알림 때 목록 (공고 ID → 비교값) */
+      notified: this.generateKey(["notified", "all"]),
+      /** 사이트별 마지막 갱신 성공 시각 (epoch ms) */
+      lastSync: (source: RecruitSource) => this.generateKey(["lastSync", source]),
     };
   }
 }

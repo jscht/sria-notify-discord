@@ -1,5 +1,7 @@
-import type { EliasRecruit } from "@/common/types";
+import type { DisplayField, EliasRecruit, RecruitmentStatus } from "@/common/types";
+import { toKorean } from "@/common/utils/cityName";
 import type { EliasField, EliasValue } from "./eliasFields";
+import type { EliasTitle } from "./eliasTitles";
 
 /**
  * elias 규칙 엔진 — stateless 결정적 시뮬레이션. (Phase 1.10)
@@ -15,12 +17,12 @@ export interface EliasRuleConfig {
   lifespanTicks: number;
   /** 한 경계에서 생성 개수 확률. */
   spawnProbs: { 1: number; 2: number; 3: number };
-  /** 내용 확률 수정 확률(0~1). */
-  editProb: number;
-  /** 확률 삭제(영구) 확률(0~1). */
+  /** 접수중이 종료로 바뀌는 확률(0~1). 제거 확률과 따로 계산한다. */
+  closeProb: number;
+  /** 공고가 목록에서 빠지는 확률(0~1). */
   deleteProb: number;
-  /** 제목 후보(필수 속성 값 풀). */
-  titles: string[];
+  /** 공고 목록(지역·제목·게시자). */
+  titles: EliasTitle[];
   /** 추가 속성 규칙. */
   fields: EliasField[];
 }
@@ -60,19 +62,34 @@ function spawnCount(s: number, probs: EliasRuleConfig["spawnProbs"]): number {
 }
 
 /**
- * 확률 삭제(영구): (born, born+lifespan) 중 최초로 임계 미만이 되는 tick. 없으면 null.
+ * (born, born+lifespan) 중 처음으로 확률에 걸린 tick. 없으면 null.
  * born 당일은 제외 — 공고는 최소 한 경계는 노출된다(스폰 즉시 소멸 방지).
+ * 제거("del")와 종료("close")는 난수 이름이 달라 서로 영향을 주지 않는다.
  */
-function firstDeathTick(
+function firstHitTick(
   id: string,
+  kind: "del" | "close",
   born: number,
   lifespan: number,
-  deleteProb: number
+  prob: number
 ): number | null {
   for (let u = born + 1; u < born + lifespan; u++) {
-    if (rand(id, "del", u) < deleteProb) return u;
+    if (rand(id, kind, u) < prob) return u;
   }
   return null;
+}
+
+const KST_OFFSET_MS = 9 * 60 * 60_000;
+
+/**
+ * epoch ms → `"YYYY.MM.DD HH:mm"` (한국 시간).
+ * 배포된 함수는 UTC, 로컬은 한국 시간으로 돌기 때문에 `getUTC*` + 9시간으로 계산해
+ * 서버 시간대와 상관없이 같은 글자를 만든다.
+ */
+function formatKst(ms: number): string {
+  const d = new Date(ms + KST_OFFSET_MS);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getUTCFullYear()}.${p(d.getUTCMonth() + 1)}.${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}`;
 }
 
 function resolveValue(v: EliasValue, id: string, key: string): unknown {
@@ -92,44 +109,49 @@ export function generateEliasRecruits(now: number, cfg: EliasRuleConfig): EliasR
   // 후보 = [t-lifespan, t] 경계에서 스폰된 공고(유계 순회).
   for (let s = Math.max(0, t - lifespan); s <= t; s++) {
     const n = spawnCount(s, cfg.spawnProbs);
+    const used = new Set<number>(); // 이 회차에서 고른 줄
+
     for (let idx = 0; idx < n; idx++) {
       const id = `elias:${s}-${idx}`;
 
-      // 확정 삭제: 모집기간 종료.
+      // ⚠️ 줄 선택은 제거·만료 판정보다 먼저 한다.
+      //    판정 뒤에 고르면, 앞 공고가 제거된 회차부터 뒤 공고의 줄이 바뀌어
+      //    "변경됨"으로 잡힌다.
+      if (used.size >= cfg.titles.length) break; // 줄을 다 썼으면 이 회차는 더 만들지 않는다
+      let titleIdx = Math.floor(rand(id, "title") * cfg.titles.length);
+      while (used.has(titleIdx)) titleIdx = (titleIdx + 1) % cfg.titles.length;
+      used.add(titleIdx);
+
+      // 모집 기간 끝: 목록에서 빠진다.
       if (t >= s + lifespan) continue;
-      // 확률 삭제(영구): 최초 히트 이후로는 영구히 사라짐.
-      const death = firstDeathTick(id, s, lifespan, cfg.deleteProb);
-      if (death !== null && t >= death) continue;
+      // 제거: 처음 걸린 시점부터 목록에서 빠진다.
+      const removedAt = firstHitTick(id, "del", s, lifespan, cfg.deleteProb);
+      if (removedAt !== null && t >= removedAt) continue;
+      // 종료: 처음 걸린 시점부터 모집 기간 끝까지 "종료"로 남는다.
+      const closedAt = firstHitTick(id, "close", s, lifespan, cfg.closeProb);
+      const status: RecruitmentStatus = closedAt !== null && t >= closedAt ? "종료" : "접수중";
 
-      const age = t - s;
-      const remaining = lifespan - age; // 남은 틱(>=1)
-      const title = cfg.titles.length ?
-        String(cfg.titles[Math.floor(rand(id, "title") * cfg.titles.length)]) :
-        "무제 공고";
+      const pick = cfg.titles[titleIdx];
+      const title = `[${toKorean(pick.region)}] ${pick.title}`;
 
-      const posting: EliasRecruit = {
+      // 사용자 정의 속성(eliasFields): 포함(무조건/확률) + 값(고정/풀 랜덤).
+      const fields: DisplayField[] = [];
+      for (const f of cfg.fields) {
+        const include = f.required || rand(id, "field", f.key) < (f.chance ?? 0);
+        if (!include) continue;
+        const v = resolveValue(f.value, id, f.key);
+        if (v !== undefined) fields.push({ name: f.key, value: String(v) });
+      }
+
+      out.push({
         id,
         source: "elias",
         title,
-        // 확정 수정(진행도): 경과에 따라 결정적으로 변함 → 매 경계 updated.
-        dDay: remaining <= 1 ? "오늘마감" : `D-${remaining - 1}`,
-        dayTxt: `모집 ${lifespan}틱 · 경과 ${age}틱`,
-        recruitmentStatus: remaining <= 1 ? "발표중" : "접수중",
-        url: "",
-      };
-
-      // 확률 수정: 특정 경계에서 내용 토글.
-      if (rand(id, "edit", t) < cfg.editProb) {
-        posting.badge = "급구";
-      }
-
-      // 사용자 정의 속성(spec): 포함(무조건/확률) + 값(고정/풀 랜덤).
-      for (const f of cfg.fields) {
-        const include = f.required || rand(id, "field", f.key) < (f.chance ?? 0);
-        if (include) posting[f.key] = resolveValue(f.value, id, f.key);
-      }
-
-      out.push(posting);
+        postedBy: pick.postedBy,
+        period: `${formatKst(s * cfg.unitMs)} ~ ${formatKst((s + lifespan) * cfg.unitMs)}`,
+        status,
+        ...(fields.length ? { fields } : {}),
+      });
     }
   }
 

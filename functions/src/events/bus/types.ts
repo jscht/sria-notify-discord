@@ -4,9 +4,9 @@
  * 비즈니스 이벤트 타입과 페이로드 인터페이스를 정의합니다.
  */
 
-import type { Job, JobDiffResult } from "@/common/types/job.d";
+import type { JobDiffResult } from "@/common/types/job.d";
 import type { CityEn } from "@/common/types/city.d";
-import type { AlarmSubscription, Recruit } from "@/common/types";
+import type { AlarmSubscription, Recruit, RecruitDisplay } from "@/common/types";
 
 
 /**
@@ -112,7 +112,8 @@ export interface NotificationUnsubscribeEvent extends BaseEvent {
 // 알림 발송 시작 이벤트
 export interface NotificationSendEvent extends BaseEvent {
   userId: string;
-  jobs: Job[];
+  /** 구독 조건에 맞는 공고 전체. 바뀌지 않은 공고도 포함하고 발송 순서로 정렬되어 있다 */
+  displays: RecruitDisplay[];
   settings: AlarmSubscription;
 }
 

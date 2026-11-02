@@ -1,8 +1,7 @@
 import { ActionRowBuilder, ButtonBuilder } from "discord.js";
-import { AlertMode } from "@/common/types";
 import type { AlarmSubscription } from "@/common/types";
 import { showSubscribeOptionButtons } from "@/providers/discord/builder/buttons/showSubscribeOptionButtons";
-import { formatRegionList } from "@/providers/discord/builder/buttons/formatRegionList";
+import { regionSummary, sourceSummary } from "@/providers/discord/builder/subscriptionSummary";
 
 /**
  * 알림 설정 진입 화면(content + 옵션 버튼)을 구성한다.
@@ -18,11 +17,9 @@ export function buildSubscribeEntryView(sub: AlarmSubscription | null): {
 } {
   let content: string;
 
-  if (sub?.enabled && sub.alertMode === AlertMode.ALL) {
-    content = "🔔 알림 **켜짐** · 🌐 전체 지역";
-  } else if (sub?.enabled && sub.alertMode === AlertMode.SELECTED) {
-    content = `🔔 알림 **켜짐** · 📍 ${formatRegionList(sub.regions)}`;
-  } else if (sub && !sub.enabled) {
+  if (sub?.enabled) {
+    content = `🔔 알림 **켜짐** · 📍 ${regionSummary(sub.regions)} · 🌐 ${sourceSummary(sub.sources)}`;
+  } else if (sub) {
     content = "🔕 알림 **꺼짐** — 다시 켜려면 '알림 켜기'를 눌러주세요.";
   } else {
     content = "🔔 알림을 시작하거나 설정을 변경할 수 있어요.";

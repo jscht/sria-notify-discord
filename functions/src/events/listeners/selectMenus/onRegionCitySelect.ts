@@ -1,6 +1,7 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import type { StringSelectMenuInteraction } from "discord.js";
 import type { CityEn } from "@/common/types";
+import { selectedValues } from "@/common/utils/alarmFilter";
 import { alarmSubscriptionService } from "@/features/alarmSubscribe/services/subscriptionService";
 import { MAX_REGION_COUNT } from "@/features/alarmSubscribe/commands/slashCommand";
 import { subscribeOptionActionId } from "@/features/alarmSubscribe/constants";
@@ -44,7 +45,7 @@ export async function onRegionCitySelect(interaction: StringSelectMenuInteractio
       return;
     }
 
-    const current = sub.regions;
+    const current = selectedValues(sub.regions);
 
     if (current.includes(cityEn)) {
       await interaction.editReply({

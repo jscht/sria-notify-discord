@@ -113,6 +113,12 @@ const JejuCities = {
   seogwipo: "서귀포",
 } as const;
 
+// elias 전용 지역. 구독 지역 이름이 공고 제목에 있어야 지역 필터를 통과하므로 여기에 적는다
+const EliasRegions = {
+  fairyKingdom: "요정 왕국",
+  worldTreeOrder: "세계수 교단",
+} as const;
+
 // 모든 도시를 합친 객체
 export const CITIES = {
   ...MetropolitanCities,
@@ -125,6 +131,7 @@ export const CITIES = {
   ...GyeongbukCities,
   ...GyeongnamCities,
   ...JejuCities,
+  ...EliasRegions,
 } as const;
 
 // 권역 그룹 (권역→시 2단계 SelectMenu 구성용)
@@ -139,6 +146,7 @@ export const CITY_GROUPS = {
   gyeongbuk: { label: "경북", cities: GyeongbukCities },
   gyeongnam: { label: "경남", cities: GyeongnamCities },
   jeju: { label: "제주", cities: JejuCities },
+  eliasRegions: { label: "엘리아스", cities: EliasRegions },
 } as const;
 
 export type CityGroupKey = keyof typeof CITY_GROUPS;

@@ -1,6 +1,7 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import type { StringSelectMenuInteraction } from "discord.js";
 import type { CityEn } from "@/common/types";
+import { selectedValues } from "@/common/utils/alarmFilter";
 import { alarmSubscriptionService } from "@/features/alarmSubscribe/services/subscriptionService";
 import { subscribeOptionActionId } from "@/features/alarmSubscribe/constants";
 import {
@@ -45,7 +46,7 @@ export async function onRegionRemoveSelect(
 
     const updated = await alarmSubscriptionService.updateRegions(
       userId,
-      sub.regions.filter((r) => r !== cityEn)
+      selectedValues(sub.regions).filter((r) => r !== cityEn)
     );
     await renderSubscribeManage(interaction, updated);
   } catch (e) {

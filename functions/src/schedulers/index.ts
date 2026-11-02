@@ -4,10 +4,14 @@ export { RecruitScheduler } from "./RecruitScheduler";
 export { BaseScheduler } from "./base/BaseScheduler";
 
 // 팩토리
-export { createRecruitScheduler } from "./factory";
+export { createScheduler } from "./factory";
+
+// 작업 목록
+export { SCHEDULED_JOBS } from "./jobs";
+export type { ScheduledJob } from "./jobs";
 
 // 유틸리티 함수들
-export { initializeSchedulers, setupGracefulShutdown } from "./utils";
+export { initializeSchedulers, registerSchedulers, setupGracefulShutdown } from "./utils";
 export { toScheduleExpression, toIntervalMs } from "./utils";
 
 // 타입들

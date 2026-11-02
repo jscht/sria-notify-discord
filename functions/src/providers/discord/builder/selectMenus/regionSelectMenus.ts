@@ -6,8 +6,8 @@ import type { CityEn } from "@/common/types";
  * 1단계 — 권역 선택 메뉴.
  *
  * customId `region-group-select`. 선택값(`values[0]`)은 `CityGroupKey`.
- * 단일 StringSelectMenu는 25개 옵션 한계라 75개 시를 직접 노출할 수 없으므로
- * 권역(10) → 시(≤19) 2단계로 분할한다.
+ * 단일 StringSelectMenu는 25개 옵션 한계라 77개 시를 직접 노출할 수 없으므로
+ * 권역(11) → 시(≤19) 2단계로 분할한다.
  */
 export function regionGroupSelectMenu(): ActionRowBuilder<StringSelectMenuBuilder> {
   const menu = new StringSelectMenuBuilder()

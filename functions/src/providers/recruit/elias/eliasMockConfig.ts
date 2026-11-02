@@ -14,10 +14,10 @@ export interface EliasConfig extends EliasRuleConfig {
 export const eliasConfig: EliasConfig = {
   intervalMinutes: 30,
   unitMs: 30 * 60_000, // 시간 한 칸(틱) = 30분
-  lifespanTicks: 48, // 기본 모집기간 = 48틱(=24시간)
-  spawnProbs: { 1: 0.4, 2: 0.1, 3: 0.02 }, // 1개 40% · 2개 10% · 3개 2% (나머지 0)
-  editProb: 0.3, // 30% 확률로 내용 수정
-  deleteProb: 0.1, // 10% 확률로 조기 삭제
+  lifespanTicks: 24, // 모집 기간 12시간
+  spawnProbs: { 1: 0.45, 2: 0.12, 3: 0.03 }, // 나머지 40%는 0개
+  closeProb: 0.1, // 접수중 → 종료 (수정)
+  deleteProb: 0.05, // 목록에서 제거
   titles: eliasTitles,
   fields: eliasFields,
 };

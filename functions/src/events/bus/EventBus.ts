@@ -101,8 +101,8 @@ export class EventBus extends EventEmitter {
    *
    * @example
    * ```typescript
-   * eventBus.onEvent<RecruitChangedEvent>(EventType.RECRUIT_CHANGED, async (payload) => {
-   *   await notificationService.notifyNewRecruits(payload);
+   * eventBus.onEvent<NotificationSendEvent>(EventType.NOTIFICATION_SEND, async (payload) => {
+   *   await sendNotificationDM(payload.userId, { content: "새 공고 알림" });
    * });
    * ```
    */

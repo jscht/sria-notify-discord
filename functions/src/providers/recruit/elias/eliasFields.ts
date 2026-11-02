@@ -5,15 +5,15 @@
  * 생성기가 공고를 만들 때 그대로 적용한다.
  *
  * 예)
- *   { key: "badge", required: false, chance: 0.3, value: { kind: "pick", pool: ["급구", "우대"] } }
- *   { key: "pay",   required: true,                value: { kind: "fixed", value: "시급 협의" } }
+ *   { key: "급여", required: true, value: { kind: "fixed", value: "시급 협의" } }
+ *   { key: "근무 시간", required: false, chance: 0.3, value: { kind: "pick", pool: ["오전", "오후"] } }
  */
 export type EliasValue =
   | { kind: "fixed"; value: unknown } // 항상 이 값
   | { kind: "pick"; pool: unknown[] }; // 풀에서 랜덤(시드)
 
 export interface EliasField {
-  /** 속성 이름(공고 객체의 key). */
+  /** 화면에 보일 이름. 공고의 `fields`에 `{ name: key, value }`로 들어간다. */
   key: string;
   /** true=무조건 포함 / false(기본)=확률 포함. */
   required?: boolean;

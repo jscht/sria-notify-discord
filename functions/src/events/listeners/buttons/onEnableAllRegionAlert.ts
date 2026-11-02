@@ -7,15 +7,17 @@ import {
   disableMessageComponents,
   restoreMessageComponents,
 } from "@/providers/discord/builder/disableMessageComponents";
+import { renderFirstSourceQuestion } from "./firstSourceStep";
 
 /**
  * ALERT_MODE:ALL 버튼 핸들러.
  *
  * 전체 지역 알림(ALL) 모드를 확정한다.
- * - 신규 사용자(모드 null): `subscribe`로 신규 활성화(이벤트 발행은 서비스 내부)
+ * - 신규 사용자(모드 null): `subscribe`로 사이트 "전체"로 활성화한 뒤 사이트 질문을 띄운다
+ *   (이벤트 발행은 서비스 내부)
  * - 기존 사용자가 다른 모드: `updateMode`로 ALL 전환
  * 이미 ALL이면 추가 쓰기 없이 현재 구독을 다시 조회한다.
- * 확정 후 완료 토스트와 함께 진입 화면으로 복귀해 막다른 화면을 없앤다.
+ * 기존 사용자는 완료 토스트와 함께 진입 화면으로 복귀해 막다른 화면을 없앤다.
  */
 export async function onEnableAllRegionAlert(interaction: ButtonInteraction): Promise<void> {
   const original = interaction.message.components;
@@ -30,9 +32,11 @@ export async function onEnableAllRegionAlert(interaction: ButtonInteraction): Pr
     if (current === null) {
       sub = await alarmSubscriptionService.subscribe(userId, {
         enabled: true,
-        alertMode: AlertMode.ALL,
-        regions: [],
+        regions: { mode: AlertMode.ALL },
+        sources: { mode: AlertMode.ALL },
       });
+      await renderFirstSourceQuestion(interaction, sub);
+      return;
     } else if (current !== AlertMode.ALL) {
       sub = await alarmSubscriptionService.updateMode(userId, AlertMode.ALL);
     } else {

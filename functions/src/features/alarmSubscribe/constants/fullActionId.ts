@@ -3,9 +3,11 @@ import {
   REGION_MODE_CHANGE_PREFIX,
   SUBSCRIBE_OPTION_PREFIX,
   ALERT_MODE_SELECT_PREFIX,
+  SOURCE_SELECT_PREFIX,
   alertModeSelectActionId,
   alertRegionEditActionId,
   regionModeChangeActionId,
+  sourceSelectActionId,
   subscribeOptionActionId,
 } from "../constants";
 
@@ -25,12 +27,18 @@ export const fullActionId = {
   // SUBSCRIBE_OPTION
   SUBSCRIBE_OPTION_ENABLE: subscribeOptionActionId.ENABLE,
   SUBSCRIBE_OPTION_MANAGE: subscribeOptionActionId.MANAGE,
+  SUBSCRIBE_OPTION_REGION: subscribeOptionActionId.REGION,
   SUBSCRIBE_OPTION_DISABLE: subscribeOptionActionId.DISABLE,
   SUBSCRIBE_OPTION_BACK: subscribeOptionActionId.BACK,
 
   // ALERT_MODE
   ALERT_MODE_ALL: alertModeSelectActionId.ALL,
   ALERT_MODE_SELECTED: alertModeSelectActionId.SELECTED,
+
+  // SOURCE_SELECT
+  SOURCE_SELECT_OPEN: sourceSelectActionId.OPEN,
+  SOURCE_SELECT_PICK: sourceSelectActionId.PICK,
+  SOURCE_SELECT_KEEP_ALL: sourceSelectActionId.KEEP_ALL,
 } as const;
 
 // ============================================
@@ -59,3 +67,6 @@ export type RegionModeChangeActionId = ExtractByPrefix<typeof REGION_MODE_CHANGE
 
 /** "SUBSCRIBE_OPTION:ENABLE" | "SUBSCRIBE_OPTION:MANAGE" */
 export type SubscribeOptionActionId = ExtractByPrefix<typeof SUBSCRIBE_OPTION_PREFIX>;
+
+/** "SOURCE_SELECT:OPEN" | "SOURCE_SELECT:PICK" | "SOURCE_SELECT:KEEP_ALL" */
+export type SourceSelectActionId = ExtractByPrefix<typeof SOURCE_SELECT_PREFIX>;

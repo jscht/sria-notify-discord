@@ -5,8 +5,7 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import { registerGlobalErrorHandlers } from "./registerGlobalErrorHandlers";
 import { initFunctionProviders } from "@/providers";
 import { registerAllEventHandlers } from "@/events";
-import { createRecruitScheduler, toScheduleExpression } from "@/schedulers";
-import { getSourceConfig } from "@/providers/recruit";
+import { createScheduler, SCHEDULED_JOBS, toScheduleExpression } from "@/schedulers";
 
 // 최후의 거름망(A): init 중 발생하는 미처리 rejection/예외도 잡도록 가장 먼저 등록한다.
 registerGlobalErrorHandlers();
@@ -20,43 +19,39 @@ registerGlobalErrorHandlers();
 const FUNCTION_SECRETS = ["FB_PRIVATE_KEY", "DISCORD_BOT_TOKEN", "REDIS_URL"];
 
 // 함수 프로세스 부트스트랩: REST 전용 provider init 후 EventBus 핸들러 등록.
-// 메모이즈된 ready promise를 각 트리거가 await한다.
-const ready = initFunctionProviders().then(() => registerAllEventHandlers());
+// 처음 부를 때 시작한다. 파일을 불러오는 것만으로 Firebase·Redis 연결이 시작되지 않아,
+// 내보낸 함수 이름을 테스트로 확인할 수 있다.
+let readyPromise: Promise<void> | undefined;
+const ready = () =>
+  (readyPromise ??= initFunctionProviders().then(() => registerAllEventHandlers()));
 
 /**
- * 프로덕션 공고 갱신 트리거 — **사이트별** (소스 프로바이더 수집→소스별 diff→DM).
- * 각 사이트 config의 schedule을 주기로 사용(배포 시점 확정 → 변경 시 redeploy).
+ * 프로덕션 예약 트리거 — 작업 목록(`SCHEDULED_JOBS`)의 작업마다 함수 하나를 내보낸다.
+ * 일정은 배포 시점에 확정되므로 바꾸면 다시 배포한다.
+ * `runOnce()`는 예외를 삼키고 `RECRUIT_SYNC_*` 이벤트를 발행한다.
  */
-// eslint-disable-next-line camelcase -- 배포되는 Firebase Function 이름(함수 ID). 리네임 시 스케줄 함수가 교체됨.
-export const recruitSchedule_sria = onSchedule(
-  {
-    schedule: toScheduleExpression(getSourceConfig("sria").intervalMinutes),
-    secrets: FUNCTION_SECRETS,
-  },
-  async () => {
-    await ready;
-    await createRecruitScheduler("sria").runOnce();
-  }
-);
+for (const job of SCHEDULED_JOBS) {
+  exports[job.functionName] = onSchedule(
+    {
+      schedule: job.schedule ?? toScheduleExpression(job.intervalMinutes),
+      timeZone: "Asia/Seoul",
+      timeoutSeconds: job.timeoutSeconds,
+      secrets: FUNCTION_SECRETS,
+    },
+    async () => {
+      await ready();
+      await createScheduler(job).runOnce();
+    }
+  );
+}
 
-// eslint-disable-next-line camelcase -- 배포되는 Firebase Function 이름(함수 ID). 리네임 시 스케줄 함수가 교체됨.
-export const recruitSchedule_elias = onSchedule(
-  {
-    schedule: toScheduleExpression(getSourceConfig("elias").intervalMinutes),
-    secrets: FUNCTION_SECRETS,
-  },
-  async () => {
-    await ready;
-    await createRecruitScheduler("elias").runOnce();
-  }
-);
-
-// 로컬 E2E — env 게이팅. 실행: RUN_SCHEDULER_ONCE=true (양 소스 1회씩)
+// 로컬 E2E — env 게이팅. 실행: RUN_SCHEDULER_ONCE=true (목록 순서대로 1회씩, 사이트 갱신 뒤 알림)
 if (process.env.RUN_SCHEDULER_ONCE === "true") {
-  ready
+  ready()
     .then(async () => {
-      await createRecruitScheduler("sria").runOnce();
-      await createRecruitScheduler("elias").runOnce();
+      for (const job of SCHEDULED_JOBS) {
+        await createScheduler(job).runOnce();
+      }
     })
     .catch((e) => globalLogger.error("로컬 스케줄러 1회 실행 실패:", e));
 }

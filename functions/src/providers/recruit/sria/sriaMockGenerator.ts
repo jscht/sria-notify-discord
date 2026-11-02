@@ -11,13 +11,16 @@ import { sriaConfig, type SriaMockConfig } from "./sriaMockConfig";
  */
 export function generateSriaRecruits(config: SriaMockConfig = sriaConfig): SriaRecruit[] {
   const base = ENV.SRIA_URL ?? "";
-  return config.postings.map((p, i) => {
+  return config.postings.map((p, i): SriaRecruit => {
     const localId = config.idBase + i;
     const href = toHref(localId);
     return {
       id: `sria:${localId}`,
       source: "sria",
       title: p.title,
+      postedBy: p.postedBy,
+      // 공고 목록은 Firestore에도 저장되고 Firestore는 undefined를 거부하므로, 값이 있을 때만 넣는다
+      ...(p.postedAt ? { postedAt: p.postedAt } : {}),
       url: base ? `${base}${href}` : href,
       dDay: p.dDay,
       dayTxt: p.dayTxt,

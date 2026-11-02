@@ -1,5 +1,6 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import type { ButtonInteraction, CommandInteraction } from "discord.js";
+import { selectedValues } from "@/common/utils/alarmFilter";
 import type { SubscribeCommand } from "@/features/alarmSubscribe/types";
 import { alarmSubscriptionService } from "@/features/alarmSubscribe/services/subscriptionService";
 import { subscribeOptionActionId } from "@/features/alarmSubscribe/constants";
@@ -45,7 +46,9 @@ export async function subscribeRemove(payload: SubscribeRemovePayload): Promise<
     return;
   }
 
-  if (sub.regions.length === 0) {
+  const regions = selectedValues(sub.regions);
+
+  if (regions.length === 0) {
     await interaction.editReply({
       content: "제거할 지역이 없어요.",
       components: subscribeManageButtons(sub),
@@ -55,6 +58,6 @@ export async function subscribeRemove(payload: SubscribeRemovePayload): Promise<
 
   await interaction.editReply({
     content: "제거할 지역을 선택하세요",
-    components: [regionRemoveSelectMenu(sub.regions)],
+    components: [regionRemoveSelectMenu(regions)],
   });
 }

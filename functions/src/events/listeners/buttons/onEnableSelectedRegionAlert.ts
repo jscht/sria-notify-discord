@@ -9,14 +9,16 @@ import {
   restoreMessageComponents,
 } from "@/providers/discord/builder/disableMessageComponents";
 import { renderSubscribeManage } from "@/events/listeners/buttons/renderSubscribeManage";
+import { renderFirstSourceQuestion } from "./firstSourceStep";
 
 /**
  * ALERT_MODE:SELECTED 버튼 핸들러.
  *
  * 선택 지역 알림(SELECTED) 모드를 확정하고 지역 편집 UI로 진입한다.
- * - 신규 사용자(모드 null): `subscribe`로 신규 활성화
+ * - 신규 사용자(모드 null): `subscribe`로 사이트 "전체"로 활성화한 뒤 사이트 질문을 띄운다.
+ *   지역 편집 UI는 사이트 단계를 마친 뒤에 나온다
  * - 기존 사용자가 다른 모드: `updateMode`로 SELECTED 전환
- * 확정 후 현재 지역 목록과 지역 편집 버튼을 노출한다.
+ * 기존 사용자는 확정 후 현재 지역 목록과 지역 편집 버튼을 노출한다.
  */
 export async function onEnableSelectedRegionAlert(interaction: ButtonInteraction): Promise<void> {
   const original = interaction.message.components;
@@ -31,9 +33,11 @@ export async function onEnableSelectedRegionAlert(interaction: ButtonInteraction
     if (current === null) {
       sub = await alarmSubscriptionService.subscribe(userId, {
         enabled: true,
-        alertMode: AlertMode.SELECTED,
-        regions: [],
+        regions: { mode: AlertMode.SELECTED, values: [] },
+        sources: { mode: AlertMode.ALL },
       });
+      await renderFirstSourceQuestion(interaction, sub);
+      return;
     } else if (current !== AlertMode.SELECTED) {
       sub = await alarmSubscriptionService.updateMode(userId, AlertMode.SELECTED);
     } else {

@@ -22,3 +22,8 @@ export {
 export {
   SUBSCRIBE_OPTION_PREFIX, SubscribeOptionAction, subscribeOptionActionId,
 } from "./subscribeOptionAction";
+
+// Source Select
+export {
+  SOURCE_SELECT_PREFIX, SourceSelectAction, sourceSelectActionId,
+} from "./sourceSelectAction";

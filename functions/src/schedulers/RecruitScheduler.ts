@@ -1,60 +1,53 @@
 import { BaseScheduler } from "./base/BaseScheduler";
-import { RecruitService } from "@/services/recruitService";
-import type { RecruitSource } from "@/common/types";
 import type { SchedulerConfig, WorkResult } from "./types";
 
 /**
- * 공고 갱신 스케줄러. (Phase 1.10 재정의 — 소스별 프로바이더 수집)
- * 사이트별로 인스턴스를 두어 소스별 스케줄·diff를 지원한다.
+ * 받은 `run`을 주기마다 실행하는 범용 스케줄러.
+ * 사이트 갱신과 알림이 같은 클래스를 쓴다. 어느 작업인지는 스케줄러 이름으로 구분한다.
  */
 export class RecruitScheduler extends BaseScheduler {
-  private recruitService: RecruitService;
-  private readonly source: RecruitSource;
+  private readonly run: () => Promise<number>;
 
-  // workIntervalMs는 필수 — 소스 config(intervalMinutes) 단일 출처에서 파생해 주입한다
-  // (createRecruitScheduler). 하드코딩 기본값을 두지 않아 주기 드리프트를 막는다.
-  constructor(source: RecruitSource, workIntervalMs: number) {
+  // workIntervalMs는 필수 — 작업 목록(SCHEDULED_JOBS)의 intervalMinutes에서 파생해 주입한다
+  // (createScheduler). 하드코딩 기본값을 두지 않아 주기 드리프트를 막는다.
+  constructor(name: string, workIntervalMs: number, run: () => Promise<number>) {
     const config: SchedulerConfig = {
-      name: `RecruitScheduler:${source}`,
+      name,
       workIntervalMs,
       logIntervalMs: 60 * 1000, // 1분마다 상태 로깅
     };
 
     super(config);
-    this.source = source;
-    this.recruitService = new RecruitService();
+    this.run = run;
   }
 
   /**
-   * 소스 프로바이더에서 공고를 수집→diff→(변경 시)RECRUIT_CHANGED 발행.
+   * 받은 작업을 실행하고 돌려받은 처리 건수를 `totalCount`로 넘긴다.
    */
   protected async performWork(): Promise<WorkResult> {
     const startTime = new Date();
 
     try {
-      globalLogger.info(`[${this.config.name}] 🔄 Recruit sync started...`);
+      globalLogger.info(`[${this.config.name}] 🔄 Work started...`);
 
-      const diff = await this.recruitService.syncRecruits(this.source);
+      const totalCount = await this.run();
 
       const endTime = new Date();
       const durationMs = endTime.getTime() - startTime.getTime();
-
-      const totalCount = diff.addedJobs.length + diff.updatedJobs.length;
-      const message = `Collected ${totalCount} recruitment data (added/updated)`;
 
       return {
         success: true,
         startTime,
         endTime,
         durationMs,
-        message,
+        message: `Processed ${totalCount} items`,
         totalCount,
       };
     } catch (error) {
       const endTime = new Date();
       const durationMs = endTime.getTime() - startTime.getTime();
 
-      const failure = new Error(`Recruit sync failed: ${(error as Error).message}`);
+      const failure = new Error(`Work failed: ${(error as Error).message}`);
       Object.assign(failure, {
         success: false,
         startTime,

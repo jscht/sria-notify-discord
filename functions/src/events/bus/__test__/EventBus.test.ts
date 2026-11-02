@@ -45,6 +45,7 @@ export async function testEventBus(): Promise<void> {
           id: "sria:12345",
           source: "sria",
           title: "테스트 공고",
+          postedBy: "테스트 게시자",
           url: "https://example.com/jobs/12345",
           dDay: "D-7",
           dayTxt: "2026.01.14",
