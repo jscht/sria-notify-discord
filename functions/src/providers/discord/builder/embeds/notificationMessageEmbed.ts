@@ -8,7 +8,7 @@ import { formatRecruitGroups } from "./recruitList";
 const TOP_COUNT = 3;
 
 /** DM에는 모집이 끝난 공고도 들어가므로 정렬 기준을 항상 안내한다. */
-const SORT_NOTICE = "접수 중인 공고를 먼저 보여드려요. 모집이 끝난 공고는 목록 아래쪽에 있어요.";
+const SORT_NOTICE = "접수 중인 공고부터 최신순으로 보여드려요.";
 
 /**
  * 배너(푸시 알림) 요약용 message.content를 생성한다. (Phase 1.9 iterate §7)
@@ -29,7 +29,7 @@ export function notificationBannerContent(
   settings: AlarmSubscription
 ): string {
   return [
-    `📢 ${regionSummary(settings.regions, "·")} · 총 ${displays.length}건`,
+    `📢 ${regionSummary(settings, "·")} · 총 ${displays.length}건`,
     " ▽ 아래 목록에서 확인하세요",
   ].join("\n");
 }

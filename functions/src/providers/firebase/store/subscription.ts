@@ -221,9 +221,18 @@ export class SubscriptionStore {
 
     return snapshot.docs
       .filter((doc) => doc.id === SETTINGS_DOC_ID)
-      .map((doc) => {
+      .flatMap((doc) => {
         const userId = doc.ref.parent.parent!.id;
-        return toAlarmSubscription(userId, doc.data());
+        try {
+          return [toAlarmSubscription(userId, doc.data())];
+        } catch (error) {
+          // 문서 하나 때문에 그 회차 알림 전체가 멈추지 않게 한다
+          providerLogger.warn("구독 문서를 읽지 못해 건너뜀", {
+            userId,
+            reason: (error as Error).message,
+          });
+          return [];
+        }
       });
   }
 }

@@ -23,7 +23,12 @@ const FUNCTION_SECRETS = ["FB_PRIVATE_KEY", "DISCORD_BOT_TOKEN", "REDIS_URL"];
 // 내보낸 함수 이름을 테스트로 확인할 수 있다.
 let readyPromise: Promise<void> | undefined;
 const ready = () =>
-  (readyPromise ??= initFunctionProviders().then(() => registerAllEventHandlers()));
+  (readyPromise ??= initFunctionProviders()
+    .then(() => registerAllEventHandlers())
+    .catch((error) => {
+      readyPromise = undefined; // 실패를 보관하지 않아야 다음 호출이 다시 초기화한다
+      throw error;
+    }));
 
 /**
  * 프로덕션 예약 트리거 — 작업 목록(`SCHEDULED_JOBS`)의 작업마다 함수 하나를 내보낸다.
@@ -45,7 +50,7 @@ for (const job of SCHEDULED_JOBS) {
   );
 }
 
-// 로컬 E2E — env 게이팅. 실행: RUN_SCHEDULER_ONCE=true (목록 순서대로 1회씩, 사이트 갱신 뒤 알림)
+// 로컬 E2E — env 게이팅. 실행: RUN_SCHEDULER_ONCE=true (목록 순서대로 1회씩, 공고 동기화 뒤 알림)
 if (process.env.RUN_SCHEDULER_ONCE === "true") {
   ready()
     .then(async () => {

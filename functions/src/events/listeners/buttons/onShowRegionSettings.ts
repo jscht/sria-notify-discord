@@ -1,9 +1,6 @@
 import type { ButtonInteraction } from "discord.js";
 import { alarmSubscriptionService } from "@/features/alarmSubscribe/services/subscriptionService";
-import {
-  disableMessageComponents,
-  restoreMessageComponents,
-} from "@/providers/discord/builder/disableMessageComponents";
+import { withDisabledComponents } from "@/providers/discord/builder/disableMessageComponents";
 import { renderSubscribeManage } from "./renderSubscribeManage";
 import { renderNoSubscription } from "./renderSubscribeSettingsHub";
 
@@ -14,12 +11,7 @@ import { renderNoSubscription } from "./renderSubscribeSettingsHub";
  * 설정이 없으면 안내 메시지를 노출한다.
  */
 export async function onShowRegionSettings(interaction: ButtonInteraction): Promise<void> {
-  const original = interaction.message.components;
-  await interaction.update({
-    components: disableMessageComponents(interaction.message, interaction.customId),
-  });
-
-  try {
+  await withDisabledComponents(interaction, async () => {
     const sub = await alarmSubscriptionService.getSubscription(interaction.user.id);
     if (!sub) {
       await renderNoSubscription(interaction);
@@ -27,10 +19,5 @@ export async function onShowRegionSettings(interaction: ButtonInteraction): Prom
     }
 
     await renderSubscribeManage(interaction, sub);
-  } catch (e) {
-    await interaction
-      .editReply({ components: restoreMessageComponents(original) })
-      .catch(() => {});
-    throw e;
-  }
+  });
 }

@@ -3,7 +3,7 @@ import type { SchedulerConfig, WorkResult } from "./types";
 
 /**
  * 받은 `run`을 주기마다 실행하는 범용 스케줄러.
- * 사이트 갱신과 알림이 같은 클래스를 쓴다. 어느 작업인지는 스케줄러 이름으로 구분한다.
+ * 공고 동기화와 알림이 같은 클래스를 쓴다. 어느 작업인지는 스케줄러 이름으로 구분한다.
  */
 export class RecruitScheduler extends BaseScheduler {
   private readonly run: () => Promise<number>;

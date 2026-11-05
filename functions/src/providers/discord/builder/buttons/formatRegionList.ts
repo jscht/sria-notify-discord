@@ -1,6 +1,7 @@
 import { CITIES } from "@/common/constants/city";
 import type { CityEn } from "@/common/types";
 import { MAX_REGION_COUNT } from "@/features/alarmSubscribe/commands/slashCommand";
+import type { ToggleRegions } from "@/providers/recruit/sourceToggle";
 
 /**
  * CITIES(en→ko)의 역방향 매핑(ko→en).
@@ -12,31 +13,32 @@ const KO_TO_CITY_EN: Record<string, CityEn> = Object.fromEntries(
 );
 
 /**
- * 선택된 지역 목록을 한글로 변환하여 사용자용 안내 문자열로 만든다.
- * @param regions 선택된 지역(CityEn) 배열
- * @returns 빈 배열이면 "선택된 지역이 없습니다.", 아니면 "현재 선택 지역: {한글, ...}"
+ * SELECTED 편집/관리 화면용 안내 — 공고별 선택 목록 + 최대 지역 수 안내.
+ * 전체 0개일 때는 알림이 발송되지 않는다는 경고와 설정 권유를 보여준다.
+ * 일부 공고만 0개이면 그 공고의 알림이 오지 않으므로 줄을 남겨 알린다.
+ *
+ * @param groups 켜진 공고별로 나눈 지역
+ * @returns 화면에 보여 줄 여러 줄 문구
  */
-export function formatRegionList(regions: CityEn[]): string {
-  if (regions.length === 0) {
-    return "선택된 지역이 없습니다.";
-  }
-  const ko = regions.map((r) => CITIES[r]).join(", ");
-  return `현재 선택 지역: ${ko}`;
-}
+export function selectedRegionContent(groups: ToggleRegions[]): string {
+  const limit = `(공고별 최대 ${MAX_REGION_COUNT}개까지 선택 가능)`;
 
-/**
- * SELECTED 편집/관리 화면용 안내 — 선택 목록 + 최대 지역 수 안내.
- * 0개일 때는 알림이 발송되지 않는다는 경고와 설정 권유를 보여준다.
- */
-export function selectedRegionContent(regions: CityEn[]): string {
-  if (regions.length === 0) {
+  if (groups.every(({ regions }) => regions.length === 0)) {
     return [
       "⚠️ 선택된 지역이 없어 알림이 발송되지 않아요.",
       "지역을 추가해 알림 받을 지역을 설정해 주세요.",
-      `(최대 ${MAX_REGION_COUNT}개까지 선택 가능)`,
+      limit,
     ].join("\n");
   }
-  return `${formatRegionList(regions)}\n(최대 ${MAX_REGION_COUNT}개까지 선택 가능)`;
+
+  return [
+    "현재 선택 지역",
+    ...groups.map(({ toggle, regions }) => {
+      const names = regions.map((region) => `\`${CITIES[region]}\``).join(" ");
+      return `> ${toggle.label}: ${names || "선택한 지역 없음"}`;
+    }),
+    limit,
+  ].join("\n");
 }
 
 /**

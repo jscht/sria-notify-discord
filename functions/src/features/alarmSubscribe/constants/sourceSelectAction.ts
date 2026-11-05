@@ -1,13 +1,13 @@
 export const SOURCE_SELECT_PREFIX = "SOURCE_SELECT" as const;
 
 export enum SourceSelectAction {
-  OPEN = "OPEN", // 설정 관리 화면에서 사이트 메뉴 열기
-  PICK = "PICK", // 첫 구독 질문에서 사이트 메뉴 열기
-  KEEP_ALL = "KEEP_ALL" // 첫 구독에서 모든 사이트를 그대로 받기
+  OPEN = "OPEN", // 설정 관리 화면에서 사이트 설정 화면 열기
+  TOGGLE_KOREA = "TOGGLE_KOREA", // 일반 공고 켜기/끄기
+  TOGGLE_ELIAS = "TOGGLE_ELIAS" // elias 공고 켜기/끄기
 }
 
 export const sourceSelectActionId = {
   OPEN: `${SOURCE_SELECT_PREFIX}:${SourceSelectAction.OPEN}`,
-  PICK: `${SOURCE_SELECT_PREFIX}:${SourceSelectAction.PICK}`,
-  KEEP_ALL: `${SOURCE_SELECT_PREFIX}:${SourceSelectAction.KEEP_ALL}`,
+  TOGGLE_KOREA: `${SOURCE_SELECT_PREFIX}:${SourceSelectAction.TOGGLE_KOREA}`,
+  TOGGLE_ELIAS: `${SOURCE_SELECT_PREFIX}:${SourceSelectAction.TOGGLE_ELIAS}`,
 } as const;

@@ -81,12 +81,13 @@ export function filterByRegion(jobs: Job[], filter: AlarmFilter<CityEn>): Job[] 
 }
 
 /**
- * 공고의 시작 날짜를 읽는다 (Pure Function)
+ * 공고의 시작 시점을 읽는다 (Pure Function)
  *
- * 시각은 보지 않는다.
+ * 시각이 있으면 시각까지 읽는다. elias 공고는 모집 기간이 12시간이라 날짜만 보면
+ * 같은 날 공고가 모두 같은 순서가 되어 새 공고가 상위에 오지 못한다.
  *
  * @param recruit 공고
- * @returns `"YYYY.MM.DD"`. 형식이 맞지 않으면 빈 문자열이라 최신순 정렬에서 맨 뒤로 간다
+ * @returns `"YYYY.MM.DD"` 또는 `"YYYY.MM.DD HH:mm"`. 형식이 맞지 않으면 빈 문자열이라 최신순 정렬에서 맨 뒤로 간다
  */
 export function getStartDate(recruit: Recruit): string {
   const period = (() => {
@@ -99,14 +100,14 @@ export function getStartDate(recruit: Recruit): string {
     }
     }
   })();
-  return /^\d{4}\.\d{2}\.\d{2}/.exec(period)?.[0] ?? "";
+  return /^\d{4}\.\d{2}\.\d{2}(?: \d{2}:\d{2})?/.exec(period)?.[0] ?? "";
 }
 
 /**
- * 시작 날짜 최신순으로 정렬한다 (Pure Function)
+ * 시작 시점 최신순으로 정렬한다 (Pure Function)
  *
- * `YYYY.MM.DD` 글자는 사전순이 날짜순과 같아 글자로 비교한다.
- * 같은 날짜는 원래 순서를 유지한다(Array.prototype.sort는 안정 정렬).
+ * `YYYY.MM.DD HH:mm` 글자는 사전순이 시간순과 같아 글자로 비교한다.
+ * 시작 시점이 같으면 원래 순서를 유지한다(Array.prototype.sort는 안정 정렬).
  *
  * @param items 정렬 대상. 원본은 바꾸지 않는다
  * @param toRecruit 항목에서 공고를 꺼내는 함수
@@ -143,7 +144,7 @@ const STATUS_ORDER: Record<RecruitmentStatus, number> = { 접수중: 0, 발표�
 /**
  * ② 알림 정렬 (Pure Function)
  *
- * 접수중 → 발표중 → 종료, 같은 상태 안에서는 시작 날짜 최신순.
+ * 접수중 → 발표중 → 종료, 같은 상태 안에서는 시작 시점 최신순.
  * 최신순으로 정렬한 뒤 상태로 다시 정렬하며, 안정 정렬이라 같은 상태 안의 최신순이 유지된다.
  * 발송 1회에 한 번만 호출한다.
  *

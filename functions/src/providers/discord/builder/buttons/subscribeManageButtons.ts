@@ -5,6 +5,7 @@ import { selectedValues } from "@/common/utils/alarmFilter";
 import { regionModeChangeActionId, subscribeOptionActionId } from "@/features/alarmSubscribe/constants";
 import { MAX_REGION_COUNT } from "@/features/alarmSubscribe/commands/slashCommand";
 import { alertRegionEditButtons } from "@/providers/discord/builder/buttons/alertRegionEditButtons";
+import { activeRegions, activeToggles, isToggleFull } from "@/providers/recruit/sourceToggle";
 
 /**
  * 지역 화면의 액션 버튼 행들.
@@ -27,10 +28,11 @@ export function subscribeManageButtons(sub: AlarmSubscription): ActionRowBuilder
   );
 
   if (sub.regions.mode === AlertMode.SELECTED) {
-    // 상한 도달 시 ➕추가를, 0개일 때 ➖제거·🧹초기화를 잠근다.
-    const regions = selectedValues(sub.regions);
-    const addDisabled = regions.length >= MAX_REGION_COUNT;
-    const noRegions = regions.length === 0;
+    // 켜진 공고가 모두 상한이면 ➕추가를, 보이는 지역이 0개일 때 ➖제거·🧹초기화를 잠근다.
+    const saved = selectedValues(sub.regions);
+    const addDisabled = activeToggles(sub.sources)
+      .every((toggle) => isToggleFull(toggle, saved, MAX_REGION_COUNT));
+    const noRegions = activeRegions(sub).length === 0;
     return [row1, alertRegionEditButtons(true, addDisabled, noRegions)];
   }
 

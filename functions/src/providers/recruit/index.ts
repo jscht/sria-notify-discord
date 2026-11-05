@@ -1,3 +1,4 @@
+import type { CityGroupKey } from "@/common/constants/city";
 import type { Recruit, RecruitDisplay, RecruitSource } from "@/common/types";
 import { ENV, SystemError } from "@/common/utils";
 import type { RecruitProvider } from "./RecruitProvider";
@@ -24,6 +25,11 @@ export interface SourceConfig {
   url?: string;
   /** 구독 메뉴 노출과 발송 대상 여부. 값은 코드에 고정한다. */
   userFacing: boolean;
+  /**
+   * 이 사이트만 쓰는 권역. 없으면 한국 지역을 쓰는 사이트로 보고 "일반 공고"로 묶는다.
+   * 있으면 사이트 설정에 켜기/끄기 버튼이 따로 생기고, 켜진 동안에만 지역 메뉴에 권역이 보인다.
+   */
+  ownRegionGroup?: CityGroupKey;
 }
 
 /** 스케줄 주기의 단일 출처 — 소스별 config에서 분(minute) 단위로 노출. */
@@ -39,6 +45,7 @@ const SOURCE_CONFIGS: Record<RecruitSource, SourceConfig> = {
     displayName: "elias",
     url: undefined,
     userFacing: true,
+    ownRegionGroup: "eliasRegions",
   },
 };
 

@@ -78,15 +78,18 @@ const ELIAS_OVERFLOW_DISPLAYS: RecruitDisplay[] = [1, 2, 3, 4].map((order) => ({
 
 const SIMPLE_SRIA_BLOCK = [
   "**🌐 sria** · 5건",
-  `1. [[서울][접수중] 카페 스태프](${JOB_URL_1}) · 📅 ${SRIA_PERIOD}`,
-  `2. [발표중] 행사 안내 · 📅 ${SRIA_PERIOD}`,
+  `1. [[서울][접수중] 카페 스태프](${JOB_URL_1})`,
+  `📅 ${SRIA_PERIOD}`,
+  "2. [발표중] 행사 안내",
+  `📅 ${SRIA_PERIOD}`,
   `3. [[부산] 물류 보조](${JOB_URL_3})`,
   `▸ 이 외 2건 더 있어요 · [전체 공고 보기](${SITE_URL})`,
 ].join("\n");
 
 const SIMPLE_ELIAS_BLOCK = [
   "**🌐 elias** · 1건",
-  `1. [세계수 교단][종료] 교단 가입시키기 · 📅 ${ELIAS_PERIOD}`,
+  "1. [세계수 교단][종료] 교단 가입시키기",
+  `📅 ${ELIAS_PERIOD}`,
 ].join("\n");
 
 const DETAILED_SRIA_BLOCK = [
@@ -170,11 +173,20 @@ export async function testRecruitList(): Promise<boolean> {
       },
     },
     {
-      name: "간단히: 한 줄이고 게시자·extraFields가 없음",
+      name: "간단히: 제목 다음 줄에 기간이 오고 게시자·extraFields가 없음",
       run: () => {
         expectEqual(
           formatRecruitLine(SRIA_DISPLAYS[0], 1, "simple"),
-          `1. [[서울][접수중] 카페 스태프](${JOB_URL_1}) · 📅 ${SRIA_PERIOD}`
+          `1. [[서울][접수중] 카페 스태프](${JOB_URL_1})\n📅 ${SRIA_PERIOD}`
+        );
+      },
+    },
+    {
+      name: "간단히: 기간의 시각을 그대로 보여 줌",
+      run: () => {
+        expectEqual(
+          formatRecruitLine(makeDisplay({ period: ELIAS_PERIOD }), 1, "simple"),
+          `1. [서울][접수중] 카페 스태프\n📅 ${ELIAS_PERIOD}`
         );
       },
     },

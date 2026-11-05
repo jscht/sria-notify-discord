@@ -355,8 +355,9 @@ const flowCases: TestCase[] = [
       capture.failFor = { userId: "user-bad", mode: "async" };
       const added = addSria(env, "[서울] 추가 공고");
 
-      await env.run();
+      const sent = await env.run();
 
+      expectEqual(sent, 2); // 발송 시도 인원. 비동기 실패도 센다
       expectEqual(sentUsers(), ["user-good"]);
       expectTrue((await notifiedIds(env)).includes(added.id), "지난 알림 때 목록이 저장되지 않음");
     },

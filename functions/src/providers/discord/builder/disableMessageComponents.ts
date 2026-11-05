@@ -7,6 +7,7 @@ import {
   type Message,
   type MessageActionRowComponent,
   type MessageActionRowComponentBuilder,
+  type MessageComponentInteraction,
 } from "discord.js";
 
 const LOADING_LABEL = "⏳ 적용 중…";
@@ -43,6 +44,39 @@ export function restoreMessageComponents(
   rows: ActionRow<MessageActionRowComponent>[],
 ): ActionRowBuilder<MessageActionRowComponentBuilder>[] {
   return rows.map((row) => rebuildRow(row, { disabled: false }));
+}
+
+/**
+ * 메시지 컴포넌트를 잠근 채 `work`를 실행하고, 실패하면 원래 상태로 되돌린다.
+ *
+ * 복원하지 않으면 버튼이 잠긴 채로 남아 사용자가 슬래시 커맨드를 다시 실행해야 한다.
+ * 예외는 그대로 던져서 `onInteraction`이 안내 메시지를 보낸다.
+ *
+ * @param interaction 버튼 또는 셀렉트 메뉴 인터랙션
+ * @param work 화면을 갱신하는 작업. `editReply`로 응답한다
+ * @param options.loading 누른 버튼에 "⏳ 적용 중…"을 표시할지 여부. 기본 true
+ */
+export async function withDisabledComponents(
+  interaction: MessageComponentInteraction,
+  work: () => Promise<void>,
+  { loading = true }: { loading?: boolean } = {},
+): Promise<void> {
+  const original = interaction.message.components;
+  await interaction.update({
+    components: disableMessageComponents(
+      interaction.message,
+      loading ? interaction.customId : undefined,
+    ),
+  });
+
+  try {
+    await work();
+  } catch (e) {
+    await interaction
+      .editReply({ components: restoreMessageComponents(original) })
+      .catch(() => {});
+    throw e;
+  }
 }
 
 function rebuildRow(

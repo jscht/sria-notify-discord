@@ -30,7 +30,7 @@ export interface RecruitServiceDeps {
   lockWaitMs: number;
 }
 
-/** `syncRecruits` 옵션. 없으면 예약 실행되는 사이트 갱신과 같다. */
+/** `syncRecruits` 옵션. 없으면 예약 실행되는 공고 동기화와 같다. */
 export interface SyncRecruitsOptions {
   /** 마지막 갱신 성공이 이 시간(ms) 안이면 갱신하지 않고 끝낸다 */
   skipIfSyncedWithinMs?: number;
@@ -42,7 +42,7 @@ export interface SyncRecruitsOptions {
  * 알림과 공고 조회가 쓰는 갱신 옵션.
  * 최근 5분 안에 갱신했으면 건너뛰고, 진행 중인 갱신은 끝날 때까지 기다린다.
  */
-export const FRESH_SYNC_OPTIONS: SyncRecruitsOptions = {
+const FRESH_SYNC_OPTIONS: SyncRecruitsOptions = {
   skipIfSyncedWithinMs: 5 * 60_000,
   waitForLock: true,
 };
@@ -53,12 +53,17 @@ function createDefaultCacheService(): RecruitCacheService {
   return new RecruitCacheService(recruit, recruit_hash);
 }
 
+/** 로그에 남길 실패 사유. Error를 그대로 넘기면 `JSON.stringify`에서 메시지가 사라진다. */
+function toReason(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
- * 공고 조회와 사이트 갱신.
+ * 공고 조회와 공고 동기화.
  *
  * 공고 조회(`getRecruitList`) 흐름:
  * 1. Redis 최신 공고 목록 → 2. 비어 있으면 사이트마다 `syncRecruits` → 3. Firestore 목록(읽기만).
@@ -87,7 +92,7 @@ export class RecruitService {
   /**
    * 공고 목록을 조회한다.
    *
-   * Redis가 비면 사이트 갱신과 같은 `syncRecruits`로 채운다. Firestore 목록은 보여 주기만 하고
+   * Redis가 비면 공고 동기화와 같은 `syncRecruits`로 채운다. Firestore 목록은 보여 주기만 하고
    * Redis에 쓰지 않는다. 오래된 목록이 Redis에 섞이지 않게 하기 위해서다.
    *
    * @param city 한글 지명. 없으면 전체
@@ -104,18 +109,43 @@ export class RecruitService {
     const cached = await this.readRedis();
     if (cached) return done(cached, "redis");
 
-    // 2. 사이트 갱신과 같은 함수로 채운다 (락·사이트 구분·마지막 갱신 시각을 그대로 따른다)
-    await Promise.allSettled(
-      getAllProviders().map(({ source }) => this.syncRecruits(source, FRESH_SYNC_OPTIONS))
-    );
+    // 2. 공고 동기화와 같은 함수로 채운다 (락·사이트 구분·마지막 갱신 시각을 그대로 따른다)
+    await this.syncAllSources();
     const synced = await this.readRedis();
     if (synced) return done(synced, "source");
 
     // 3. Firestore는 보여 주기만 한다
-    const backup = await this.firestore.getRecruitList().catch(() => null);
+    const backup = await this.firestore.getRecruitList().catch((error: unknown) => {
+      globalLogger.warn("Firestore 공고 목록 읽기 실패", { reason: toReason(error) });
+      return null;
+    });
     if (backup?.length) return done(backup, "firestore");
 
     return done(null, "empty");
+  }
+
+  /**
+   * 모든 사이트를 동시에 갱신한다. 알림과 공고 조회가 쓴다.
+   *
+   * 한 사이트가 실패해도 나머지는 진행한다. 실패한 사이트와 사유는 경고 로그로 남긴다.
+   *
+   * @returns 실패한 사이트가 하나라도 있으면 true
+   */
+  async syncAllSources(): Promise<boolean> {
+    const sources = getAllProviders().map(({ source }) => source);
+    const results = await Promise.allSettled(
+      sources.map((source) => this.syncRecruits(source, FRESH_SYNC_OPTIONS))
+    );
+
+    let anyFailed = false;
+    results.forEach((result, index) => {
+      if (result.status === "fulfilled") return;
+      anyFailed = true;
+      globalLogger.warn(`공고 동기화 실패: ${sources[index]}`, {
+        reason: toReason(result.reason),
+      });
+    });
+    return anyFailed;
   }
 
   /**

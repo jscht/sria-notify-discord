@@ -18,7 +18,7 @@ export function buildSubscribeEntryView(sub: AlarmSubscription | null): {
   let content: string;
 
   if (sub?.enabled) {
-    content = `🔔 알림 **켜짐** · 📍 ${regionSummary(sub.regions)} · 🌐 ${sourceSummary(sub.sources)}`;
+    content = `🔔 알림 **켜짐** · 📍 ${regionSummary(sub)} · 🌐 ${sourceSummary(sub.sources)}`;
   } else if (sub) {
     content = "🔕 알림 **꺼짐** — 다시 켜려면 '알림 켜기'를 눌러주세요.";
   } else {

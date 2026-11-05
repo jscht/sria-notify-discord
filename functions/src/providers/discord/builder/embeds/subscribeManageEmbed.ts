@@ -1,9 +1,9 @@
 import { EmbedBuilder } from "discord.js";
 import { AlertMode } from "@/common/types";
 import type { AlarmSubscription } from "@/common/types";
-import { selectedValues } from "@/common/utils/alarmFilter";
 import { selectedRegionContent } from "@/providers/discord/builder/buttons/formatRegionList";
 import { regionSummary, sourceSummary } from "@/providers/discord/builder/subscriptionSummary";
+import { activeRegionsByToggle } from "@/providers/recruit/sourceToggle";
 
 /**
  * 설정 관리 화면과 지역 화면이 함께 쓰는 Embed.
@@ -14,8 +14,8 @@ import { regionSummary, sourceSummary } from "@/providers/discord/builder/subscr
 export function buildSubscribeManageEmbed(sub: AlarmSubscription): EmbedBuilder {
   const statusLabel = sub.enabled ? "🔔 켜짐" : "🔕 꺼짐";
   const regionLabel = sub.regions.mode === AlertMode.ALL ?
-    `📍 ${regionSummary(sub.regions)}` :
-    selectedRegionContent(selectedValues(sub.regions));
+    `📍 ${regionSummary(sub)}` :
+    selectedRegionContent(activeRegionsByToggle(sub));
 
   return new EmbedBuilder()
     .setTitle("🔧 내 알림 설정")

@@ -28,26 +28,28 @@ function ids(jobs: Job[]): string[] {
 export async function testRecruitSort(): Promise<boolean> {
   return runCases("공고 정렬", [
     {
-      name: "시작 날짜 최신순, 같은 날짜는 넣은 순서, 형식 오류는 맨 뒤",
+      name: "시작 시점 최신순, 형식 오류는 맨 뒤",
       run: () => {
         const input = [OLD_SRIA, MALFORMED, NEW_ELIAS, SAME_DAY_SRIA, EARLY_ELIAS, LATE_ELIAS];
-        const expected = [NEW_ELIAS, SAME_DAY_SRIA, EARLY_ELIAS, LATE_ELIAS, OLD_SRIA, MALFORMED];
+        const expected = [NEW_ELIAS, SAME_DAY_SRIA, LATE_ELIAS, EARLY_ELIAS, OLD_SRIA, MALFORMED];
 
         expectEqual(sortIds(input), ids(expected));
       },
     },
     {
-      name: "시각은 순서에 영향을 주지 않음",
+      name: "같은 날이면 시각이 늦은 공고가 앞, 같은 시각은 넣은 순서",
       run: () => {
-        expectEqual(sortIds([EARLY_ELIAS, LATE_ELIAS]), ids([EARLY_ELIAS, LATE_ELIAS]));
-        expectEqual(sortIds([LATE_ELIAS, EARLY_ELIAS]), ids([LATE_ELIAS, EARLY_ELIAS]));
+        expectEqual(sortIds([EARLY_ELIAS, LATE_ELIAS]), ids([LATE_ELIAS, EARLY_ELIAS]));
+        const sameTime = makeEliasJob(4, { period: `2026.10.10 23:30 ~ ${ELIAS_END}` });
+        expectEqual(sortIds([LATE_ELIAS, sameTime]), ids([LATE_ELIAS, sameTime]));
+        expectEqual(sortIds([sameTime, LATE_ELIAS]), ids([sameTime, LATE_ELIAS]));
       },
     },
     {
-      name: "시작 날짜 읽기: 소스별 필드에서 날짜만 읽고 형식 오류는 빈 값",
+      name: "시작 시점 읽기: 소스별 필드에서 읽고 형식 오류는 빈 값",
       run: () => {
         expectEqual(getStartDate(OLD_SRIA.value), "2026.10.09");
-        expectEqual(getStartDate(NEW_ELIAS.value), "2026.10.12");
+        expectEqual(getStartDate(NEW_ELIAS.value), "2026.10.12 14:00");
         expectEqual(getStartDate(MALFORMED.value), "");
       },
     },

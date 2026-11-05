@@ -37,8 +37,8 @@ export const fullActionId = {
 
   // SOURCE_SELECT
   SOURCE_SELECT_OPEN: sourceSelectActionId.OPEN,
-  SOURCE_SELECT_PICK: sourceSelectActionId.PICK,
-  SOURCE_SELECT_KEEP_ALL: sourceSelectActionId.KEEP_ALL,
+  SOURCE_SELECT_TOGGLE_KOREA: sourceSelectActionId.TOGGLE_KOREA,
+  SOURCE_SELECT_TOGGLE_ELIAS: sourceSelectActionId.TOGGLE_ELIAS,
 } as const;
 
 // ============================================
@@ -68,5 +68,5 @@ export type RegionModeChangeActionId = ExtractByPrefix<typeof REGION_MODE_CHANGE
 /** "SUBSCRIBE_OPTION:ENABLE" | "SUBSCRIBE_OPTION:MANAGE" */
 export type SubscribeOptionActionId = ExtractByPrefix<typeof SUBSCRIBE_OPTION_PREFIX>;
 
-/** "SOURCE_SELECT:OPEN" | "SOURCE_SELECT:PICK" | "SOURCE_SELECT:KEEP_ALL" */
+/** "SOURCE_SELECT:OPEN" | "SOURCE_SELECT:TOGGLE_KOREA" | "SOURCE_SELECT:TOGGLE_ELIAS" */
 export type SourceSelectActionId = ExtractByPrefix<typeof SOURCE_SELECT_PREFIX>;

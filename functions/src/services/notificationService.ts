@@ -11,11 +11,12 @@ import { eventBus, EventType } from "@/events/bus";
 import type { NotificationSendEvent } from "@/events/bus";
 import { RecruitStore } from "@/providers/firebase/store";
 import { SubscriptionStore } from "@/providers/firebase/store/subscription";
-import { getAllProviders, getUserFacingSources, toDisplay } from "@/providers/recruit";
+import { getUserFacingSources, toDisplay } from "@/providers/recruit";
+import { expandSourceFilter } from "@/providers/recruit/sourceToggle";
 import { RedisManager } from "@/providers/redis/manager/redisManager";
 import type { NotifiedHashStore } from "@/providers/redis/store";
 import { RecruitCacheService } from "./recruitCacheService";
-import { FRESH_SYNC_OPTIONS, RecruitService } from "./recruitService";
+import { RecruitService } from "./recruitService";
 
 /** 로컬 계속 실행의 알림 주기(분). 운영 일정은 `NOTIFICATION_SCHEDULE`을 따른다. */
 export const NOTIFICATION_INTERVAL_MINUTES = 120;
@@ -71,7 +72,7 @@ export class NotificationService {
 
     for (const subscriber of subscribers) {
       try {
-        const bySource = filterBySource(targetJobs, subscriber.sources); // ③
+        const bySource = filterBySource(targetJobs, expandSourceFilter(subscriber.sources)); // ③
         const matched = filterByRegion(bySource, subscriber.regions); // ④
         // 구독 조건에 맞는 공고 중 바뀐 것이 없으면 보내지 않는다
         if (!matched.some((job) => changedIds.has(job.id))) continue;
@@ -103,7 +104,7 @@ export class NotificationService {
   /**
    * 알림 1회를 실행한다.
    *
-   * 알림 락 → 사이트 갱신 → 지난 알림 때 목록과 비교 → 발송 → 지난 알림 때 목록 저장 →
+   * 알림 락 → 공고 동기화 → 지난 알림 때 목록과 비교 → 발송 → 지난 알림 때 목록 저장 →
    * Firestore 공고 목록 저장 순서다. 저장은 발송이 끝난 뒤에 하므로, 발송 중 멈추면 다음 알림이
    * 다시 보낸다(누락보다 중복을 택한다).
    *
@@ -120,18 +121,13 @@ export class NotificationService {
 
     try {
       // 1. 사이트마다 동시에 강제 갱신
-      const syncResults = await Promise.allSettled(
-        getAllProviders().map(({ source }) =>
-          this.deps.recruitService.syncRecruits(source, FRESH_SYNC_OPTIONS)
-        )
-      );
-      const anySyncFailed = syncResults.some((result) => result.status === "rejected");
+      const anySyncFailed = await this.deps.recruitService.syncAllSources();
 
       // 2. 최신 공고 목록 ↔ 지난 알림 때 목록 비교
       const current = (await this.deps.recruitCache.getRecruitList()) ?? [];
       if (current.length === 0 && anySyncFailed) {
         // 비교 기준과 Firestore 목록을 지키려고 아무것도 저장하지 않는다
-        globalLogger.warn("사이트 갱신 실패로 최신 공고 목록이 비어 있음 — 저장 없이 끝냄");
+        globalLogger.warn("공고 동기화 실패로 최신 공고 목록이 비어 있음 — 저장 없이 끝냄");
         return 0;
       }
 
@@ -171,7 +167,7 @@ export class NotificationService {
     try {
       await this.deps.recruitStore.saveRecruitList(current);
     } catch (error) {
-      globalLogger.warn("Firestore 공고 목록 저장 실패 — 다음 알림에서 다시 저장", { error });
+      globalLogger.error("Firestore 공고 목록 저장 실패 — 다음 알림에서 다시 저장", error as Error);
     }
   }
 }

@@ -56,7 +56,7 @@ function detailCells(display: RecruitDisplay): string[] {
  *
  * @param d 공고 표시 정보
  * @param index 목록 번호. 1부터 시작한다
- * @param detail 간단히는 한 줄, 자세히는 기간·게시자·추가 칸을 둘째 줄에 그린다
+ * @param detail 간단히는 기간을, 자세히는 기간·게시자·추가 칸을 둘째 줄에 그린다
  * @returns 공고 한 건의 글자
  */
 export function formatRecruitLine(
@@ -67,7 +67,7 @@ export function formatRecruitLine(
   const titleLine = `${index}. ${formatJobTitleLink(titleWithStatus(d.title, d.status), d.url)}`;
 
   if (detail === "simple") {
-    return d.period ? `${titleLine} · 📅 ${d.period}` : titleLine;
+    return d.period ? `${titleLine}\n📅 ${d.period}` : titleLine;
   }
 
   const cells = detailCells(d);
