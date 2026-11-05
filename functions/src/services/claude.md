@@ -169,7 +169,7 @@ export class RecruitCacheService {
 
 **`runNotification` 순서**:
 1. 알림 락(`lock:notification`)을 잡는다. 못 잡으면 다른 실행이 진행 중이므로 바로 끝낸다
-2. 사이트마다 `syncRecruits(source, FRESH_SYNC_OPTIONS)`로 갱신한다. 최근 5분 안에 갱신했으면 건너뛰고, 진행 중인 갱신은 끝날 때까지 기다린다
+2. `syncAllSources()`로 사이트마다 갱신한다. 최근 5분 안에 갱신했으면 건너뛰고, 진행 중인 갱신은 끝날 때까지 기다린다. 실패한 사이트와 사유는 경고 로그로 남긴다
 3. 최신 공고 목록을 지난 알림 때 목록(`recruit:notified:all`, 공고 ID → 비교값)과 비교해 새 공고와 내용이 바뀐 공고를 찾는다
 4. `notifyRecruits`로 발송한다
 5. 지난 알림 때 목록을 최신 목록으로 통째로 바꾼다. 발송 뒤에 저장하므로 발송 중 멈추면 다음 알림이 다시 보낸다 (누락보다 중복을 택한다)
@@ -184,13 +184,13 @@ export class RecruitCacheService {
 
 **`notifyRecruits` 판정 순서**:
 1. 숨긴 사이트(`userFacing: false`)의 공고를 뺀다. `sources`가 `ALL`인 구독자에게도 가지 않는다
-2. 접수중 → 발표중 → 종료 순서로, 같은 상태 안에서는 시작 날짜 최신순으로 정렬한다
+2. 접수중 → 발표중 → 종료 순서로, 같은 상태 안에서는 시작 시점 최신순으로 정렬한다
 3. 구독자마다 `sources`와 `regions`로 거른다
 4. 거른 공고 중 바뀐 공고가 없으면 그 구독자는 건너뛴다
 5. 거른 공고 전체를 `RecruitDisplay`로 바꿔 `NOTIFICATION_SEND`를 발행한다. 바뀌지 않은 공고도 함께 보낸다
 
 **계약**:
-- 사이트 갱신(`recruitService.syncRecruits`)은 DM을 보내지 않는다. `RECRUIT_CHANGED`는 발행되지만 구독하는 핸들러가 없다
+- 공고 동기화(`recruitService.syncRecruits`)은 DM을 보내지 않는다. `RECRUIT_CHANGED`는 발행되지만 구독하는 핸들러가 없다
 - 최신 공고 목록에서 사라진 공고는 DM을 일으키지 않는다
 - 구독자 한 명의 오류는 나머지 발송을 막지 않는다
 - 쓰는 객체는 생성자로 받는다(`NotificationDeps`). 테스트는 가짜를 넘긴다

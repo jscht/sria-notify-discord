@@ -37,7 +37,7 @@ Phase 1.10부터 봇은 **두 개의 독립 프로세스**로 나뉘어 배포�
 | 프로세스 | 역할 | 실행 대상 | 엔트리 | 트리거 |
 |----------|------|-----------|--------|--------|
 | **A · 게이트웨이** | discord.js WS 로그인 + 인터랙션(슬래시 커맨드·버튼 등) 수신 | Oracle Cloud x86 Micro VM (무료 티어) + pm2 상주 | `lib/app/gateway.js` | WS 상주 (HTTP 리슨 없음 · WS-only) |
-| **B · 스케줄러** | `onSchedule` → 사이트 갱신(`syncRecruits`) 또는 알림(`runNotification` → REST DM 발송). 알림 체인 전체가 이 프로세스 안에서 완결 | Firebase Functions (`asia-northeast3`) | `lib/app/scheduler.js` (`package.json` `main`) | `recruitSchedule_sria` / `recruitSchedule_elias` / `notificationScheduler` |
+| **B · 스케줄러** | `onSchedule` → 공고 동기화(`syncRecruits`) 또는 알림(`runNotification` → REST DM 발송). 알림 체인 전체가 이 프로세스 안에서 완결 | Firebase Functions (`asia-northeast3`) | `lib/app/scheduler.js` (`package.json` `main`) | `recruitSchedule_sria` / `recruitSchedule_elias` / `notificationScheduler` |
 
 > **설계 근거**: DM 발송은 `providers/discord/dmSender.ts`가 REST(`rest.post`)를 사용하므로
 > 알림 체인 전체가 스케줄러/Functions 프로세스 내부에서 완결된다. WS 게이트웨이는 구독
@@ -59,7 +59,7 @@ npm run deploy   # firebase deploy --only functions
 |------|------------------|-----------|---------|
 | `recruitSchedule_sria` | 2시간마다 | 120초 | sria 공고 갱신 |
 | `recruitSchedule_elias` | 30분마다 | 120초 | elias 공고 갱신 |
-| `notificationScheduler` | 매일 06~20시 짝수 정시 | 300초 | 사이트 갱신 뒤 구독자별 판정과 DM 발송 |
+| `notificationScheduler` | 매일 06~20시 짝수 정시 | 300초 | 공고 동기화 뒤 구독자별 판정과 DM 발송 |
 
 `firebase.json`의 predeploy는 `npm run build`만 강제한다(lint는 repo-wide 스타일 debt로 별도 lint-cleanup 태스크로 분리 — todo.md).
 

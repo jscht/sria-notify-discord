@@ -13,7 +13,7 @@ graph TD
     subgraph Firebase Functions - asia-northeast3
         HTTP[HTTP Express] --> EventBus[EventBus Core - Node.js EventEmitter]
         Discord[Discord Events] --> EventBus
-        Schedulers[Schedulers 사이트 갱신/알림] --> EventBus
+        Schedulers[Schedulers 공고 동기화/알림] --> EventBus
         EventBus --> Services
         EventBus --> Features
         EventBus --> Providers
@@ -50,16 +50,15 @@ events/
 
 ### 2. Application Layer
 
-#### EventBus (eventBus/)
+#### EventBus (events/bus/)
 
 **역할**: 비즈니스 이벤트의 중앙 허브 (Singleton, Node.js EventEmitter 기반)
 
 **이벤트 도메인**:
-- **Recruit**: 크롤링, 새 공고, 공고 요청
+- **Recruit**: 공고 동기화, 공고 변경, 공고 요청
 - **Notification**: 구독, 알림 발송
 - **System**: 에러 처리 및 로깅
 - **Admin**: 관리자 기능
-- **Proxy**: 프록시 순환
 
 #### Services (services/)
 
@@ -125,21 +124,19 @@ providers/
         └── rateLimiter.ts       # Rate Limit 관리
 ```
 
-#### Crawlers (crawlers/)
+#### Schedulers (schedulers/)
 
-**역할**: 웹 크롤링 및 스케줄링
+**역할**: 예약 작업 목록과 실행. 공고 동기화(사이트별)와 알림을 맡는다.
 
 ```
-crawlers/
-├── schedulers/
-│   ├── base/
-│   │   └── BaseScheduler.ts     # 스케줄러 기본 클래스
-│   ├── RecruitScheduler.ts      # 공고 크롤링 (4시간)
-│   └── ProxyScheduler.ts        # 프록시 갱신 (6시간)
-│
-└── recruit/
-    └── RecruitCrawler.ts        # Playwright 크롤러
+schedulers/
+├── jobs.ts               # 예약 작업 목록 SCHEDULED_JOBS (운영 함수 3개와 로컬 실행이 함께 씀)
+├── RecruitScheduler.ts   # 작업 하나를 실행 (공고 동기화 또는 알림)
+├── SchedulerManager.ts   # 상시 실행 경로(로컬)의 스케줄러 등록·관리
+└── base/, factory.ts     # 기본 클래스, 작업마다 스케줄러를 만드는 함수
 ```
+
+언제 무엇을 하는지는 [스케줄링 가이드](../../docs/guides/scheduling-guide.md)에 있다.
 
 ---
 
@@ -153,8 +150,8 @@ graph TD
     T2[Discord Interaction] --> PL
     PL --> AL[Application Layer - recruitRequest handler]
     AL --> RS[recruitService.getRecruitList]
-    RS --> Cache[Redis → 사이트 갱신 → Firestore 3-tier]
-    T3[사이트 갱신 스케줄러] --> Sync[recruitService.syncRecruits]
+    RS --> Cache[Redis → 공고 동기화 → Firestore 3-tier]
+    T3[공고 동기화 스케줄러] --> Sync[recruitService.syncRecruits]
     T4[알림 스케줄러] --> RN[notificationService.runNotification]
     RN --> Sync
     RN --> EB[eventBus NOTIFICATION_SEND]
@@ -165,11 +162,10 @@ graph TD
 ### 이벤트 목록
 
 **도메인별 이벤트**:
-- **Recruit**: 크롤링 시작/완료/실패, 새 공고, 공고 요청
+- **Recruit**: 공고 동기화 시작/완료/실패, 공고 변경, 공고 요청
 - **Notification**: 구독/구독해제, 알림 발송 시작/완료
 - **System**: Critical/Failure/Warning 에러
 - **Admin**: 전체 공지 요청/완료
-- **Proxy**: 프록시 순환 성공/실패
 
 ---
 
@@ -182,13 +178,13 @@ graph TD
 ```mermaid
 graph TD
     Req[User Request] -->|1st| Redis[Redis 최신 공고 목록 - 6시간 만료, 갱신마다 연장]
-    Redis -->|비어 있음| Sync[사이트 갱신 - syncRecruits]
+    Redis -->|비어 있음| Sync[공고 동기화 - syncRecruits]
     Sync -->|갱신 뒤에도 비어 있음| FS[Firestore 공고 목록 - 읽기만]
 ```
 
 - Redis 최신 공고 목록에 쓰는 곳은 `syncRecruits` 하나다. 사이트 락과 사이트별 비교를 모든 경로가 똑같이 따르게 하기 위해서다.
 - Firestore 목록은 보여 주기만 하고 Redis에 쓰지 않는다. 오래된 목록이 Redis에 섞이지 않게 하기 위해서다.
-- Firestore 공고 목록은 알림 실행이 저장한다. 사이트 갱신은 갱신 시각만 저장한다.
+- Firestore 공고 목록은 알림 실행이 저장한다. 공고 동기화는 갱신 시각만 저장한다.
 
 ### 공고 변경 감지
 
@@ -196,13 +192,13 @@ SHA-256 해시 비교로 사이트별 공고 변경을 감지한 뒤 `RECRUIT_CH
 
 ### 알림 흐름
 
-사이트 갱신과 알림은 따로 돈다. 사이트 갱신은 공고 조회가 최신 목록을 읽도록 밤에도 돌고, 알림은 낮 시간에만 돈다. 작업 목록은 `schedulers/jobs.ts`의 `SCHEDULED_JOBS` 한 곳이다.
+공고 동기화와 알림은 따로 돈다. 공고 동기화는 공고 조회가 최신 목록을 읽도록 밤에도 돌고, 알림은 낮 시간에만 돈다. 작업 목록은 `schedulers/jobs.ts`의 `SCHEDULED_JOBS` 한 곳이다.
 
 | 작업 | 일정 (한국 시간) | 하는 일 |
 |------|------------------|---------|
 | `recruitSchedule_sria` | 2시간마다 | sria 공고 갱신 |
 | `recruitSchedule_elias` | 30분마다 | elias 공고 갱신 |
-| `notificationScheduler` | 매일 06~20시 짝수 정시 | 사이트 갱신 뒤 구독자별 판정과 발송 |
+| `notificationScheduler` | 매일 06~20시 짝수 정시 | 공고 동기화 뒤 구독자별 판정과 발송 |
 
 알림 1회의 순서:
 
@@ -228,5 +224,6 @@ SHA-256 해시 비교로 사이트별 공고 변경을 감지한 뒤 `RECRUIT_CH
 
 ## 관련 문서
 
+- [스케줄링 가이드](../../docs/guides/scheduling-guide.md) - 공고 동기화와 알림 스케줄러의 동작
 - [SystemLogger 가이드](./functions/src/common/utils/__docs__/SYSTEM_LOGGER_GUIDE.md)
 - [SystemError 가이드](./functions/src/common/utils/__docs__/SYSTEM_ERROR_GUIDE.md)

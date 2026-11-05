@@ -30,11 +30,13 @@
 
 사람인 에이전트 단기알바 채용공고 알림 봇은 사람인 에이전트 웹사이트의 단기알바 채용 공고를 Discord Bot을 통해 사용자에게 알림을 제공하는 서비스입니다.
 
+> 공고 데이터는 사이트별 mock 소스로 대신합니다. 실제 사이트를 크롤링할 계획이었지만, 검토 끝에 사이트별 mock 소스로 진행합니다. 결정 경위는 [Phase 1.10 계획서](docs/archive/phase-1-10/01-plan.md)에 있습니다.
+
 ### 핵심 가치
 
 - **정기 알림**: 매일 06~20시 2시간마다 새 공고와 바뀐 공고를 알림
 - **개인화된 설정**: 지역별·사이트별 필터링 (각각 전체/선택)
-- **높은 안정성**: 3-tier 캐싱 전략 (Redis → 사이트 갱신 → Firestore)
+- **높은 안정성**: 3-tier 캐싱 전략 (Redis → 공고 동기화 → Firestore)
 - **확장 가능**: Event-Driven Architecture로 기능 추가 용이
 - **AI 지원**: Hugging Face 무료 AI 모델 활용
 
@@ -44,13 +46,13 @@
 
 ### 1. 공고 요청 (`/recruit-request`)
 - 즉시 채용 공고 조회
-- 3-tier 캐싱 전략 (Redis → 사이트 갱신 → Firestore)
+- 3-tier 캐싱 전략 (Redis → 공고 동기화 → Firestore)
 - Discord 임베드 형식 제공
 
 ### 2. 알림 설정 (`/alarm-subscribe`)
 - 개인 맞춤형 알림 설정
 - 지역: 전체 공고 / 특정 지역만
-- 사이트: 모든 사이트 / 고른 사이트만
+- 공고: 일반 공고 / elias 공고 켜기·끄기
 - 지역 선택 및 알림 ON/OFF
 
 ### 3. 자동 알림 (매일 06~20시, 2시간마다)
@@ -85,11 +87,11 @@
 ### Database & Cache
 - **Primary DB**: Firebase Firestore
 - **Cache Layer**: Redis 4.7
-- **Caching Strategy**: 3-tier (Redis → 사이트 갱신 → Firestore)
+- **Caching Strategy**: 3-tier (Redis → 공고 동기화 → Firestore)
 
 ### External APIs
 - **Discord**: discord.js 14.17
-- **Web Scraping**: Playwright 1.47
+- **공고 소스**: 사이트별 mock 공고 생성기
 - **AI**: Hugging Face Inference API
 
 ### DevOps
@@ -108,19 +110,19 @@ Firebase Functions (asia-northeast3)
 ├── Entry Points
 │   ├── HTTP (Express)
 │   ├── Discord Events
-│   └── Schedulers (사이트 갱신, 알림)
+│   └── Schedulers (공고 동기화, 알림)
 │
 ├── Presentation Layer (events/)
 │   └── Discord 이벤트 라우팅
 │
 ├── Application Layer
-│   ├── eventBus/     → 비즈니스 이벤트 허브
+│   ├── events/bus/   → 비즈니스 이벤트 허브
 │   ├── services/     → 비즈니스 로직
 │   └── features/     → 기능별 모듈
 │
 └── Integration Layer
-    ├── providers/    → 외부 API 통합
-    └── crawlers/     → 웹 크롤링
+    ├── providers/    → 외부 API 통합, 사이트별 공고 소스(providers/recruit/)
+    └── schedulers/   → 예약 작업 목록(공고 동기화, 알림)
 
 External Services
 ├── Discord API
@@ -142,7 +144,7 @@ eventBus.onEvent<NotificationSendEvent>(EventType.NOTIFICATION_SEND, async (payl
 ```
 
 **이벤트 도메인**:
-- **Recruit**: 크롤링, 새 공고, 공고 요청
+- **Recruit**: 공고 동기화, 공고 변경, 공고 요청
 - **Notification**: 구독, 알림 발송
 - **System**: 에러 처리 및 로깅
 - **Admin**: 관리자 기능
@@ -156,7 +158,7 @@ Discord User
 events/ (Presentation)
   ↓
 services/ (Application)
-  ↓ Redis → 사이트 갱신 → Firestore
+  ↓ Redis → 공고 동기화 → Firestore
 providers/ (Integration)
   ↓
 Discord Response (Embed)
@@ -179,7 +181,7 @@ NotificationSendHandler
 사용자별 Discord DM 발송
 ```
 
-사이트 갱신은 알림과 따로 돈다 (`recruitSchedule_sria` 2시간마다, `recruitSchedule_elias` 30분마다). 사이트 갱신은 DM을 보내지 않는다.
+공고 동기화(사이트의 공고 목록을 가져와 저장)는 알림과 따로 돈다 (`recruitSchedule_sria` 2시간마다, `recruitSchedule_elias` 30분마다). 공고 동기화는 DM을 보내지 않는다.
 
 ## 프로젝트 구조
 
@@ -187,12 +189,11 @@ NotificationSendHandler
 sria-notify-discord/
 ├── functions/                  # Firebase Functions 코드
 │   ├── src/
-│   │   ├── eventBus/          # 비즈니스 이벤트 시스템
-│   │   ├── events/            # Discord 이벤트 핸들러
+│   │   ├── events/            # Discord 이벤트 핸들러, 비즈니스 이벤트(bus/)
 │   │   ├── features/          # 기능별 모듈
 │   │   ├── services/          # 비즈니스 로직
 │   │   ├── providers/         # 외부 서비스 통합
-│   │   ├── crawlers/          # 웹 크롤링
+│   │   ├── schedulers/        # 예약 작업 목록
 │   │   ├── common/            # 공통 유틸리티
 │   │   └── app/               # 진입점
 │   │
@@ -292,7 +293,7 @@ npm run register:commands
 옵션:
   - 전체 공고 알림 (ALL)
   - 특정 지역 알림 (SELECTED)
-  - 사이트 선택 (모든 사이트 / 고른 사이트)
+  - 공고 켜기/끄기 (일반 공고 / elias 공고)
   - 알림 켜기/끄기
 ```
 
@@ -444,13 +445,12 @@ dev (개발) → stable (검수) → main (배포)
 ## 문서
 
 ### 프로젝트 문서
-- [개발 진행 현황](./.claude/todo/PROGRESS.md) - 현재 Phase 진행 상황
-- [TODO 관리](./.claude/todo/TODO.md) - Phase별 작업 목록
-- [Phase 1 상세 계획](./.claude/todo/phase-1-core.md)
-- [검토 프로세스](./.claude/todo/review/REVIEW_PROCESS.md)
+- [스케줄링 가이드](./docs/guides/scheduling-guide.md) - 공고 동기화와 알림 스케줄러의 동작
+- [Phase별 작업 기록](./docs/archive/) - 계획서·설계서·분석서·완료 보고서
+- [검토 기록](./docs/reviews/) - Phase별 리뷰
+- [개선 보고서](./docs/reports/) - 에러·로깅 체계 개선, 설계 결정 기록
 
 ### 기술 문서
-- [EventBus 시스템](./functions/src/eventBus/claude.md)
 - [SystemLogger 가이드](./functions/src/common/utils/__docs__/SYSTEM_LOGGER_GUIDE.md)
 - [SystemError 가이드](./functions/src/common/utils/__docs__/SYSTEM_ERROR_GUIDE.md)
 

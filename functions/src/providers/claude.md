@@ -113,6 +113,7 @@ users/{userId}/notifications/settings   (문서 ID는 고정값 "settings")
 - `mode`가 `ALL`이면 `values`는 읽을 때 무시한다. 지역 모드만 바꿀 때 `values`를 남겨, `SELECTED`로 돌아오면 고른 지역이 그대로 보인다.
 - `mode`가 `SELECTED`이고 `regions.values`가 비어 있으면 정상 상태이며 알림은 0건이다.
 - 옛 형식 문서 `{ alertMode, regions: CityEn[] }`은 읽을 때 새 형식으로 바꾼다. 데이터 이전 작업은 없고, 다음 지역 쓰기나 전체 저장 때 저장 형식이 바뀌며 `alertMode`가 지워진다.
+- `SELECTED`의 `sources`는 공고 묶음 단위로 읽는다. `sria`가 있으면 일반 공고 전체가 켜진 것이다(`providers/recruit/sourceToggle.ts`의 `expandSourceFilter`).
 - `sources` 필드가 없으면 `{ mode: 'ALL' }`로 읽는다. 사이트를 고른 적 없는 구독자는 모든 사이트의 공고를 받는다.
 - 필터 형식이 잘못되면 던지지 않고 경고 로그를 남긴 뒤 기본값으로 읽는다. `regions`는 알림 0건 쪽(`SELECTED` + 빈 목록), `sources`는 `ALL`이다.
 
@@ -131,7 +132,7 @@ users/{userId}/notifications/settings   (문서 ID는 고정값 "settings")
 | `updateRegionFilter(userId, filter)` | `void` | `regions` 전체 교체, `alertMode`를 지운다. 문서 없으면 NOT_FOUND throw |
 | `updateSourceFilter(userId, filter)` | `void` | `sources` 전체 교체. `regions`를 건드리지 않으므로 `alertMode`는 지우지 않는다. 문서 없으면 NOT_FOUND throw |
 | `toggleNotificationEnabled(userId, enabled)` | `void` | `update()` |
-| `getAllActiveSubscribers()` | `AlarmSubscription[]` | `collectionGroup('notifications')` + `enabled==true` |
+| `getAllActiveSubscribers()` | `AlarmSubscription[]` | `collectionGroup('notifications')` + `enabled==true`. 읽지 못한 문서는 경고 로그를 남기고 건너뛴다 |
 
 **계약**:
 - `Timestamp ↔ number` 변환과 옛 형식 읽기 변환은 store 경계(`toAlarmSubscription` 헬퍼)에서만 수행 — 외부 코드는 항상 `number`(ms)와 새 형식만 본다

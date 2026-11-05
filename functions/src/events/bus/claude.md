@@ -97,7 +97,7 @@ handlers/
 └── NotificationSendHandler.ts  # NOTIFICATION_SEND → DM 발송 → NOTIFICATION_SENT 발행
 ```
 
-`RECRUIT_CHANGED`를 구독하는 핸들러는 없다. 사이트 갱신은 DM을 보내지 않고, 알림 스케줄러(`notificationService.runNotification`)가 `NOTIFICATION_SEND`를 발행한다.
+`RECRUIT_CHANGED`를 구독하는 핸들러는 없다. 공고 동기화는 DM을 보내지 않고, 알림 스케줄러(`notificationService.runNotification`)가 `NOTIFICATION_SEND`를 발행한다.
 
 **예시: NotificationSendHandler.ts**
 ```typescript

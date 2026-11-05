@@ -48,18 +48,19 @@ alarmSubscribe/
 ```
 진입 화면 (/alarm-subscribe)
 ├── 🔔 알림 켜기 / 🔕 알림 끄기
-│   └── 첫 구독: 지역 모드 선택 → 사이트 질문 (🌐 사이트 고르기 / 모두 받기)
+│   └── 첫 구독: 지역 모드 선택 → 일반 공고만 켜서 저장
 └── ⚙️ 설정 관리 (SUBSCRIBE_OPTION:MANAGE) → 설정 관리 화면
     ├── 📍 지역 설정 (SUBSCRIBE_OPTION:REGION) → 지역 화면
     │   └── ⬅️ 뒤로 (SUBSCRIBE_OPTION:MANAGE) → 설정 관리 화면
-    ├── 🌐 사이트 설정 (SOURCE_SELECT:OPEN) → 사이트 메뉴
+    ├── 🌐 사이트 설정 (SOURCE_SELECT:OPEN) → 공고 켜기/끄기 화면
     │   └── ⬅️ 뒤로 (SUBSCRIBE_OPTION:MANAGE) → 설정 관리 화면
     └── ⬅️ 뒤로 (SUBSCRIBE_OPTION:BACK) → 진입 화면
 ```
 
 - 지역 화면은 설정 관리 화면 아래에 있다. 그래서 `subscribeManageButtons`의 뒤로 버튼은 진입 화면이 아니라 MANAGE를 가리킨다.
-- 첫 구독은 사이트 질문을 띄우기 전에 `sources: { mode: 'ALL' }`로 저장한다. 질문 메시지를 닫아도 모든 사이트의 공고를 받는다. 지역을 고르는 구독자는 사이트 단계를 마친 뒤 지역 화면으로 간다.
-- 사이트를 전부 고르면 `ALL`로 저장한다. 메뉴에 "모든 사이트" 칸이 따로 없어서, 일부만 고른 구독자가 `ALL`로 돌아갈 방법이 이것뿐이다. 0개 저장은 `updateSources`가 막는다.
+- 첫 구독은 사이트를 묻지 않고 일반 공고만 켠다(`initialSourceFilter()`, 지금은 `sources: { mode: 'SELECTED', values: ['sria'] }`). elias 공고는 사이트 설정 화면에서 켠다.
+- 사이트 설정은 공고 묶음을 켜고 끈다. 고유 지역이 없는 사이트는 "일반 공고" 하나로 묶고, 고유 지역이 있는 사이트(`ownRegionGroup`)는 따로 버튼을 둔다. 둘 다 켜면 `ALL`, 하나면 `SELECTED`로 저장하며, 켜진 묶음이 하나뿐이면 그 버튼을 잠근다. 계산은 `providers/recruit/sourceToggle.ts`가 맡는다.
+- 지역 메뉴는 켜진 공고의 권역만 보여 준다. 꺼진 공고의 지역은 지우지 않고 화면에서만 뺀다. 지역 개수 제한은 공고별로 센다.
 
 **작업 내용 (Phase 1.5)**:
 - `subscriptionService.ts`(`AlarmSubscriptionService`) 6개 메서드 구현 (CQS + 이벤트 발행)
@@ -334,4 +335,4 @@ import { NotificationService } from '@/features/notification';
 
 ---
 
-*최종 수정: 2026-11-01*
+*최종 수정: 2026-11-05*
