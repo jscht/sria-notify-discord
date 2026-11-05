@@ -1,8 +1,8 @@
 {
-  "feature": "phase-1-15-source-subscription",
-  "phase": "do",
+  "feature": null,
+  "phase": null,
   "matchRate": null,
-  "startedAt": "2026-10-10",
+  "startedAt": null,
   "completedAt": null,
-  "description": "멀티 source 구독 — 소스를 독립 구독 조건(AlarmFilter)으로, 공통 표시 형식(RecruitDisplay), temp 타입 정리, userFacing 노출 여부"
+  "description": null
 }

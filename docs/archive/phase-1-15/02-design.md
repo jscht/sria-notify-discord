@@ -3,6 +3,7 @@
 **상태**: 🔄 진행 중
 **기반 문서**: `docs/phase-1-15/01-plan.md`, 시드 `.claude/phases/phase-source-subscription.md`
 **사용자 결정 반영**: 2026-10-10 승인분 (저장 형식, 발송 판정 순서, 기타 결정), 2026-10-10 추가 결정 (모드만 바꿀 때 지역 목록 유지, 두 소스 모두 노출, 소스 이름 temp → elias, elias 제목에 지역 따로 적기, 표시 이름, 사용자 문구 용어), 2026-10-10 UI 결정 (사용자 문구 "사이트", 첫 구독 사이트 질문, 설정 관리 화면의 지역·사이트 버튼, embed 간단히/자세히), 2026-10-12 추가 결정 (elias 모집 기간을 실제 날짜로 고정, elias 상태 "접수중"→"종료" 전환, "급구" 표시 삭제, `RecruitDisplay.status` 추가, "종료" 공고 알림 제외, `updateSources`도 문서 존재 확인, 사이트 메뉴 안내 문구, 기간 표시 형식 유지, 첫 구독 순서 유지, README 속성 안내), 2026-10-14 추가 결정 (elias 생성 규칙 재설정과 종료·제거 확률 분리, 게시자 `postedBy`, 기간 형식 `YYYY.MM.DD` 통일 — 10-12의 "기간 표시 형식 유지"를 대체, 최신순 정렬, DM 안내 문구, 알림 전용 스케줄러 2시간, sria 갱신 2시간, 사이트 공고 0건 처리), 2026-10-27 추가 결정 (바뀐 공고가 있으면 구독 조건에 맞는 공고 전체를 DM으로 보냄, DM 정렬 접수중 → 발표중 → 종료 + 같은 상태 안 최신순 — 10-12의 "종료" 공고 알림 제외를 대체, 송신 실패 구독자 따로 저장 안 함, 작성 시각 `postedAt?`, 제목에 `[지역][상태]` 표시, 알림 스케줄러가 Firestore 공고 목록 저장, 예약 실행 작업 목록 한 곳 `SCHEDULED_JOBS`), 2026-10-29 추가 결정 (공고 조회의 저장 경로를 `syncRecruits`로 통일, Firestore 목록은 읽기만), 2026-10-31 추가 결정 (알림 시각 06~20시 짝수 정시, 지난 알림 때 목록 만료 없음, 사이트 동시 갱신, 실패로 빈 목록이면 저장 안 함, 게시자는 공고 조회 둘째 줄에만 표시, elias 지역 `요정 왕국`·`세계수 교단`과 공고 2줄), 2026-11-01 추가 결정 (사이트 갱신 대기 초과는 실패로 처리, 운영 실행은 `runOnce()` 유지, 일부 사이트 복구 뒤 DM이 한 번 더 나가는 경우 허용, 서비스 객체는 처음 쓸 때 만들고 생성자로 받음, 예약 작업 `run`은 처리 건수를 돌려줌, 테스트의 사이트 락 대기는 10초)
+**런타임 검증 뒤 변경** (2026-11-03 사용자 결정): 사이트 선택 메뉴와 첫 구독 사이트 질문을 없애고 공고 묶음 켜기/끄기로 바꾼다(§2.9.5, §2.9.6). 정렬은 시작 시각까지 비교한다(§2.7). 2026-11-05: 지역 모드가 ALL이면 열어 둔 옛 메시지에서 지역을 저장하지 않는다(§2.9.5). 첫 구독은 일반 공고만 켠다(§2.9.6).
 **계획서와 달라진 범위**: 공고 조회 커맨드(`onRecruitRequest.ts`, `recruitMessageEmbed.ts`)를 이번 범위에 넣는다 (2026-10-10 사용자 결정, §2.9.4). `features/recruitRequest/**`는 계속 범위 밖이다.
 
 > 경로 표기: 별도 표시가 없으면 `functions/src/` 기준이다.
@@ -20,14 +21,14 @@
 | Types (`common/types/`) | `AlarmFilter<T>` 추가, `AlarmSubscription` 재구성, `RecruitDisplay`·`DisplayField` 추가, 공통 `postedBy`·`postedAt?` 추가, `TempRecruit` → `EliasRecruit` 이름 변경·정리 |
 | Common Utils (`common/utils/`) | 소스 필터·노출 소스 필터 추가, 지역 필터를 `AlarmFilter` 입력으로 변경, `selectedValues()`·`getStartDate()`·`getRecruitStatus()`·최신순 정렬·알림 정렬(상태순 + 최신순) 추가 |
 | Providers — Firestore (`providers/firebase/store/subscription.ts`) | 새 저장 형식 읽기·쓰기, 옛 형식 읽기 변환, 지역 모드만 바꾸는 쓰기와 필드 전체 교체 쓰기 |
-| Providers — 공고 소스 (`providers/recruit/`) | 소스 이름 temp → elias (§2.11), `SourceConfig`에 `displayName`·`url`·`userFacing` 추가, 소스별 `toDisplay()`, elias 생성 규칙 정리(모집 기간 고정, 종료·제거 확률 분리, 게시자, "급구" 표시와 `editProb` 삭제), sria `postedBy`·`postedAt?`·갱신 주기 120분 |
+| Providers — 공고 소스 (`providers/recruit/`) | 소스 이름 temp → elias (§2.11), `SourceConfig`에 `displayName`·`url`·`userFacing`·`ownRegionGroup` 추가, 소스별 `toDisplay()`, elias 생성 규칙 정리(모집 기간 고정, 종료·제거 확률 분리, 게시자, "급구" 표시와 `editProb` 삭제), sria `postedBy`·`postedAt?`·갱신 주기 120분 |
 | Common Constants (`common/constants/city.ts`) | elias 전용 지역 권역 `eliasRegions` 추가 (§2.6) |
 | Providers — Redis (`providers/redis/`) | 지난 알림 때 목록·사이트별 마지막 갱신 시각 키 추가 (§2.8.2) |
 | App (`app/scheduler.ts`), Schedulers (`schedulers/`) | 예약 실행 작업 목록 `SCHEDULED_JOBS` 한 곳에서 운영 함수·로컬 1회 실행·로컬 계속 실행을 만듦, 알림 작업 추가, `RecruitScheduler`를 범용 스케줄러로 변경 (§2.8.2), 소스 이름 변경에 따른 배포 함수 이름 수정 (§2.11) |
 | Services (`services/notificationService.ts`, `recruitService.ts`, `recruitSourceService.ts`) | 알림 스케줄러(강제 갱신 → 비교 → 판정 ①~⑤ → 발송), 구독자별 try/catch, `RecruitDisplay` 변환, 사이트 공고 0건 처리 (§2.8, §2.12), 공고 조회의 저장 경로를 `syncRecruits`로 통일 (§2.8.4) |
 | EventBus (`events/bus/`) | `NOTIFICATION_SEND` 데이터를 `{ userId, displays, settings }`로 변경, 발송 핸들러 대응, `RECRUIT_CHANGED` → 즉시 발송 연결 해제 |
 | Features (`features/alarmSubscribe/services/`) | 구독 서비스 쓰기 메서드를 필터 단위로 변경, 소스 필터 저장 메서드 추가 |
-| Discord UI (`providers/discord/builder/**`, `events/listeners/**`) | 사이트 선택 메뉴, 첫 구독 흐름, 설정 관리 화면, 공고 목록 그리기(간단히/자세히) — §2.9 |
+| Discord UI (`providers/discord/builder/**`, `events/listeners/**`) | 공고 켜기/끄기 화면, 첫 구독 흐름, 설정 관리 화면, 공고별 지역 표시, 공고 목록 그리기(간단히/자세히) — §2.9 |
 
 ### 1.2 컴포넌트 다이어그램
 
@@ -47,7 +48,7 @@
    ① filterVisibleSources(최신 공고 목록, getUserFacingSources())  ← 한 번만
    ② sortForNotification(jobs) (접수중 → 발표중 → 종료, 같은 상태 안은 최신순. 뒤 필터는 순서를 유지) ← 한 번만
    for 구독자 (구독자마다 try/catch):
-     ③ filterBySource(jobs, sub.sources)
+     ③ filterBySource(jobs, expandSourceFilter(sub.sources))
      ④ filterByRegion(jobs, sub.regions)
         구독 조건에 맞는 공고 중 바뀐 공고가 없으면 건너뜀
      ⑤ jobs.map(j => toDisplay(j.value))  → RecruitDisplay[] (바뀌지 않은 공고도 함께)
@@ -265,9 +266,9 @@ users/{userId}/notifications/settings
 ```typescript
 export interface SourceConfig {
   intervalMinutes: number;   // 기존 — 스케줄 주기
-  displayName: string;       // 사용자에게 보이는 사이트 이름. 구독 메뉴 라벨, RecruitDisplay.sourceLabel
+  displayName: string;       // 사용자에게 보이는 사이트 이름. RecruitDisplay.sourceLabel
   url?: string;              // "전체 공고" 링크. 없으면 링크 없이 텍스트만
-  userFacing: boolean;       // 구독 메뉴 노출 + 발송 대상 여부
+  userFacing: boolean;       // 사이트 설정 화면 노출 + 발송 대상 여부
 }
 
 const SOURCE_CONFIGS: Record<RecruitSource, SourceConfig> = {
@@ -293,7 +294,7 @@ export function getUserFacingSources(): RecruitSource[];               // userFa
 - 갱신 주기: sria는 240분에서 120분으로 바꾼다(`sriaMockConfig.ts:16`). elias는 30분 그대로다. 사용자에게 가는 알림은 사이트와 상관없이 매일 06~20시 짝수 정시에 나간다(§2.8).
 
 **`userFacing` 값** — sria와 elias 모두 `true`다.
-- 두 소스 모두 구독 메뉴에 나오고, 소스 필터가 ALL인 구독자는 두 소스 공고를 모두 받는다.
+- 두 소스 모두 사이트 설정 화면의 공고 묶음에 들어가고, 소스 필터가 ALL인 구독자는 두 소스 공고를 모두 받는다.
 - 값을 바꾸는 환경변수는 만들지 않는다. 값은 코드에 고정한다.
 - 지금은 숨긴 소스가 없다. 그래도 `userFacing` 설정, `getUserFacingSources()`, 숨긴 소스를 빼는 `filterVisibleSources()`(§2.7)는 나중에 소스를 숨길 때 쓸 수 있도록 그대로 둔다.
 - 공고 조회 슬래시 커맨드도 노출 사이트만 보여 주고, `RecruitDisplay`를 자세히 모드로 그린다(§2.9.4). 값이 없는 칸은 표시하지 않으므로 elias 항목에 빈 칸이 생기지 않는다.
@@ -346,12 +347,12 @@ export interface RecruitDisplay {
 - sria: `SriaSeed`에 `postedAt?: string`을 추가한다. 아는 공고만 값을 적고 모르면 비워 둔다. 생성기는 그대로 옮긴다.
 - elias: 채우지 않는다. 모집 기간 시작이 곧 생성 시각이고 시각까지 표시되므로 같은 값이 두 번 나오게 된다.
 - 화면에는 변환 함수가 `extraFields`의 "작성" 칸으로 넘긴다. 그래서 `RecruitDisplay`와 목록 그리기 코드는 바꾸지 않는다.
-- 정렬에는 쓰지 않는다. 정렬 기준은 모집 시작 날짜다(§2.7).
+- 정렬에는 쓰지 않는다. 정렬 기준은 모집 시작 시점이다(§2.7).
 - 비교값 계산에 들어가지만 한 번 정해지면 바뀌지 않으므로, 이 값 때문에 "바뀐 공고"가 되지 않는다.
 
 **기간 형식 규칙** — 모든 사이트의 기간 값은 `YYYY.MM.DD`로 시작한다.
 - 사이트가 어떤 형식으로 날짜를 주든, 공고를 만들 때(생성기 또는 수집 코드) 이 형식으로 바꿔 넣는다.
-- 정렬은 이 앞 날짜만 읽는다(§2.7 `getStartDate`).
+- 정렬은 앞의 시작 시점만 읽는다. 시각이 있으면 시각까지 비교한다(§2.7 `getStartDate`).
 - 지금 값: sria `2026.09.06 ~ 2026.09.13`(이미 맞음), elias `2026.10.11 14:00 ~ 2026.10.12 02:00`(§2.6에서 연도 추가).
 
 **소스별 변환** — 순수 함수. 표시 이름은 인자로 받는다(`index.ts`와 서로 import하는 순환을 피하기 위해).
@@ -499,12 +500,12 @@ const EliasRegions = {
 
 // CITIES에 ...EliasRegions 추가
 // CITY_GROUPS에 추가
-eliasRegions: { label: "엘리아스", cities: EliasRegions },
+eliasRegions: { label: "elias 지역", itemPrompt: "지역을 선택하세요", cities: EliasRegions },
 ```
 
 - `CityEn`, `toKorean`, 지역 선택 메뉴는 이 목록을 읽으므로 코드를 고치지 않는다. `regionSelectMenus.ts:9-10` 주석의 "75개 시"는 77개로, "권역(10)"은 11로 고친다.
 - 공고 조회는 지역을 직접 입력받아 `isValidCityName`으로 검증한다(`events/listeners/commands/onRecruitRequest.ts:14-18`). 지금 정규식 `/^[가-힣]+$/`(`common/utils/cityName.ts:62`)은 공백을 허용하지 않아 `요정 왕국`이 없는 지역으로 처리된다. `/^[가-힣 ]+$/`로 고친다.
-- 실제 지역만 고른 구독자는 elias 공고를 받지 않는다. 엘리아스 권역을 고르거나 모든 지역을 구독해야 받는다.
+- 실제 지역만 고른 구독자는 elias 공고를 받지 않는다. `elias 지역`을 고르거나 모든 지역을 구독해야 받는다.
 
 #### README 안내
 
@@ -619,7 +620,7 @@ export function filterByRegion(jobs: Job[], filter: AlarmFilter<CityEn>): Job[] 
   return matchRegions(jobs, filter.values);   // 기존 filterByRegion 본문(:25-35)을 내부 함수로
 }
 
-/** 공고의 시작 날짜 "YYYY.MM.DD". 시각은 보지 않는다. 형식이 맞지 않으면 "" (맨 뒤로 감). */
+/** 공고의 시작 시점 "YYYY.MM.DD" 또는 "YYYY.MM.DD HH:mm". 형식이 맞지 않으면 "" (맨 뒤로 감). */
 export function getStartDate(recruit: Recruit): string {
   const period = (() => {
     switch (recruit.source) {
@@ -631,10 +632,10 @@ export function getStartDate(recruit: Recruit): string {
     }
     }
   })();
-  return /^\d{4}\.\d{2}\.\d{2}/.exec(period)?.[0] ?? "";
+  return /^\d{4}\.\d{2}\.\d{2}(?: \d{2}:\d{2})?/.exec(period)?.[0] ?? "";
 }
 
-/** 시작 날짜 최신순. 같은 날짜는 원래 순서를 유지한다(Array.prototype.sort는 안정 정렬). */
+/** 시작 시점 최신순. 시점이 같으면 원래 순서를 유지한다(Array.prototype.sort는 안정 정렬). */
 export function sortByStartDateDesc<T>(items: T[], toRecruit: (item: T) => Recruit): T[] {
   return [...items].sort((a, b) => getStartDate(toRecruit(b)).localeCompare(getStartDate(toRecruit(a))));
 }
@@ -654,7 +655,7 @@ export function getRecruitStatus(recruit: Recruit): RecruitmentStatus {
 /** 알림 정렬의 상태 순서. 작을수록 앞에 온다. */
 const STATUS_ORDER: Record<RecruitmentStatus, number> = { 접수중: 0, 발표중: 1, 종료: 2 };
 
-/** ② 알림 정렬. 접수중 → 발표중 → 종료, 같은 상태 안에서는 시작 날짜 최신순. 발송 1회에 한 번만 호출한다. */
+/** ② 알림 정렬. 접수중 → 발표중 → 종료, 같은 상태 안에서는 시작 시점 최신순. 발송 1회에 한 번만 호출한다. */
 export function sortForNotification(jobs: Job[]): Job[] {
   return sortByStartDateDesc(jobs, (job) => job.value).sort(
     (a, b) => STATUS_ORDER[getRecruitStatus(a.value)] - STATUS_ORDER[getRecruitStatus(b.value)],
@@ -662,8 +663,8 @@ export function sortForNotification(jobs: Job[]): Job[] {
 }
 ```
 
-- `YYYY.MM.DD` 글자는 사전순이 날짜순과 같으므로 날짜로 바꾸지 않고 글자로 비교한다.
-- 정렬 기준이 날짜뿐인 이유: 시각까지는 필요 없다(2026-10-14 사용자 결정). 같은 날짜 공고는 생성기가 준 순서를 따른다.
+- `getStartDate`는 시각이 있으면 `YYYY.MM.DD HH:mm`까지 읽는다. 이 글자는 사전순이 시간순과 같으므로 날짜로 바꾸지 않고 글자로 비교한다.
+- 시각까지 비교하는 이유: elias 공고는 모집 기간이 12시간이라 날짜만 보면 같은 날 공고가 모두 같은 순서가 되어 새 공고가 위로 오지 못한다(2026-11-03 사용자 결정. 10-14의 "날짜만 비교"를 대체). 시작 시점이 같으면 생성기가 준 순서를 따른다.
 - 알림 정렬은 최신순으로 먼저 정렬한 뒤 상태로 다시 정렬한다. `Array.prototype.sort`는 안정 정렬이라 같은 상태 안에서는 최신순이 유지된다(2026-10-27 사용자 결정). 예: A(접수중, 10.11)·B(종료, 10.12)·C(접수중, 10.09)·D(발표중, 10.10) → A, C, D, B.
 - "종료" 공고도 빼지 않고 뒤에 둔다. 공고는 남아 있지만 모두 마감된 경우에도 목록을 보여 주기 위해서다(2026-10-27 사용자 결정. 10-12의 "종료" 공고 알림 제외를 대체).
 - 발송은 ①에서 숨긴 소스를 뺀 뒤 ②에서 한 번 정렬한다. ③·④는 `filter`라서 순서가 유지된다.
@@ -753,7 +754,8 @@ async notifyRecruits(current: Job[], changedIds: ReadonlySet<string>): Promise<n
   for (const subscriber of subscribers) {
     // 구독자 한 명의 오류가 나머지 발송을 막지 않는다
     try {
-      const bySource = filterBySource(targetJobs, subscriber.sources);    // ③
+      // ③ 공고 묶음 저장값을 소스 목록으로 펼친다 (§2.9.5)
+      const bySource = filterBySource(targetJobs, expandSourceFilter(subscriber.sources));
       const matched = filterByRegion(bySource, subscriber.regions);       // ④
       // 구독 조건에 맞는 공고 중 바뀐 것이 없으면 보내지 않는다
       if (!matched.some((job) => changedIds.has(job.id))) continue;
@@ -849,7 +851,7 @@ private async backupToFirestore(current: Recruit[]): Promise<void> {
   try {
     await this.deps.recruitStore.saveRecruitList(current);
   } catch (error) {
-    globalLogger.warn("Firestore 공고 목록 저장 실패 — 다음 알림에서 다시 저장", { error });
+    globalLogger.error("Firestore 공고 목록 저장 실패 — 다음 알림에서 다시 저장", error as Error);
   }
 }
 ```
@@ -1054,13 +1056,13 @@ Discord 쪽은 아래 입력 계약 세 가지만 읽는다. 소스별 공고 �
 **입력 계약 2 — `NOTIFICATION_SEND` 이벤트 데이터** (§2.8)
 - `{ userId: string; displays: RecruitDisplay[]; settings: AlarmSubscription }`
 - `displays`는 1건 이상이다(0건이면 발행하지 않음). 바뀐 공고만이 아니라 구독 조건에 맞는 공고 전체다(§2.8.1). 이미 접수중 → 발표중 → 종료, 같은 상태 안 최신순으로 정렬되어 있다(§2.7).
-- `settings.regions.mode`로 지역 라벨을 만든다. 선택 지역 목록은 `selectedValues(settings.regions)`로 읽는다.
+- 지역 라벨은 `regionSummary(settings, "·")`로 만든다. 꺼진 공고의 지역을 빼야 하므로 `regions`와 `sources`를 함께 넘긴다(§2.9.5).
 
 **입력 계약 3 — `SourceConfig`** (`providers/recruit/index.ts`, §2.4)
-- `getSourceConfig(source)` → `{ displayName, url?, userFacing, intervalMinutes }`
+- `getSourceConfig(source)` → `{ displayName, url?, userFacing, ownRegionGroup?, intervalMinutes }`
 - "전체 공고" 링크는 소스마다 그 소스의 `getSourceConfig(display.source).url`을 쓴다. `url`이 없으면 링크 없이 텍스트만 쓴다. `ENV.SRIA_URL` 직접 참조(`notificationMessageEmbed.ts:83`, `recruitMessageEmbed.ts:7`)는 없앤다.
-- 구독 메뉴 옵션은 `getUserFacingSources()`의 소스만 쓴다. 라벨은 `displayName`.
-- 소스 선택 저장은 `alarmSubscriptionService.updateSources(userId, filter)`를 호출한다. 0개 선택은 UI에서 막고, 서비스도 검증 오류로 거부한다(§2.3).
+- 사이트 설정 화면의 버튼은 `getUserFacingSources()`의 소스를 공고 묶음으로 나눠 만든다(`getSourceToggles()`, §2.9.5). 묶음 이름은 `displayName`이 아니라 "일반 공고", "elias 공고"다.
+- 켜기/끄기 저장은 `alarmSubscriptionService.updateSources(userId, filter)`를 호출한다. 마지막 묶음은 버튼을 잠가 끌 수 없고, 서비스도 0개 저장을 검증 오류로 거부한다(§2.3).
 
 #### 2.9.1 문구 원칙
 
@@ -1072,19 +1074,22 @@ Discord 쪽은 아래 입력 계약 세 가지만 읽는다. 소스별 공고 �
 **요약 문구** — 신규 `providers/discord/builder/subscriptionSummary.ts`
 
 ```typescript
-/** "전체 지역" | "서울, 부산" | "선택된 지역 없음" */
-export function regionSummary(filter: AlarmFilter<CityEn>, separator = ", "): string;
+/** "전체 지역" | "서울, 부산" | "선택된 지역 없음". 꺼진 공고의 지역은 넣지 않는다. */
+export function regionSummary(
+  sub: Pick<AlarmSubscription, "regions" | "sources">,
+  separator = ", ",
+): string;
 
-/** "모든 사이트" | "sria" | "받을 사이트 없음". SELECTED 값 중 노출 사이트만 이름으로 바꿔 잇는다. */
+/** "모든 공고" | "일반 공고" | "elias 공고" | "받을 공고 없음". 켜진 공고 묶음 이름을 잇는다. */
 export function sourceSummary(filter: AlarmFilter<RecruitSource>): string;
 ```
 
 | 화면 | 지금 | 바뀐 뒤 |
 |------|------|--------|
-| 진입 화면, 켜짐 + 전체 지역 | `🔔 알림 **켜짐** · 🌐 전체 지역` | `🔔 알림 **켜짐** · 📍 전체 지역 · 🌐 모든 사이트` |
-| 진입 화면, 켜짐 + 선택 지역 | `🔔 알림 **켜짐** · 📍 현재 선택 지역: 서울, 부산` | `🔔 알림 **켜짐** · 📍 서울, 부산 · 🌐 sria` |
+| 진입 화면, 켜짐 + 전체 지역 | `🔔 알림 **켜짐** · 🌐 전체 지역` | `🔔 알림 **켜짐** · 📍 전체 지역 · 🌐 모든 공고` |
+| 진입 화면, 켜짐 + 선택 지역 | `🔔 알림 **켜짐** · 📍 현재 선택 지역: 서울, 부산` | `🔔 알림 **켜짐** · 📍 서울, 부산 · 🌐 일반 공고` |
 | 진입 화면, 꺼짐·문서 없음 | — | 그대로 |
-| DM 배너 첫 줄 | `📢 서울·부산 · 총 N건` | 그대로. 지역 라벨은 `regionSummary(settings.regions, "·")` |
+| DM 배너 첫 줄 | `📢 서울·부산 · 총 N건` | 그대로. 지역 라벨은 `regionSummary(settings, "·")` |
 
 #### 2.9.2 공고 목록 그리기 (DM 알림·공고 조회 공용)
 
@@ -1110,7 +1115,7 @@ export function formatRecruitGroups(
 
 | 모드 | 모양 | 규칙 |
 |------|------|------|
-| 간단히 | `1. [서울][접수중] 카페 스태프 · 📅 2024.10.01 ~ 2024.10.15` | 한 줄. 상태를 넣은 제목 뒤에 ` · 📅 {period}`. `period`가 없으면 ` · 📅 …`를 뺀다. `postedBy`와 `extraFields`는 그리지 않는다 |
+| 간단히 | `1. [서울][접수중] 카페 스태프`<br>`📅 2024.10.01 ~ 2024.10.15` | 첫 줄은 상태를 넣은 제목. 둘째 줄은 `📅 {period}`. `period`가 없으면 둘째 줄을 뺀다. `postedBy`와 `extraFields`는 그리지 않는다 |
 | 자세히 | `1. [서울][접수중] 카페 스태프`<br>`📅 2024.10.01 ~ 2024.10.15 \| 한빛이벤트 \| 마감 D-5` | 첫 줄은 상태를 넣은 제목. 둘째 줄은 `📅 {period}`, `{postedBy}`, `extraFields`의 `{name} {value}` 칸들 순서로 ` \| `로 잇는다. 값이 빈 칸은 뺀다 |
 
 **제목에 상태 넣기** (두 모드 공통, 2026-10-27 사용자 결정)
@@ -1128,19 +1133,21 @@ export function formatRecruitGroups(
 
 ```
 **🌐 sria** · 5건
-1. [서울][접수중] 카페 스태프 · 📅 2024.10.01 ~ 2024.10.15
+1. [서울][접수중] 카페 스태프
+📅 2024.10.01 ~ 2024.10.15
 2. …
 3. …
 ▸ 이 외 2건 더 있어요 · [전체 공고 보기](https://…)
 
 **🌐 elias** · 1건
-1. [세계수 교단][종료] 교단 가입시키기 · 📅 2026.10.11 14:00 ~ 2026.10.12 02:00
+1. [세계수 교단][종료] 교단 가입시키기
+📅 2026.10.11 14:00 ~ 2026.10.12 02:00
 ```
 
 항목마다 배지를 붙이는 방식 대신 묶기를 고른 근거:
 1. "전체 공고" 링크가 사이트마다 다르다. 묶으면 링크가 그 사이트 항목 바로 아래에 붙어 어느 목록의 링크인지 분명하다. 배지 방식은 목록 끝에 사이트별 링크를 따로 늘어놓아야 한다.
 2. 상위 건수를 사이트마다 따로 센다. 한 사이트 공고가 많아도 다른 사이트 공고가 가려지지 않는다. 지금 DM은 전체에서 상위 3건만 보여 준다(`notificationMessageEmbed.ts:88`).
-3. 간단히 모드는 한 줄이다. 사이트 이름을 머리줄에 한 번만 쓰면 줄이 짧게 유지된다.
+3. 사이트 이름을 머리줄에 한 번만 쓰면 공고 줄이 짧게 유지된다.
 
 - 대가: 사이트가 하나여도 머리줄이 붙는다. 한 메시지에 보이는 건수는 최대 "사이트 수 × 3건"이 된다.
 - 사이트 순서는 `getUserFacingSources()` 순서(sria → elias)를 따른다. 이 목록에 없는 사이트 항목이 들어오면 빠뜨리지 않고 그 뒤에 들어온 순서대로 붙인다.
@@ -1170,7 +1177,7 @@ export function notificationMessageEmbed(displays: RecruitDisplay[], settings: A
 ```
 
 - 목록: `formatRecruitGroups(displays, { detail: "simple", topCount: 3 })`.
-- 배너 content: 지금 모양을 유지한다. 지역 라벨은 `regionSummary(settings.regions, "·")`, 건수는 `displays.length`(구독 조건에 맞는 공고 전체 수).
+- 배너 content: 지금 모양을 유지한다. 지역 라벨은 `regionSummary(settings, "·")`, 건수는 `displays.length`(구독 조건에 맞는 공고 전체 수).
 - 지역 안내문("지역 필터로 조회된 공고예요…")은 지금처럼 지역이 SELECTED이고 `hasOverflow`일 때 맨 아래에 붙인다. 조건은 `settings.alertMode` 대신 `settings.regions.mode`로 본다.
 - `trimDate`(`:38-41`)는 sria 변환으로 옮긴다(§2.5). `ENV`·`Job`·`CITIES` import는 없앤다.
 - 색(`0x00b0f4`)과 타임스탬프는 유지한다.
@@ -1189,7 +1196,7 @@ export function notificationMessageEmbed(displays: RecruitDisplay[], settings: A
 - elias 고유 값(`eliasFields`로 정한 값)은 지금 DM에도 나오지 않으므로 새로 빠지는 값이 아니다.
 - "종료"·"발표중" 공고도 DM 목록 아래쪽에 들어간다(§2.7 ②). 제목의 `[상태]`로 구분한다.
 - 기간 글자: sria `2024.10.01 ~ 2024.10.15`, elias `2026.10.11 14:00 ~ 2026.10.12 02:00`. 2026-10-14 결정으로 elias에 연도를 넣는다(§2.5 기간 형식 규칙). embed는 받은 글자를 그대로 쓴다.
-- 안내 문구: embed description 맨 아래에 빈 줄 하나를 두고 `접수 중인 공고를 먼저 보여드려요. 모집이 끝난 공고는 목록 아래쪽에 있어요.`를 항상 붙인다. 지역 안내문이 붙는 경우에는 그 아래에 둔다. "종료" 공고를 빼던 10-14 문구를 2026-10-27 결정에 맞춰 바꾼 것이다.
+- 안내 문구: embed description 맨 아래에 빈 줄 하나를 두고 `접수 중인 공고부터 최신순으로 보여드려요.`를 항상 붙인다. 지역 안내문이 붙는 경우에는 그 아래에 둔다. "종료" 공고를 빼던 10-14 문구를 2026-10-27 결정에 맞춰 바꾼 것이다.
 
 #### 2.9.4 공고 조회 커맨드
 
@@ -1209,9 +1216,9 @@ if (displays.length === 0) {
 await interaction.editReply({ embeds: [recruitMessageEmbed(displays, region)] });
 ```
 
-- 숨긴 사이트(`userFacing: false`)는 조회 결과에도 나오지 않는다. 구독 메뉴·발송과 같은 기준이다.
+- 숨긴 사이트(`userFacing: false`)는 조회 결과에도 나오지 않는다. 사이트 설정 화면·발송과 같은 기준이다.
 - "종료" 공고는 거르지 않는다. 제목에 `[종료]`로 그대로 보인다.
-- 정렬은 상태와 상관없이 시작 날짜 최신순이다. 기간이 남은 "종료" 공고가 위에 올 수 있다(2026-10-14 사용자 결정, 2026-10-27 재확인). DM의 상태순 정렬은 쓰지 않는다.
+- 정렬은 상태와 상관없이 시작 시점 최신순이다. 기간이 남은 "종료" 공고가 위에 올 수 있다(2026-10-14 사용자 결정, 2026-10-27 재확인). DM의 상태순 정렬은 쓰지 않는다.
 - 이 거르기는 로컬 Redis에 남은 옛 `temp:` 항목(§2.11)도 걸러 낸다. 그 항목은 `source`가 `"temp"`라 `toDisplay()`에 넘기면 검증 오류가 나고, 커맨드 전체가 "공고 요청 처리 중 오류"로 끝난다.
 - 지역 없이 조회해 결과가 0건이면 지금은 문구에 `undefined`가 찍힌다(`:57`). 같은 줄을 고치므로 `region ?? "전체"`로 함께 바로잡는다.
 - `RECRUIT_REQUEST_COMPLETED` 이벤트의 `jobs`는 지금처럼 `data`(`Recruit[]`)를 넘긴다.
@@ -1225,87 +1232,96 @@ export function recruitMessageEmbed(list: RecruitDisplay[], region?: string): AP
 - description: `총 {N}건의 공고가 검색되었어요. 사이트마다 상위 3건을 먼저 보여드릴게요.` + 빈 줄 + `formatRecruitGroups(list, { detail: "detailed", topCount: 3 }).blocks`.
 - `addFields`로 넣던 방식과 템플릿 문자열 들여쓰기(`:23-38`)를 없앤다. `ENV.SRIA_URL`(`:7`)도 없앤다.
 
-#### 2.9.5 사이트 선택 메뉴
+#### 2.9.5 사이트 설정 화면
 
-**파일**: 신규 `providers/discord/builder/selectMenus/sourceSelectMenu.ts`, 신규 `events/listeners/selectMenus/onSourceSelect.ts`, `events/handlers/selectMenus/index.ts`
+**파일**: 신규 `providers/recruit/sourceToggle.ts`, 신규 `providers/discord/builder/buttons/sourceToggleButtons.ts`, 신규 `events/listeners/buttons/renderSourceSettings.ts`, 신규 `events/listeners/buttons/onSourceToggle.ts`
+
+사이트를 하나씩 고르는 대신 공고 묶음을 켜고 끈다(2026-11-03 사용자 결정). 한국 지역을 쓰는 사이트는 사용자가 고르는 지역이 같으므로 "일반 공고" 하나로 묶고, 고유 지역이 있는 사이트만 따로 켜고 끈다.
+
+| 공고 묶음 | 든 사이트 | 지역 메뉴에 보이는 권역 |
+|-----------|----------|----------------------|
+| 일반 공고 | `ownRegionGroup`이 없는 사이트 전체 (지금은 sria) | 광역시 ~ 제주 10개 |
+| elias 공고 | elias | `elias 지역` |
 
 ```typescript
-export const SOURCE_SELECT_MENU_ID = {
-  MANAGE: "source-select",       // 설정 관리 화면에서 연 메뉴
-  FIRST: "source-select-first",  // 첫 구독 질문에서 연 메뉴
-} as const;
+// providers/recruit/index.ts SourceConfig에 추가. 없으면 한국 지역을 쓰는 사이트다.
+ownRegionGroup?: CityGroupKey;   // elias: "eliasRegions"
 
-export function sourceSelectMenu(
-  customId: (typeof SOURCE_SELECT_MENU_ID)[keyof typeof SOURCE_SELECT_MENU_ID],
-  current: AlarmFilter<RecruitSource>,
-): ActionRowBuilder<StringSelectMenuBuilder>;
+// providers/recruit/sourceToggle.ts
+export function getSourceToggles(): SourceToggle[];                     // 노출 사이트가 있는 묶음
+export function isToggleOn(toggle, filter): boolean;                    // 묶음 안의 사이트가 하나라도 저장돼 있으면 켜짐
+export function expandSourceFilter(filter): AlarmFilter<RecruitSource>; // 켜진 묶음의 사이트 전체로 넓힘
+export function toggleSourceFilter(filter, key): AlarmFilter<RecruitSource> | null; // 끌 수 없으면 null
+export function visibleRegionGroups(filter): CityGroupKey[];            // 지역 메뉴에 보일 권역
+export function isRegionInToggle(region, toggle): boolean;
 ```
+
+**저장값** — `sources` 형식은 그대로 쓴다.
+
+| 켜진 공고 | `sources` | 지역 메뉴 | 받는 공고 |
+|----------|-----------|---------|---------|
+| 둘 다 | `{ mode: "ALL" }` | 전체 | 전부 |
+| 일반 공고만 | `{ mode: "SELECTED", values: ["sria"] }` | 한국 권역 | 한국 사이트 공고 |
+| elias 공고만 | `{ mode: "SELECTED", values: ["elias"] }` | `elias 지역` | elias 공고 |
+
+- 알림 판정은 사이트 필터 앞에 `expandSourceFilter`를 쓴다(§2.8 ③). 그래서 `SELECTED ["sria"]`인 구독자도 나중에 추가되는 한국 사이트를 함께 받는다. 데이터 변환은 없다.
+- 모든 지역 모드에서는 켜진 공고를 전부 받는다. elias 공고만 켰으면 elias 공고 전부다.
+- 지역 선택 모드에서 서울을 골라도 elias 공고는 오지 않는다. 지역 필터가 제목을 보기 때문이다(§2.7).
+
+**화면** (`renderSourceSettings.ts`)
 
 | 항목 | 값 |
 |------|-----|
-| 옵션 | `getUserFacingSources()` 순서. label = `displayName`, value = 소스 값 |
-| 미리 선택 | ALL이면 전부, SELECTED면 `values`에 든 사이트 |
-| 최소 / 최대 선택 수 | 1 / 옵션 수 |
-| placeholder | `사이트 선택` |
-| 메시지 content | 첫 줄 `알림 받을 사이트를 1개 이상 고르세요`<br>둘째 줄 `모두 고르면 나중에 추가되는 사이트의 공고도 함께 받아요` |
+| 메시지 content | 첫 줄 `받을 공고를 켜거나 꺼 주세요`<br>둘째 줄 `버튼을 누르면 바로 저장돼요`<br>그 아래 공고마다 인용 블록 한 줄 (`> 일반 공고: 대한민국 지역의 공고`, `> elias 공고: elias 지역의 공고`) |
+| 켜진 버튼 | `✅ 일반 공고`, 초록색 |
+| 꺼진 버튼 | `⬜ elias 공고`, 회색 |
+| 잠금 | 켜진 묶음이 하나뿐이면 그 버튼을 잠근다 |
+| 뒤로 | [⬅️ 뒤로] → 설정 관리 화면 |
 
-- 둘째 줄 안내를 두는 이유: 전부 고르면 "전체"(ALL)로 저장되어 나중에 추가되는 사이트도 받는다(아래 저장 처리 4단계). 사용자가 이 차이를 메뉴에서 알 수 있게 한다.
-- customId는 지역 메뉴처럼 kebab-case로 두고 `selectMenus/index.ts` 맵에 등록한다. 메뉴는 버튼 ID 검사(`isValidFullActionId`) 대상이 아니다(`onInteraction.ts:52-58`).
-- 같은 메뉴를 customId 두 개로 나누는 이유: 저장한 뒤 돌아갈 화면이 다르다. 메뉴 제출 이벤트만으로는 어디서 열었는지 알 수 없다.
+- 메뉴 대신 버튼을 쓰는 이유: Discord 메뉴는 닫히는 순간 제출되어 사용자가 저장 시점을 알기 어렵다. 버튼은 누른 결과가 바로 보인다.
+- 다 끌 수 없게 막는 이유: 받을 공고가 없는 구독 상태를 만들지 않기 위해서다. 알림을 완전히 끄는 것은 진입 화면의 끄기 버튼이 맡는다.
+- 저장 처리: 버튼 잠금 → 구독 조회 → `toggleSourceFilter` → `updateSources` → 화면 다시 그리기. `toggleSourceFilter`가 null이면 저장하지 않는다. 다른 창에서 먼저 바꾼 경우다.
 
-**저장 처리** (`onSourceSelect.ts` — 두 customId가 같은 저장 함수를 쓴다)
+**지역 안내** — 권역 메뉴 위에도 사이트 설정 화면과 같은 공고 설명을 인용 블록으로 보여 준다. 공고가 둘 다 켜져 있을 때만 넣는다. 하나만 켜져 있으면 고를 수 있는 지역이 그 공고 것뿐이라 넣지 않는다.
 
-1. 원본 컴포넌트를 보관하고 `disableMessageComponents`로 잠근다 (기존 패턴).
-2. `interaction.values` 중 `getUserFacingSources()`에 있는 값만 남긴다. 메뉴를 연 뒤 노출 설정이 바뀌어도 숨긴 사이트가 저장되지 않게 하기 위해서다.
-3. 남은 값이 0개면 메뉴를 다시 보여 주며 `알림 받을 사이트를 1개 이상 고르세요.`를 띄운다. 메뉴 최소 1개 제약이 있어 보통은 오지 않는다.
-4. 노출 사이트를 전부 골랐으면 `{ mode: "ALL" }`, 아니면 `{ mode: "SELECTED", values }`로 만든다.
-5. `alarmSubscriptionService.updateSources(userId, filter)`를 호출한다.
-6. `source-select` → 설정 관리 화면(§2.9.7), `source-select-first` → 첫 구독 마무리(§2.9.6). 안내 문구는 `✅ 알림 받을 사이트를 저장했어요.`
-7. 실패하면 컴포넌트를 `restoreMessageComponents`로 되돌리고 다시 던진다. 사용자 안내는 `onInteraction.ts:75-86`이 한다.
+**꺼진 공고의 지역** — 저장값에서 지우지 않고 화면에서만 뺀다. 다시 켜면 그대로 쓰기 위해서다. `activeRegions(sub)`가 켜진 공고의 지역만 돌려준다.
 
-- 전부 고르면 ALL로 저장하는 이유: 메뉴에 "모든 사이트" 칸이 따로 없다. 한 번 일부만 고른 사용자가 ALL로 돌아갈 방법이 이것뿐이다. ALL은 나중에 추가되는 사이트도 받는다.
+| 대상 | 동작 |
+|------|------|
+| 설정 화면, 진입 화면 요약, 알림 DM 첫 줄, 지역 제거 메뉴 | 켜진 공고의 지역만 보여 준다. 공고 묶음 순서, 그 안에서 한글 가나다순이다 |
+| 설정 화면 표시 | `현재 선택 지역` 아래에 켜진 공고마다 인용 블록 한 줄을 보여 준다. 지역 이름은 인라인 코드로 감싼다(`> 일반 공고: `수원` `충주``). 고른 지역이 없는 공고는 `> {공고 이름}: 선택한 지역 없음`으로 보여 준다. 진입 화면 요약과 알림 DM 첫 줄은 글자로 둔다 |
+| 켜진 공고의 지역이 0개 | `선택된 지역 없음` 경고를 보여 주고 [➖ 제거]·[🧹 초기화]를 잠근다 |
+| [🧹 초기화] | 화면에 보이는 지역만 지운다 |
+| 지역 개수 제한 | 공고별 `MAX_REGION_COUNT`개. 켜진 공고가 모두 차야 [➕ 추가]를 잠근다. 한쪽만 찼을 때 그쪽 지역을 고르면 `대한민국 지역은 최대 2개까지 선택할 수 있어요` |
+| 지역 모드가 ALL일 때 지역 편집 | 지역을 고르던 때 열어 둔 메시지에서 [➕ 추가]·[➖ 제거]·[🧹 초기화] 버튼이나 그 메시지에 열려 있던 추가·제거 메뉴를 쓴 경우다. 메뉴를 열거나 저장하지 않고, `지금은 모든 지역 알림을 받고 있어요. 지역을 고르려면 **🔀 모드 변경**을 눌러 주세요.`와 함께 지역 화면을 다시 그린다(`rerenderIfAllRegions`). 버튼 이름은 굵게 써서 아래 버튼과 같은 것임을 보여 준다. `updateRegions`는 항상 SELECTED로 저장하므로, 저장하면 전체 지역 알림이 끊기기 때문이다(2026-11-05 사용자 결정) |
+
+**지역 추가 메뉴** — `regionGroupSelectMenu(sub.sources)`는 켜진 공고의 권역만 보여 준다. `subscribeAdd`는 구독 정보를 읽어야 하므로 버튼을 잠근 뒤 메뉴를 그린다.
+
+| 항목 | 값 |
+|------|-----|
+| 권역 옵션 | label `{권역} ▸`, description `수원, 성남 외 17곳` |
+| 1단계 문구 | `1/2단계 — 권역을 선택하세요` |
+| 2단계 문구 | `2/2단계 — {itemPrompt}`. 일반 권역 `시를 선택하세요`, elias 지역 `지역을 선택하세요` |
+| 1단계 뒤로 | [⬅️ 뒤로] → 지역 화면 (`SUBSCRIBE_OPTION:REGION`) |
+| 2단계 뒤로 | [⬅️ 뒤로] → 1단계 권역 메뉴 (`REGION_EDIT:ADD`) |
+| 지역 제거 메뉴 뒤로 | [⬅️ 뒤로] → 지역 화면 (`SUBSCRIBE_OPTION:REGION`) |
+
+권역을 고르면 그 메뉴를 먼저 잠그고(`update`) 시 메뉴로 바꾼다(`editReply`). 응답 한 번으로 메뉴를 다른 메뉴로 바로 바꾸면 Discord 앱에 로딩 표시가 남고, 시를 골라도 요청이 오지 않는 일이 있었다.
 
 #### 2.9.6 첫 구독 흐름
 
-지금은 [🔔 알림 켜기] → 지역 모드 질문 [모든 지역] [지역 선택] 순서다. 구독 문서는 지역 모드 버튼을 누를 때 만들어진다(`onEnableAllRegionAlert.ts:30-35`, `onEnableSelectedRegionAlert.ts:31-36`). 그래서 사이트 질문은 지역 모드 버튼 다음에 둔다. 지역 모드 질문은 그대로다. 지역을 먼저 정하는 이 순서는 사용자가 2026-10-12에 확인했다.
+첫 구독에서 사이트를 묻지 않는다(2026-11-03 사용자 결정). 처음에는 일반 공고만 받고, elias 공고는 사이트 설정 화면에서 켠다(2026-11-05 사용자 결정). 지역 모드 질문과 그 뒤 화면은 그대로다.
 
 ```
 [🔔 알림 켜기] (문서 없음)
-  → 지역 모드 질문 [모든 지역] [지역 선택]                         (기존)
-  → subscribe({ enabled: true, regions, sources: { mode: "ALL" } })  ← 사이트 "전체" 저장, 알림 켜짐
-  → 사이트 질문 [🌐 사이트 고르기] [모두 받기]                        (신규)
-       ├ 사이트 고르기 → 메뉴(source-select-first) + [모두 받기] → 저장 → 마무리
-       ├ 모두 받기 → 저장하지 않음 → 마무리
-       └ 메시지 닫기·무응답 → 사이트 "전체" 유지
-  마무리: regions.mode가 SELECTED → 지역 화면(지역 추가) / ALL → 진입 화면
+  → 지역 모드 질문 [모든 지역] [지역 선택]
+  → subscribe({ enabled: true, regions, sources: initialSourceFilter() })
+  → 모든 지역: 진입 화면 / 지역 선택: 지역 화면
 ```
 
-| 화면 | content | 컴포넌트 |
-|------|---------|---------|
-| 사이트 질문 (지역 ALL) | `✅ 모든 지역 알림이 설정되었어요.`<br>`어느 사이트의 공고를 받을까요? 지금은 모든 사이트의 공고를 받아요.` | [🌐 사이트 고르기] `SOURCE_SELECT:PICK` (Primary), [모두 받기] `SOURCE_SELECT:KEEP_ALL` (Secondary) |
-| 사이트 질문 (지역 SELECTED) | `✅ 알림을 켰어요. 사이트를 정한 다음 받을 지역을 추가해 주세요.`<br>둘째 줄 같음 | 같음 |
-| 메뉴 | §2.9.5 메시지 content와 같음 (두 줄) | 메뉴 + [모두 받기] `SOURCE_SELECT:KEEP_ALL` |
-| 마무리 → 진입 화면 | `{안내}\n\n{진입 화면 content}` | 진입 화면 버튼 |
-| 마무리 → 지역 화면 | `{안내}` + 관리 embed | 지역 화면 버튼 |
-
-- 안내 문구: 사이트를 저장했으면 `✅ 알림 받을 사이트를 저장했어요.`, [모두 받기]면 `✅ 모든 사이트의 공고를 받아요.`
-- 지역 모드 버튼 핸들러 두 곳은 `current === null`(새 문서) 분기에서만 사이트 질문을 띄운다. 모드 전환(`current !== null`)과 다시 켜기(`onShowSubscribeEnable.ts:30-35`, `resubscribe`)에서는 묻지 않는다.
-- 지역 모드 버튼의 `subscribe` 입력은 §2.10 바꿔 쓰기 규칙대로 `sources: { mode: "ALL" }`을 넣는다.
-- [사이트 고르기]·[모두 받기]는 문서를 다시 읽어(`getSubscription`) 마무리 화면을 정한다. 문서가 없으면 다른 핸들러처럼 `아직 알림 설정이 없어요…` + [⬅️ 뒤로]를 보여 준다.
-
-공용 함수 — 신규 `events/listeners/buttons/firstSourceStep.ts`
-
-```typescript
-/** 사이트 질문 화면. 지역 모드 버튼 핸들러가 새 문서를 만든 직후 부른다. */
-export async function renderFirstSourceQuestion(
-  interaction: MessageComponentInteraction, sub: AlarmSubscription,
-): Promise<void>;
-
-/** 마무리. regions.mode가 SELECTED면 지역 화면, 아니면 진입 화면. */
-export async function finishFirstSourceStep(
-  interaction: MessageComponentInteraction, sub: AlarmSubscription, notice: string,
-): Promise<void>;
-```
+- `initialSourceFilter()`(`providers/recruit/sourceToggle.ts`)는 "일반 공고" 묶음의 사이트만 고른 `SELECTED`를 돌려준다. 지금은 `{ mode: "SELECTED", values: ["sria"] }`다. sria를 직접 적지 않고 묶음에서 계산하므로 한국 사이트가 늘어도 일반 공고 전체가 켜진다.
+- 그래서 첫 구독자의 요약은 `🌐 일반 공고`이고, 지역 추가 메뉴에 `elias 지역`이 보이지 않는다.
+- 이미 구독한 사람과 `sources`가 없는 옛 문서(모든 공고로 읽음, §2.2)는 바뀌지 않는다.
 
 #### 2.9.7 설정 관리 화면
 
@@ -1316,14 +1332,14 @@ export async function finishFirstSourceStep(
   → 설정 관리 화면 (관리 embed)  [📍 지역 설정] [🌐 사이트 설정] [⬅️ 뒤로 → 진입 화면]
        ├ 📍 지역 설정 → 지역 화면 (지금 관리 화면 그대로)  [🔀 모드 변경] [⬅️ 뒤로 → 설정 관리 화면] (+ ➕ ➖ 🧹)
        │                └ 모드 변경 → 확인 → 지역 화면 (기존)
-       └ 🌐 사이트 설정 → 메뉴(source-select) + [⬅️ 뒤로 → 설정 관리 화면] → 저장 → 설정 관리 화면
+       └ 🌐 사이트 설정 → 공고 켜기/끄기 버튼 + [⬅️ 뒤로 → 설정 관리 화면] (누르면 바로 저장, 같은 화면 유지)
 ```
 
 - 고른 이유: 요청한 배치([지역 설정] [사이트 설정] 나란히)를 따르면서 지역 흐름(모드 변경 확인, 지역 추가·제거·초기화)의 핸들러를 그대로 둔다. 지역 화면을 다시 그리는 `renderSubscribeManage` 호출부도 바뀌지 않는다.
 - 대가: 지역을 고치려면 한 번 더 누른다.
 - 다른 안: 지금 지역 화면 첫 줄에 [🌐 사이트 설정]만 더하는 방법도 있다. 누르는 횟수는 그대로지만, 지역 버튼과 사이트 버튼이 한 화면에 섞여 요청한 배치와 다르다.
 - 지역 화면의 [⬅️ 뒤로]는 customId를 `SUBSCRIBE_OPTION:BACK` 대신 `SUBSCRIBE_OPTION:MANAGE`로 달아 설정 관리 화면으로 돌아가게 한다. ID 값 자체는 바뀌지 않는다.
-- 사이트 메뉴 화면의 [⬅️ 뒤로]도 `SUBSCRIBE_OPTION:MANAGE`를 쓴다.
+- 사이트 설정 화면의 [⬅️ 뒤로]도 `SUBSCRIBE_OPTION:MANAGE`를 쓴다.
 
 **관리 embed** (`subscribeManageEmbed.ts`) — 설정 관리 화면과 지역 화면이 함께 쓴다.
 
@@ -1331,7 +1347,7 @@ export async function finishFirstSourceStep(
 |------|------|--------|
 | 알림 상태 | 🔔 켜짐 / 🔕 꺼짐 | 그대로 |
 | 알림 모드 | 🌐 전체 지역 / 📍 선택 지역 | 없앤다. 사이트에도 전체·선택이 생겨 무엇의 모드인지 모호하다. "지역" 필드로 합친다 |
-| 지역 | 선택 지역일 때만 | 항상. 전체면 `📍 전체 지역`, 선택이면 `selectedRegionContent(selectedValues(sub.regions))` |
+| 지역 | 선택 지역일 때만 | 항상. 전체면 `📍 전체 지역`, 선택이면 `selectedRegionContent(activeRegionsByToggle(sub))`. 켜진 공고마다 한 줄로 보여 준다(§2.9.5) |
 | 사이트 | 없음 | `🌐 {sourceSummary(sub.sources)}` |
 
 **버튼 ID 추가** (기존 ID 값은 바꾸지 않는다)
@@ -1339,29 +1355,28 @@ export async function finishFirstSourceStep(
 | customId | 버튼 | 핸들러 (신규 `events/listeners/buttons/`) |
 |----------|------|------|
 | `SUBSCRIBE_OPTION:REGION` | 📍 지역 설정 | `onShowRegionSettings.ts` → `renderSubscribeManage` |
-| `SOURCE_SELECT:OPEN` | 🌐 사이트 설정 | `onSourceSelectOpen.ts` → 메뉴(`source-select`) |
-| `SOURCE_SELECT:PICK` | 🌐 사이트 고르기 | `onSourceSelectPick.ts` → 메뉴(`source-select-first`) |
-| `SOURCE_SELECT:KEEP_ALL` | 모두 받기 | `onSourceSelectKeepAll.ts` → `finishFirstSourceStep` |
+| `SOURCE_SELECT:OPEN` | 🌐 사이트 설정 | `onSourceSelectOpen.ts` → `renderSourceSettings` |
+| `SOURCE_SELECT:TOGGLE_KOREA` | 일반 공고 | `onSourceToggle.ts` (`key: "korea"`) |
+| `SOURCE_SELECT:TOGGLE_ELIAS` | elias 공고 | `onSourceToggle.ts` (`key: "elias"`) |
 
 - `SUBSCRIBE_OPTION:REGION`은 `SubscribeOptionAction` enum에 `REGION`을 더한다. 핸들러 맵은 `showSubscribeOptionHandler.ts`.
 - `SOURCE_SELECT`는 신규 `features/alarmSubscribe/constants/sourceSelectAction.ts`(`SOURCE_SELECT_PREFIX`, `SourceSelectAction`, `sourceSelectActionId`)에 둔다. 핸들러 맵은 신규 `events/handlers/buttons/sourceSelectHandlers.ts`를 `buttons/index.ts`에 합친다.
-- `constants/index.ts` export와 `fullActionId.ts`(`SUBSCRIBE_OPTION_REGION`, `SOURCE_SELECT_OPEN`·`_PICK`·`_KEEP_ALL`, `SourceSelectActionId` 타입)에 추가한다. `fullActionId`에 없는 버튼은 `onInteraction.ts:31`에서 막힌다.
-- 신규 빌더: `buttons/subscribeSettingsHubButtons.ts`(설정 관리 화면), `buttons/firstSourceQuestionButtons.ts`(사이트 질문).
-- 신규 `events/listeners/buttons/renderSubscribeSettingsHub.ts`: 설정 관리 화면을 그린다. `renderSubscribeManage`와 같은 모양에 `notice?: string` 인자를 둔다. `onShowSubscribeManage.ts:36`은 이 함수를 부른다.
-- `renderSubscribeManage`에도 `notice?: string` 인자를 더한다. 지금은 content를 비운다(`renderSubscribeManage.ts:20`).
-- 새 핸들러는 모두 기존 순서를 따른다: `update`로 컴포넌트 잠금 → 작업 → `editReply`. 쓰기 실패 시 `restoreMessageComponents`로 되돌리고 다시 던진다.
+- `constants/index.ts` export와 `fullActionId.ts`(`SUBSCRIBE_OPTION_REGION`, `SOURCE_SELECT_OPEN`·`_TOGGLE_KOREA`·`_TOGGLE_ELIAS`, `SourceSelectActionId` 타입)에 추가한다. `fullActionId`에 없는 버튼은 `onInteraction.ts:31`에서 막힌다.
+- 신규 빌더: `buttons/subscribeSettingsHubButtons.ts`(설정 관리 화면), `buttons/sourceToggleButtons.ts`(사이트 설정 화면).
+- 신규 `events/listeners/buttons/renderSubscribeSettingsHub.ts`: 설정 관리 화면을 그린다. `renderSubscribeManage`와 같은 모양에 `notice?: string` 인자를 둔다. `onShowSubscribeManage.ts:21`은 이 함수를 부른다.
+- `renderSubscribeManage`에도 `notice?: string` 인자를 더한다. 없으면 content를 비운다. `rerenderIfAllRegions`가 이 인자로 안내 문구를 넘긴다(§2.9.5).
+- 새 핸들러는 모두 `withDisabledComponents(interaction, work)`(`providers/discord/builder/disableMessageComponents.ts`)로 감싼다. 이 함수는 `update`로 컴포넌트를 잠근 뒤 `work`를 실행하고, `work`가 실패하면 원래 컴포넌트로 되돌린 뒤 예외를 다시 던진다.
 
 #### 2.9.8 에러 처리
 
-- 사이트 0개 저장은 메뉴 최소 1개 제약과 서비스 검증(§2.3) 두 곳에서 막는다.
-- 사이트 저장 전에 서비스가 `ensureExists`로 문서를 만들어 두므로(§2.3), 메뉴를 연 사이에 문서가 지워져도 저장이 NOT_FOUND 오류로 끝나지 않는다.
-- 메뉴 제출 값은 노출 사이트로 다시 거른다(§2.9.5 2단계).
-- 문서가 없는 사용자가 지역 설정·사이트 설정·사이트 질문 버튼을 누르면 기존 방어 문구(`아직 알림 설정이 없어요. '알림 켜기'로 시작해보세요.` + [⬅️ 뒤로])를 보여 준다.
+- 사이트 0개 저장은 마지막 버튼 잠금, `toggleSourceFilter`, 서비스 검증(§2.3) 세 곳에서 막는다.
+- 사이트 저장 전에 서비스가 `ensureExists`로 문서를 만들어 두므로(§2.3), 화면을 연 사이에 문서가 지워져도 저장이 NOT_FOUND 오류로 끝나지 않는다.
+- 문서가 없는 사용자가 지역 설정·사이트 설정·공고 켜기/끄기 버튼을 누르면 기존 방어 문구(`아직 알림 설정이 없어요. '알림 켜기'로 시작해보세요.` + [⬅️ 뒤로])를 보여 준다.
 - embed는 값이 없는 칸을 빼고 그린다. 두 호출부(발송·조회)는 노출 사이트 공고만 넘긴다(§2.8 ①, §2.9.4).
 
 ### 2.10 `alertMode`·`regions` 참조 지점 전체 목록
 
-`grep alertMode|AlertMode|regions` 결과(`.ts` 32개 파일)를 컴파일 영향으로 나눴다. A에 16개, B에 16개가 있다. A의 #6·#8은 grep에 걸리지 않지만 같은 변경으로 함께 고친다. 소스 이름 변경(temp → elias)으로 바뀌는 파일은 §2.11에 따로 적는다. 타입을 먼저 바꾸면 "수정 필요" 항목은 컴파일 오류로 드러난다.
+`grep alertMode|AlertMode|regions` 결과(`.ts` 32개 파일)를 컴파일 영향으로 나눴다. A에 16개, B에 16개가 있다. B의 2개(`formatRegionList.ts`, `regionSelectMenus.ts`)는 뒤에 공고별 지역 표시로 바뀌어 D 표로 옮겼다. A의 #6·#8은 grep에 걸리지 않지만 같은 변경으로 함께 고친다. 소스 이름 변경(temp → elias)으로 바뀌는 파일은 §2.11에 따로 적는다. 타입을 먼저 바꾸면 "수정 필요" 항목은 컴파일 오류로 드러난다.
 
 **바꿔 쓰기 규칙** (UI 쪽 기계적 수정)
 
@@ -1369,7 +1384,7 @@ export async function finishFirstSourceStep(
 |------|------|
 | `sub.alertMode` | `sub.regions.mode` |
 | `sub.regions` (배열로 사용) | `selectedValues(sub.regions)` |
-| `subscribe(userId, { enabled, alertMode: X, regions: [] })` | `subscribe(userId, { enabled, regions: X === ALL ? {mode:"ALL"} : {mode:"SELECTED", values: []}, sources: {mode:"ALL"} })` |
+| `subscribe(userId, { enabled, alertMode: X, regions: [] })` | `subscribe(userId, { enabled, regions: X === ALL ? {mode:"ALL"} : {mode:"SELECTED", values: []}, sources: initialSourceFilter() })` (§2.9.6) |
 
 **A. 수정 필요 (grep 16개 + 추가 2개)**
 
@@ -1387,14 +1402,14 @@ export async function finishFirstSourceStep(
 | 10 | `providers/discord/builder/embeds/subscribeManageEmbed.ts:13,24-25` | 필드 재구성: 알림 상태·지역·사이트 (§2.9.7) | Discord |
 | 11 | `providers/discord/builder/embeds/notificationMessageEmbed.ts:4,22-27,57-112` | `RecruitDisplay` 기반으로 교체 (§2.9.3) | Discord |
 | 12 | `providers/discord/builder/buttons/subscribeManageButtons.ts:22-31` | `selectedValues(sub.regions)`, [⬅️ 뒤로] customId → `SUBSCRIBE_OPTION:MANAGE` (§2.9.7) | Discord |
-| 13 | `events/listeners/selectMenus/onRegionCitySelect.ts:47-64` | `const current = selectedValues(sub.regions)` | Discord |
-| 14 | `events/listeners/selectMenus/onRegionRemoveSelect.ts:46-48` | `selectedValues(sub.regions).filter(...)` | Discord |
-| 15 | `events/listeners/buttons/subscribeRemove.ts:48,58` | `selectedValues(sub.regions)` | Discord |
-| 16 | `events/listeners/buttons/onEnableAllRegionAlert.ts:31-35` | `subscribe` 입력 새 형식, 새 문서면 사이트 질문 (§2.9.6) | Discord |
-| 17 | `events/listeners/buttons/onEnableSelectedRegionAlert.ts:32-36` | `subscribe` 입력 새 형식, 새 문서면 사이트 질문 (§2.9.6) | Discord |
+| 13 | `events/listeners/selectMenus/onRegionCitySelect.ts:47-64` | `const current = selectedValues(sub.regions)`, 공고별 개수 제한 `isToggleFull`, 지역 모드가 ALL이면 저장 안 함 (§2.9.5) | Discord |
+| 14 | `events/listeners/selectMenus/onRegionRemoveSelect.ts:46-48` | `selectedValues(sub.regions).filter(...)`, 지역 모드가 ALL이면 저장 안 함 (§2.9.5) | Discord |
+| 15 | `events/listeners/buttons/subscribeRemove.ts:48,58` | 제거 메뉴는 `activeRegions(sub)`로 켜진 공고의 지역만, [⬅️ 뒤로] 추가, 지역 모드가 ALL이면 메뉴를 열지 않음 (§2.9.5) | Discord |
+| 16 | `events/listeners/buttons/onEnableAllRegionAlert.ts:31-35` | `subscribe` 입력 새 형식 (§2.9.6) | Discord |
+| 17 | `events/listeners/buttons/onEnableSelectedRegionAlert.ts:32-36` | `subscribe` 입력 새 형식 (§2.9.6) | Discord |
 | 18 | `features/alarmSubscribe/ai/interpreter.ts:2,13` | `AlertMode` 타입은 유지되므로 오류 없음. 컴파일 확인만 | — |
 
-**B. 변경 없음 — `AlertMode` 값·타입만 쓰거나 이름만 일치 (16개 파일)**
+**B. 변경 없음 — `AlertMode` 값·타입만 쓰거나 이름만 일치 (14개 파일, D로 옮긴 2개 제외)**
 
 이 절의 구독 타입 변경 기준이다. 일부 파일은 D·E 표의 다른 이유로 수정된다.
 
@@ -1414,9 +1429,8 @@ export async function finishFirstSourceStep(
 | `events/listeners/buttons/onShowSubscribeEnable.ts:4,40` | 이름만 일치 |
 | `providers/discord/builder/buttons/showAlertModeSelectButtons.ts:2-11` | 이름만 일치 |
 | `providers/discord/builder/buttons/showConfirmChangeAlertModeButtons.ts:4` | 이름만 일치 |
-| `providers/discord/builder/buttons/formatRegionList.ts:19,31`, `selectMenus/regionSelectMenus.ts:62` | `CityEn[]` 인자 유지 — 호출하는 쪽이 `selectedValues()` 결과를 넘김 |
 
-`onEnableAllRegionAlert.ts:28,37`·`onEnableSelectedRegionAlert.ts:29,38`·`subscribeClear.ts:30`도 서비스 시그니처가 유지되므로 그 줄은 바뀌지 않는다.
+`onEnableAllRegionAlert.ts:28,37`·`onEnableSelectedRegionAlert.ts:29,38`도 서비스 시그니처가 유지되므로 그 줄은 바뀌지 않는다. B에 있던 `formatRegionList.ts`·`regionSelectMenus.ts`와 서비스 호출 줄만 그대로이던 `subscribeClear.ts`는 공고별 지역 표시 때문에 바뀌므로 D 표에 적는다.
 
 **C. 문서 (코드 아님, 갱신 대상)**
 - `providers/CLAUDE.md:100-124` — Firestore 스키마·메서드 표
@@ -1432,22 +1446,26 @@ export async function finishFirstSourceStep(
 | `providers/discord/builder/embeds/jobLink.ts` | 수정 | `recruitField` 삭제, `formatJobTitleLink`만 남김 |
 | `providers/discord/builder/embeds/recruitMessageEmbed.ts` | 수정 | `RecruitDisplay[]` 입력, 자세히 모드, `ENV.SRIA_URL` 삭제 (§2.9.4) |
 | `events/listeners/commands/onRecruitRequest.ts:56-61` | 수정 | 노출 사이트 거르기 → `toDisplay()` → embed (§2.9.4) |
-| `providers/discord/builder/subscriptionSummary.ts` | 신규 | `regionSummary`·`sourceSummary` (§2.9.1) |
-| `providers/discord/builder/selectMenus/sourceSelectMenu.ts` | 신규 | 사이트 선택 메뉴 (§2.9.5) |
+| `providers/discord/builder/subscriptionSummary.ts` | 신규 | `regionSummary`·`sourceSummary` (§2.9.1), 공고 설명 인용 블록 `sourceDescriptions` (§2.9.5) |
+| `providers/discord/builder/buttons/formatRegionList.ts` | 수정 | `selectedRegionContent(groups: ToggleRegions[])` — 켜진 공고마다 인용 블록 한 줄, 0개 경고 (§2.9.5) |
+| `providers/discord/builder/selectMenus/regionSelectMenus.ts` | 수정 | `regionGroupSelectMenu(sub.sources)`는 켜진 공고의 권역만, `regionGroupMenuContent`·`regionCityMenuContent` 단계 문구, 주석의 시·권역 수 (§2.6, §2.9.5) |
+| `providers/discord/builder/disableMessageComponents.ts` | 수정 | `withDisabledComponents` — 잠금, 작업, 실패 시 복원을 한 함수로 (§2.9.7) |
+| `events/listeners/buttons/subscribeAdd.ts` | 수정 | 구독 정보를 읽어 켜진 공고의 권역 메뉴를 그림, [⬅️ 뒤로], 지역 모드가 ALL이면 메뉴를 열지 않음 (§2.9.5) |
+| `events/listeners/buttons/subscribeClear.ts` | 수정 | 화면에 보이는 지역만 지움, 지역 모드가 ALL이면 저장 안 함 (§2.9.5) |
+| `events/listeners/selectMenus/onRegionGroupSelect.ts` | 수정 | 메뉴를 잠근 뒤 시 메뉴로 바꿈, [⬅️ 뒤로] (§2.9.5) |
+| `providers/recruit/sourceToggle.ts` | 신규 | 공고 묶음 계산 (§2.9.5) |
 | `providers/discord/builder/buttons/subscribeSettingsHubButtons.ts` | 신규 | [📍 지역 설정] [🌐 사이트 설정] [⬅️ 뒤로] |
-| `providers/discord/builder/buttons/firstSourceQuestionButtons.ts` | 신규 | [🌐 사이트 고르기] [모두 받기] |
-| `features/alarmSubscribe/constants/sourceSelectAction.ts` | 신규 | `SOURCE_SELECT:OPEN`·`PICK`·`KEEP_ALL` |
+| `providers/discord/builder/buttons/sourceToggleButtons.ts` | 신규 | 공고 켜기/끄기 버튼 |
+| `features/alarmSubscribe/constants/sourceSelectAction.ts` | 신규 | `SOURCE_SELECT:OPEN`·`TOGGLE_KOREA`·`TOGGLE_ELIAS` |
 | `features/alarmSubscribe/constants/subscribeOptionAction.ts` | 수정 | `REGION` 추가 |
 | `features/alarmSubscribe/constants/index.ts`, `fullActionId.ts` | 수정 | 새 ID export·등록, `SourceSelectActionId` 타입 |
 | `events/handlers/buttons/sourceSelectHandlers.ts` | 신규 | `SOURCE_SELECT:*` 핸들러 맵 |
 | `events/handlers/buttons/index.ts`, `showSubscribeOptionHandler.ts` | 수정 | 새 맵 합치기, `SUBSCRIBE_OPTION:REGION` 등록 |
-| `events/handlers/selectMenus/index.ts` | 수정 | `source-select`, `source-select-first` 등록 |
-| `events/listeners/selectMenus/onSourceSelect.ts` | 신규 | 메뉴 제출 저장 (§2.9.5) |
-| `events/listeners/buttons/onShowRegionSettings.ts`, `onSourceSelectOpen.ts`, `onSourceSelectPick.ts`, `onSourceSelectKeepAll.ts` | 신규 | 버튼 핸들러 (§2.9.7 표) |
-| `events/listeners/buttons/firstSourceStep.ts` | 신규 | 사이트 질문·첫 구독 마무리 (§2.9.6) |
+| `events/listeners/buttons/onShowRegionSettings.ts`, `onSourceSelectOpen.ts`, `onSourceToggle.ts` | 신규 | 버튼 핸들러 (§2.9.7 표) |
+| `events/listeners/buttons/renderSourceSettings.ts` | 신규 | 사이트 설정 화면 (§2.9.5) |
 | `events/listeners/buttons/renderSubscribeSettingsHub.ts` | 신규 | 설정 관리 화면 그리기 |
-| `events/listeners/buttons/renderSubscribeManage.ts` | 수정 | `notice?` 인자 |
-| `events/listeners/buttons/onShowSubscribeManage.ts:36` | 수정 | 설정 관리 화면으로 연결 |
+| `events/listeners/buttons/renderSubscribeManage.ts` | 수정 | `notice?` 인자, 지역 모드가 ALL이면 저장 대신 화면을 다시 그리는 `rerenderIfAllRegions` (§2.9.5) |
+| `events/listeners/buttons/onShowSubscribeManage.ts:21` | 수정 | 설정 관리 화면으로 연결 |
 
 **E. 2026-10-14 결정으로 추가되는 파일 (알림 스케줄러, 게시자, 정렬, 빈 목록)**
 
@@ -1471,7 +1489,6 @@ export async function finishFirstSourceStep(
 | `providers/redis/store/notifiedHashStore.ts` | 신규 | 지난 알림 때 목록 `recruit:notified:all` (§2.8.2) |
 | `providers/redis/key/recruitKeyManager.ts`, Redis store 레지스트리 | 수정 | 새 키 이름(`recruit:notified:all`, `recruit:lastSync:{source}`) 등록 |
 | `common/constants/city.ts` | 수정 | elias 지역 `EliasRegions`, 권역 `eliasRegions` 추가 (§2.6) |
-| `providers/discord/builder/selectMenus/regionSelectMenus.ts:9-10` | 수정 | 주석의 시·권역 수 (§2.6) |
 | `common/utils/cityName.ts:62` | 수정 | 지역 이름에 공백 허용 (§2.6) |
 | `events/bus/__test__/EventBus.test.ts:44-52` | 수정 | sria 공고에 `postedBy` 추가. `__test__`도 빌드 대상이라 빠지면 컴파일 오류가 난다 |
 | `providers/redis/manager/redisManager.ts:4,16,24` | 수정 | `setValue` 추가, `notifiedStore` 등록, `RequestLimitStore` 등록 해제 (§2.8.0, §2.8.2) |
@@ -1620,8 +1637,8 @@ export async function finishFirstSourceStep(
 | 9 | 이벤트 데이터, 판정·발송, 알림 스케줄러, 즉시 발송 연결 해제, 발송 핸들러, 알림 함수 등록 | `events/bus/types.ts`, `services/notificationService.ts`, `providers/redis/store/notifiedHashStore.ts`, `events/bus/handlers/NotificationEventHandler.ts` 삭제, `events/bus/utils/registerEventHandlers.ts:10,50`, `NotificationSendHandler.ts`, `schedulers/jobs.ts`, `app/scheduler.ts`, `schedulers/utils/initializeSchedulers.ts`, `schedulers/RecruitScheduler.ts`, `schedulers/factory.ts`, `schedulers/SchedulerManager.ts`, `schedulers/utils/index.ts`, `schedulers/index.ts` | §2.8 |
 | 10 | UI 컴파일 수정 (바꿔 쓰기 규칙, 요약 문구) | §2.10 A-12~15, `subscriptionSummary.ts`, `subscribeEntryView.ts` | §2.9.1, §2.10 |
 | 11 | 공고 목록 그리기(게시자 표시), DM embed(안내 문구), 공고 조회 커맨드(정렬) | `recruitList.ts`, `jobLink.ts`, `notificationMessageEmbed.ts`, `recruitMessageEmbed.ts`, `onRecruitRequest.ts` | §2.9.2~§2.9.4 |
-| 12 | 사이트 설정 UI: ID 상수, 사이트 선택 메뉴와 저장, 설정 관리 화면, 첫 구독 사이트 질문. 끝나면 `npm run build` 통과 확인 | §2.10 A-10·16·17, §2.10 D 나머지 | §2.9.5~§2.9.8 |
-| 13 | 테스트 11종 | §6 | §6 |
+| 12 | 사이트 설정 UI: ID 상수, 공고 묶음 계산과 켜기/끄기, 설정 관리 화면. 끝나면 `npm run build` 통과 확인 | §2.10 A-10·16·17, §2.10 D 나머지 | §2.9.5~§2.9.8 |
+| 13 | 테스트 15종 (11종 + 런타임 검증 뒤 추가 4종) | §6 | §6 |
 | 14 | 로컬 Redis 옛 데이터 삭제 → `npm run build`·`npm run lint`·로컬 2회 실행·UI 수동 확인 | — | §2.11, §6 |
 | 15 | 문서 갱신 | §2.10 C, §2.11의 `functions/src` 밖 문서 | §2.10, §2.11 |
 
@@ -1643,7 +1660,9 @@ export async function finishFirstSourceStep(
 
 ## 6. 테스트 계획
 
-### 6.1 테스트 11종 (기존 `__test__` 방식)
+### 6.1 테스트 15종 (기존 `__test__` 방식)
+
+1~11번은 처음 설계한 테스트다. 12~15번은 런타임 검증 뒤 바뀐 화면과 저장 방식을 확인하려고 더했다.
 
 기존 방식(`events/bus/__test__/EventBus.test.ts:87`)처럼 테스트 함수를 export하고 `require.main === module`일 때 직접 실행한다. 실패하면 `process.exitCode = 1`을 설정해 종료 코드로 통과·실패를 판정한다.
 
@@ -1657,13 +1676,17 @@ export async function finishFirstSourceStep(
 | 2 | `providers/recruit/__test__/toDisplay.test.ts` | `toDisplay` 변환, elias 제목 생성 | sria·elias 공고를 `toDisplay`. elias 공고 제목 확인. sria `dDay: ""` 공고도 한 건 넣음 | sria: `period`에서 시간 제거, `status`=`recruitmentStatus`, `extraFields`=작성(`postedAt`이 있을 때)·마감(`dDay`가 ""이면 빠짐) 순서, `url` 유지. elias: `status` 그대로, `fields` → `extraFields` 그대로, `url` 없음, 제목이 `[한글 지역] 제목` 형식. 둘 다 `source`·`sourceLabel`(`"sria"`·`"elias"`)·`postedBy` 채워짐 |
 | 3 | `common/utils/__test__/recruitFilter.test.ts` | 구독 조건 일치, 상태 읽기 | sria 2건(서울·부산)·elias 2건 목록에 `filterBySource`→`filterByRegion`. 따로 sria("접수중"·"발표중"·"종료")·elias("접수중"·"종료") 공고에 `getRecruitStatus` | sria만 / elias만 / 둘 다 / ALL 각각 기대 건수. 지역 SELECTED+0개는 0건. 지역 ALL은 소스 결과 그대로. 상태가 소스 필드 값 그대로 나옴 |
 | 4 | `services/__test__/userFacing.test.ts` | 노출 여부 | ① `getUserFacingSources()` 호출 ② 숨긴 소스가 있는 경우를 흉내 내 `filterVisibleSources(jobs, {sria})` 후 소스 ALL 구독자·SELECTED [elias] 구독자 판정 | ① sria·elias 둘 다 들어 있음 ② elias 공고 0건 (숨긴 소스는 ALL 구독자에게도 가지 않음) |
-| 5 | `providers/discord/builder/embeds/__test__/recruitList.test.ts` | 공고 목록 그리기 (§2.9.2) | 고정 `RecruitDisplay` 목록(sria 5건·elias 1건, `period`·`status`·`extraFields`·`url` 있음/없음 섞기)을 두 모드로 그림 | 두 모드 공통: 제목이 `[서울] …`이면 `[서울][접수중] …`, `[…]`로 시작하지 않는 제목은 맨 앞에 `[상태]`, `status`가 없으면 그대로. 간단히: 한 줄, 게시자·`extraFields` 없음. 자세히: `📅 기간 \| 게시자 \| 추가 칸` 순서, "게시" 글자 없음, 상태 칸 없음, 빈 칸 생략, 칸이 없으면 둘째 줄 없음. 묶음 순서 sria → elias, 사이트마다 상위 3건. sria 꼬리줄 `이 외 2건` + 링크. elias(`url` 없음) 링크 없음. `hasOverflow` = true |
+| 5 | `providers/discord/builder/embeds/__test__/recruitList.test.ts` | 공고 목록 그리기 (§2.9.2) | 고정 `RecruitDisplay` 목록(sria 5건·elias 1건, `period`·`status`·`extraFields`·`url` 있음/없음 섞기)을 두 모드로 그림 | 두 모드 공통: 제목이 `[서울] …`이면 `[서울][접수중] …`, `[…]`로 시작하지 않는 제목은 맨 앞에 `[상태]`, `status`가 없으면 그대로. 간단히: 제목 줄과 `📅 기간` 줄, 게시자·`extraFields` 없음. 자세히: `📅 기간 \| 게시자 \| 추가 칸` 순서, "게시" 글자 없음, 상태 칸 없음, 빈 칸 생략, 칸이 없으면 둘째 줄 없음. 묶음 순서 sria → elias, 사이트마다 상위 3건. sria 꼬리줄 `이 외 2건` + 링크. elias(`url` 없음) 링크 없음. `hasOverflow` = true |
 | 6 | `providers/recruit/__test__/eliasRule.test.ts` | elias 생성 규칙 (§2.6) | `generateEliasRecruits`를 고정 시작 시각부터 `unitMs` 간격으로 30일 이상 돌리며 공고 ID별로 결과를 모음. 결과를 실제 `RecruitCacheService`(메모리 저장소)에 연결해 회차별 변경 감지 결과도 모음 | 같은 ID의 `title`·`postedBy`·`period`·`fields`는 모든 시각에서 같음. `status`가 바뀐다면 "접수중" → "종료" 한 번뿐이고, 변경 감지의 `updatedJobs`는 이 경우만 잡힘(앞 공고가 제거된 회차에도 뒤 공고 값이 바뀌지 않음). 모집 기간 끝 이후에는 없음. 같은 회차 공고끼리 제목+게시자가 겹치지 않고, 3건이 뽑힌 회차도 2건만 만들어짐. 제목의 지역이 `요정 왕국`·`세계수 교단`이고 게시자가 지역과 같음. `period`는 `YYYY.MM.DD HH:mm ~ YYYY.MM.DD HH:mm` 모양이고 시작 값이 `s * unitMs`의 한국 시간과 같음. 같은 30분 안 다른 시각의 결과가 같음. 하루 생성 수·목록 평균이 §2.6 예상 범위 안(생성 30~45건, 평균 8~14건). "틱" 글자와 `badge` 칸이 없음 |
-| 7 | `common/utils/__test__/recruitSort.test.ts` | 정렬 (§2.7) | sria(`dayTxt`)·elias(`period`) 공고를 날짜를 섞어 넣고 `sortByStartDateDesc`. 같은 날짜 2건, 형식이 틀린 기간 1건 포함 | 시작 날짜 최신순. 같은 날짜는 넣은 순서 유지. 형식이 틀린 공고는 맨 뒤. 시각은 순서에 영향 없음. 같은 목록에 상태를 섞어 `sortForNotification`: A(접수중, 10.11)·B(종료, 10.12)·C(접수중, 10.09)·D(발표중, 10.10) → A, C, D, B |
-| 8 | `services/__test__/runNotification.test.ts` | 알림 스케줄러 (§2.8.2) | `new NotificationService(가짜 deps)`로 메모리 기반 가짜 저장소·락·구독자 목록을 넘기고 `NOTIFICATION_SEND` 수집. 모든 경우의 실행 전에 가짜 저장소의 마지막 갱신 시각을 지워 다시 갱신이 건너뛰어지지 않게 한다. ① 지난 알림 때 목록 없이 실행 ② 공고 1건 추가 후 실행 ③ 락을 미리 잡아 두고 실행 ④ 구독자 목록 읽기에서 예외를 낸 뒤 다시 실행 ⑤ 사이트 락을 미리 잡아 두고, 2초 뒤 마지막 갱신 시각을 지금으로 저장하고 락을 푼다 ⑥ ⑤와 같되 마지막 갱신 시각을 저장하지 않고 락만 푼다(앞 갱신 실패) ⑦ 공고 1건의 상태를 "종료"로 바꾼 뒤 실행 ⑧ 서울 구독자·부산 구독자를 두고 부산 공고 1건만 추가한 뒤 실행 ⑨ 구독자 2명 중 1명의 발송 핸들러가 오류를 내게 하고 공고 1건 추가 후 실행 ⑩ 최신 공고 목록을 비우고 모든 사이트 가져오기가 실패하게 한 뒤 실행 ⑪ 모든 사이트가 정상으로 0건을 돌려주게 한 뒤 실행하고, 공고 1건을 추가해 한 번 더 실행 ⑫ 한 사이트 가져오기만 실패하게 하고 공고 1건 추가 후 실행 ⑬ 사이트 락을 2초 잡아 둔 채 다른 사이트 가져오기 시작 시각을 기록 ⑭ `RecruitService`에 `lockWaitMs: 10_000`을 넘기고, 최신 공고 목록을 비운 뒤 모든 사이트 락을 풀지 않아 대기 시간을 넘기게 하고 실행 | ① 발송 0건, 목록 저장됨 ② 조건이 맞는 구독자에게 추가 공고와 기존 공고가 함께 발송됨 ③ 발송 0건(건너뜀) ④ 목록이 저장되지 않아 다음 실행에서 다시 발송됨 ⑤ 그 사이트 가져오기 0회 ⑥ 그 사이트 가져오기 1회 ⑦ 발송됨. "종료" 공고가 목록 맨 뒤 ⑧ 부산 구독자만 발송 ⑨ 다른 1명은 발송됨, 지난 알림 때 목록은 저장됨 ⑩ 발송 0건, 지난 알림 때 목록과 Firestore 목록이 그대로 ⑪ 첫 실행에서 지난 알림 때 목록과 Firestore 목록이 비워지고, 다음 실행은 첫 실행으로 처리되지 않아 추가 공고가 발송됨 ⑫ 추가 공고가 발송됨 ⑬ 다른 사이트가 기다리지 않고 바로 시작됨 ⑭ 발송 0건, 지난 알림 때 목록과 Firestore 목록이 그대로. ①②⑦⑧⑨는 가짜 `RecruitStore.saveRecruitList`가 최신 공고 목록으로 1번 불림, 이 저장이 실패하도록 해도 알림은 정상 종료. 모든 경우 실행 뒤 알림 락이 풀려 있음(③ 제외). 반환값은 ②⑦⑧⑨⑫와 ④의 다시 실행, ⑪의 둘째 실행의 발송 시도 인원과 같고, 나머지는 0. 발송 시도 인원에는 DM이 실패한 구독자도 들어간다 |
+| 7 | `common/utils/__test__/recruitSort.test.ts` | 정렬 (§2.7) | sria(`dayTxt`)·elias(`period`) 공고를 날짜를 섞어 넣고 `sortByStartDateDesc`. 같은 날 다른 시각 2건, 같은 시각 2건, 형식이 틀린 기간 1건 포함 | 시작 시점 최신순. 같은 날이면 시각이 늦은 공고가 앞. 같은 시각은 넣은 순서 유지. 형식이 틀린 공고는 맨 뒤. 같은 목록에 상태를 섞어 `sortForNotification`: A(접수중, 10.11)·B(종료, 10.12)·C(접수중, 10.09)·D(발표중, 10.10) → A, C, D, B |
+| 8 | `services/__test__/runNotification.test.ts` | 알림 스케줄러 (§2.8.2) | `new NotificationService(가짜 deps)`로 메모리 기반 가짜 저장소·락·구독자 목록을 넘기고 `NOTIFICATION_SEND` 수집. 모든 경우의 실행 전에 가짜 저장소의 마지막 갱신 시각을 지워 다시 갱신이 건너뛰어지지 않게 한다. ① 지난 알림 때 목록 없이 실행 ② 공고 1건 추가 후 실행 ③ 락을 미리 잡아 두고 실행 ④ 구독자 목록 읽기에서 예외를 낸 뒤 다시 실행 ⑤ 사이트 락을 미리 잡아 두고, 2초 뒤 마지막 갱신 시각을 지금으로 저장하고 락을 푼다 ⑥ ⑤와 같되 마지막 갱신 시각을 저장하지 않고 락만 푼다(앞 갱신 실패) ⑦ 공고 1건의 상태를 "종료"로 바꾼 뒤 실행 ⑧ 서울 구독자·부산 구독자를 두고 부산 공고 1건만 추가한 뒤 실행 ⑨ 구독자 2명 중 1명의 발송 핸들러가 오류를 내게 하고 공고 1건 추가 후 실행 ⑩ 최신 공고 목록을 비우고 모든 사이트 가져오기가 실패하게 한 뒤 실행 ⑪ 모든 사이트가 정상으로 0건을 돌려주게 한 뒤 실행하고, 공고 1건을 추가해 한 번 더 실행 ⑫ 한 사이트 가져오기만 실패하게 하고 공고 1건 추가 후 실행 ⑬ 사이트 락을 2초 잡아 둔 채 다른 사이트 가져오기 시작 시각을 기록 ⑭ `RecruitService`에 `lockWaitMs: 10_000`을 넘기고, 최신 공고 목록을 비운 뒤 모든 사이트 락을 풀지 않아 대기 시간을 넘기게 하고 실행 | ① 발송 0건, 목록 저장됨 ② 조건이 맞는 구독자에게 추가 공고와 기존 공고가 함께 발송됨 ③ 발송 0건(건너뜀) ④ 목록이 저장되지 않아 다음 실행에서 다시 발송됨 ⑤ 그 사이트 가져오기 0회 ⑥ 그 사이트 가져오기 1회 ⑦ 발송됨. "종료" 공고가 목록 맨 뒤 ⑧ 부산 구독자만 발송 ⑨ 다른 1명은 발송됨, 지난 알림 때 목록은 저장됨 ⑩ 발송 0건, 지난 알림 때 목록과 Firestore 목록이 그대로 ⑪ 첫 실행에서 지난 알림 때 목록과 Firestore 목록이 비워지고, 다음 실행은 첫 실행으로 처리되지 않아 추가 공고가 발송됨 ⑫ 추가 공고가 발송됨 ⑬ 다른 사이트가 기다리지 않고 바로 시작됨 ⑭ 발송 0건, 지난 알림 때 목록과 Firestore 목록이 그대로. ①②⑦⑧⑨는 가짜 `RecruitStore.saveRecruitList`가 최신 공고 목록으로 1번 불림, 이 저장이 실패하도록 해도 알림은 정상 종료. 모든 경우 실행 뒤 알림 락이 풀려 있음(③ 제외). 반환값은 ②⑦⑧⑨⑫와 ④의 다시 실행, ⑪의 둘째 실행의 발송 시도 인원과 같고, 나머지는 0. 발송 시도 인원에는 DM이 실패한 구독자도 들어간다. ⑨는 핸들러가 비동기로 실패하면 2, 이벤트 발행에서 동기 예외가 나면 1이다 |
 | 9 | `app/__test__/scheduledJobs.test.ts` | 작업 목록과 내보낸 함수 (§2.8.2 스케줄 등록) | 빌드한 `lib/app/scheduler.js`를 불러와 내보낸 이름과 각 함수의 `__endpoint`를 읽음(실행하지 않음). `registerSchedulers()`의 레지스트리 키도 모음(시작하지 않음) | 둘 다 `SCHEDULED_JOBS`의 `functionName`(`recruitSchedule_sria`·`recruitSchedule_elias`·`notificationScheduler`)과 같음. 각 함수의 일정·시간대·제한 시간이 목록 값과 같음. 알림 일정은 `0 6-20/2 * * *`, 시간대는 `Asia/Seoul` |
 | 10 | `services/__test__/getRecruitList.test.ts` | 공고 조회의 읽기 경로 (§2.8.4) | `new RecruitService(가짜 deps)`로 메모리 기반 가짜 저장소·락, 가짜 `recruitSource`(`fetchBySource`), 가짜 `RecruitStore`를 넘김. 경우마다 새 저장소로 시작한다. ① Redis에 목록이 있을 때 ② Redis가 비었을 때 ③ ②에서 elias 사이트 락을 미리 잡아 두고 2초 뒤 푼다 ④ ②에서 사이트 가져오기가 모두 실패하고 Firestore에 목록이 있을 때 ⑤ ④에서 Firestore도 비었을 때 | ① `tier: "redis"`, 사이트 가져오기 0회 ② `tier: "source"`, 사이트마다 1회씩 가져옴, Redis에 sria·elias 공고가 사이트별로 저장되고 마지막 갱신 시각이 남음 ③ elias는 락이 풀린 뒤 결과를 씀(락 대기) ④ `tier: "firestore"`, Redis에 쓰지 않음 ⑤ `tier: "empty"`. 어느 경우에도 `saveRecruitList`가 불리지 않음 |
 | 11 | `providers/redis/store/__test__/notifiedHashStore.test.ts` | 지난 알림 때 목록 저장 (§2.8.2) | 메모리 기반 가짜 Redis 클라이언트(`hGetAll`, `multi`)로 실제 저장소 코드를 실행. ① 키 없이 `getAll` ② 빈 객체로 `clearAndSaveHashes` 후 `getAll` ③ 공고 2건 저장 후 1건으로 저장 ④ `multi` 안의 저장 실패 | ① `null` ② `{}` (`__empty__`가 보이지 않음) ③ 1건만 남음 ④ 기존 값이 그대로 남음 |
+| 12 | `providers/recruit/__test__/sourceToggle.test.ts` | 공고 묶음 계산 (§2.9.5) | 저장값을 바꿔 가며 `sourceToggle.ts`와 요약·안내 함수를 직접 부름 | 묶음과 권역이 겹치지 않음. 하나를 끄면 SELECTED, 다시 켜면 ALL. 마지막 묶음은 끌 수 없음. 지역 메뉴·알림 판정·화면 표시가 켜진 공고 기준. 꺼진 공고의 지역은 저장값에 남음. 표시는 묶음 순서와 가나다순. 개수 제한은 공고별 |
+| 13 | `events/listeners/selectMenus/__test__/onRegionGroupSelect.test.ts` | 권역 선택 뒤 화면 교체 (§2.9.5) | 권역 메뉴가 달린 가짜 인터랙션으로 실제 핸들러를 실행하고 응답 순서를 기록 | `update`로 권역 메뉴를 잠근 뒤 `editReply`로 시 메뉴와 [⬅️ 뒤로]로 바꿈. 뒤로 버튼 3곳이 §2.9.5 표의 화면으로 감 |
+| 14 | `providers/discord/builder/__test__/disableMessageComponents.test.ts` | 잠금과 복원 (§2.9.7) | 실제 버튼 빌더로 만든 메시지에서 `withDisabledComponents`를 성공·실패 경우로 실행 | 성공하면 잠금 응답만 보냄. 작업이나 화면 그리기가 실패하면 버튼과 원래 이름을 되돌리고 원래 예외를 다시 던짐. 잠금이 실패하면 작업을 시작하지 않음 |
+| 15 | `events/listeners/selectMenus/__test__/regionSave.test.ts` | 지역 저장 핸들러 3개 (§2.9.5) | 구독 조회와 `updateRegions`만 가짜로 바꾸고 추가·제거·초기화 핸들러를 실행 | 지역 모드가 ALL이면 셋 다 저장하지 않고 안내 문구와 함께 지역 화면을 다시 그림. 추가·제거 버튼도 메뉴를 열지 않고 같은 화면을 그림. 일반 공고 지역이 2개면 더 추가하지 않고, elias 지역은 따로 세어 추가됨. 초기화는 꺼진 공고의 지역을 남김 |
 
 ### 6.2 정적·로컬 검증
 
@@ -1679,16 +1702,20 @@ export async function finishFirstSourceStep(
 | 구독자별 오류 격리 | 2회 실행 중 형식이 잘못된 테스트 문서 1개 포함 | 경고 로그 후 나머지 구독자 발송 계속 |
 | "변경됨"·"종료" 발송 | 1회차 뒤 `sriaPostings.ts`에서 공고 A의 `dDay`를, 공고 B의 `recruitmentStatus`를 "종료"로 바꾸고 다시 빌드 → 2회차 | A·B 모두 지난 알림 때 목록과 비교값이 달라짐. A나 B의 조건이 맞는 구독자에게 `NOTIFICATION_SEND`. B는 목록에서 접수 중 공고 뒤에 있음 |
 | elias 기간 고정 | 로컬 2회 실행 사이에 조기 마감된 elias 공고가 없을 때 | elias `updatedJobs` 0건 (지금처럼 매번 모든 elias 공고가 "변경됨"이 되지 않음) |
-| elias 지역 | 지역 선택에서 엘리아스 권역 → 요정 왕국을 고르고 실행 | 메뉴에 권역이 보이고, 요정 왕국 공고가 발송됨. 서울만 고른 구독자에게는 elias 공고가 가지 않음 |
+| elias 지역 | 지역 추가에서 `elias 지역` → 요정 왕국을 고르고 실행 | 메뉴에 `elias 지역`이 보이고, 요정 왕국 공고가 발송됨. 서울만 고른 구독자에게는 elias 공고가 가지 않음 |
 | 기존 기능 | 알림 설정 UI(모드 전환, 지역 추가·삭제·초기화, 끄기·켜기) | 정상 동작, 저장 문서에 `alertMode` 없음 |
 | 모드 전환 후 지역 복원 | 지역 2개 선택 → 전체 모드로 전환 → 선택 모드로 다시 전환. 옛 형식 문서로도 한 번 반복 | 처음 고른 지역 2개가 그대로 보임. 전체 모드일 때는 모든 지역 공고 수신 |
-| 첫 구독 사이트 질문 | 문서 없는 계정으로 [알림 켜기] → [모든 지역] / [지역 선택] 각각 → [사이트 고르기]·[모두 받기]·메시지 닫기 각각 | 질문이 뜨기 전에 `sources: {mode:"ALL"}`로 저장됨. 닫아도 ALL 유지. 지역 선택 경로는 마무리 후 지역 화면 |
-| 다시 켜기·모드 전환 | 기존 구독자가 끄기 → 켜기, 지역 모드 전환 | 사이트 질문이 뜨지 않음 |
-| 설정 관리 화면 | [⚙️ 설정 관리] → [🌐 사이트 설정]에서 1개 선택 → 다시 열어 전부 선택 | 1개면 `SELECTED`, 전부면 `ALL`로 저장. 요약 줄이 `🌐 sria` → `🌐 모든 사이트`로 바뀜. 메뉴 아래에 "모두 고르면 나중에 추가되는 사이트의 공고도 함께 받아요" 안내가 보임. [📍 지역 설정] → [⬅️ 뒤로]가 설정 관리 화면으로 돌아감 |
+| 첫 구독 | 문서 없는 계정으로 [알림 켜기] → [모든 지역] / [지역 선택] 각각 | 사이트 질문 없이 `sources: {mode:"SELECTED", values:["sria"]}`로 저장되고 요약이 `🌐 일반 공고`. 지역 추가 메뉴에 `elias 지역`이 없음. 모든 지역은 진입 화면, 지역 선택은 지역 화면으로 감 |
+| 공고 켜기/끄기 | [⚙️ 설정 관리] → [🌐 사이트 설정]에서 elias 끄기 → 한국 끄기 시도 → elias 켜고 한국 끄기 | 켜진 묶음이 하나면 버튼이 잠김. 저장값이 §2.9.5 표대로 바뀜. 요약 줄이 켜진 공고 이름으로 바뀜 |
+| 공고에 따른 지역 메뉴 | elias만 켠 상태와 한국만 켠 상태에서 지역 추가 | 켜진 공고의 권역만 보임. 꺼진 공고의 지역은 화면에서 빠지고, 다시 켜면 돌아옴. [📍 지역 설정] → [⬅️ 뒤로]가 설정 관리 화면으로 돌아감 |
+| 지역 개수 제한 | 일반 공고 지역 2개를 고른 뒤 일반 지역과 elias 지역을 하나씩 더 추가 | 일반 지역은 `대한민국 지역은 최대 2개까지 선택할 수 있어요.`로 거절되고, elias 지역은 추가됨. 두 공고가 모두 차면 [➕ 추가]가 잠김 |
+| 지역 초기화 | 두 공고에 지역을 고른 뒤 elias를 끄고 [🧹 초기화] → elias를 다시 켬 | 초기화 뒤 화면에는 지역이 없고, elias를 켜면 elias 지역이 그대로 돌아옴 |
+| 뒤로 버튼 | 권역 메뉴, 시 메뉴, 지역 제거 메뉴에서 각각 [⬅️ 뒤로] | 권역·제거 메뉴는 지역 화면으로, 시 메뉴는 권역 메뉴로 감 |
+| 옛 메시지에서 지역 편집 | 지역 선택 상태에서 지역 화면을 연 채로 둔다 → 새로 연 화면에서 모든 지역으로 바꾼다 → 옛 화면에서 [➕ 추가]·[➖ 제거]·[🧹 초기화]를 각각 누름. 옛 화면에 추가·제거 메뉴를 열어 둔 경우도 메뉴에서 지역을 고름 | 저장값이 ALL 그대로이고, 첫 클릭에 옛 화면이 안내 문구와 함께 모든 지역 화면으로 바뀜 |
 | Redis `multi()` | 로컬 Redis와 Upstash에서 알림을 한 번 실행하고 `HGETALL recruit:notified:all` | 두 환경 모두 지난 알림 때 목록이 저장됨 |
-| 공고 조회 커맨드 | 공고 조회 슬래시 커맨드를 지역 없이·지역 지정(`서울`, `요정 왕국`)으로 실행 | 사이트별 묶음, 자세히 모드. 제목이 `[지역][상태] …` 모양이고 "종료" 공고도 `[종료]`로 나옴. 둘째 줄에 상태 칸이 없음. elias 기간이 `2026.10.11 14:00 ~ 2026.10.12 02:00` 모양이고 "틱" 글자가 없음. 게시자가 기간 뒤 칸에 "게시" 글자 없이 보임. `postedAt`을 적은 sria 공고에만 `작성 …` 칸이 보임. 시작 날짜 최신순이고 "종료" 공고도 날짜 순서대로 섞여 나옴. elias 항목에 마감 칸이 없음. 링크는 sria에만 |
+| 공고 조회 커맨드 | 공고 조회 슬래시 커맨드를 지역 없이·지역 지정(`서울`, `요정 왕국`)으로 실행 | 사이트별 묶음, 자세히 모드. 제목이 `[지역][상태] …` 모양이고 "종료" 공고도 `[종료]`로 나옴. 둘째 줄에 상태 칸이 없음. elias 기간이 `2026.10.11 14:00 ~ 2026.10.12 02:00` 모양이고 "틱" 글자가 없음. 게시자가 기간 뒤 칸에 "게시" 글자 없이 보임. `postedAt`을 적은 sria 공고에만 `작성 …` 칸이 보임. 시작 시점(시각이 있으면 시각까지) 최신순이고 "종료" 공고도 그 순서대로 섞여 나옴. elias 항목에 마감 칸이 없음. 링크는 sria에만 |
 
 ---
 
-*작성일: 2026-10-10 · 수정일: 2026-11-01*
+*작성일: 2026-10-10 · 수정일: 2026-11-05*
 *참고: docs/phase-1-15/01-plan.md, .claude/phases/phase-source-subscription.md*

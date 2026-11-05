@@ -1,6 +1,6 @@
 # Phase 시드 — 멀티 source 구독 설계
 
-> **상태**: Phase 1.15로 진행. 최종 설계는 `docs/phase-1-15/02-design.md`를 따른다. 본 문서의 "현재"는 작성 시점의 코드를 뜻한다.
+> **상태**: Phase 1.15로 진행. 최종 설계는 `docs/archive/phase-1-15/02-design.md`를 따른다. 본 문서의 "현재"는 작성 시점의 코드를 뜻한다.
 > **착수 절차**: `git checkout dev && git pull` → `feature/phase-X.Y-source-subscription` 분기 → `/pdca next`로 phase 번호 확정 → `/pdca plan X.Y`에 본 문서를 시드로 투입.
 > **작성**: 2026-10-09 (설계 세션) · **수정**: 2026-11-01
 
@@ -69,7 +69,7 @@ export interface RecruitDisplay {
 
 ### 3. elias 인터페이스 트리밍
 
-> 이 절의 `period` 변동 설계는 대체되었다. 최종 설계는 `docs/phase-1-15/02-design.md` §2.6을 따른다.
+> 이 절의 `period` 변동 설계는 대체되었다. 최종 설계는 `docs/archive/phase-1-15/02-design.md` §2.6을 따른다.
 
 elias의 `dDay`/`dayTxt`/`recruitmentStatus`는 sria 흉내 파생값이고 **존재 목적은 "틱마다 해시가 바뀌어 updated diff를 유발"**이다. `period` 1개만 시변 필드로 남겨 diff churn을 유지하고 나머지는 제거.
 
