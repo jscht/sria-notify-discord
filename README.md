@@ -30,11 +30,13 @@
 
 사람인 에이전트 단기알바 채용공고 알림 봇은 사람인 에이전트 웹사이트의 단기알바 채용 공고를 Discord Bot을 통해 사용자에게 알림을 제공하는 서비스입니다.
 
+> 공고 데이터는 사이트별 mock 소스로 대신합니다. 실제 사이트를 크롤링할 계획이었지만, 검토 끝에 사이트별 mock 소스로 진행합니다. 결정 경위는 [Phase 1.10 계획서](docs/archive/phase-1-10/01-plan.md)에 있습니다.
+
 ### 핵심 가치
 
-- **실시간 알림**: 4시간 주기로 새로운 채용 공고를 즉시 알림
-- **개인화된 설정**: 지역별 필터링, 알림 모드 설정 (전체/선택)
-- **높은 안정성**: 3-tier 캐싱 전략 (Redis → Firestore → Crawling)
+- **정기 알림**: 매일 06~20시 2시간마다 새 공고와 바뀐 공고를 알림
+- **개인화된 설정**: 지역별·사이트별 필터링 (각각 전체/선택)
+- **높은 안정성**: 3-tier 캐싱 전략 (Redis → 공고 동기화 → Firestore)
 - **확장 가능**: Event-Driven Architecture로 기능 추가 용이
 - **AI 지원**: Hugging Face 무료 AI 모델 활용
 
@@ -44,18 +46,20 @@
 
 ### 1. 공고 요청 (`/recruit-request`)
 - 즉시 채용 공고 조회
-- 3-tier 캐싱 전략 (Redis → Firestore → Crawling)
+- 3-tier 캐싱 전략 (Redis → 공고 동기화 → Firestore)
 - Discord 임베드 형식 제공
 
 ### 2. 알림 설정 (`/alarm-subscribe`)
 - 개인 맞춤형 알림 설정
-- 알림 모드: 전체 공고 / 특정 지역만
+- 지역: 전체 공고 / 특정 지역만
+- 공고: 일반 공고 / elias 공고 켜기·끄기
 - 지역 선택 및 알림 ON/OFF
 
-### 3. 자동 알림 (4시간 주기)
-- 새 공고 감지 및 알림
+### 3. 자동 알림 (매일 06~20시, 2시간마다)
+- 새 공고와 내용이 바뀐 공고 감지 및 알림
 - SHA-256 해시 기반 변경 감지
-- 구독자 필터링 및 DM 발송
+- 구독자별 사이트·지역 필터링 및 DM 발송
+- 22~04시 사이 바뀐 공고는 06시에 알림
 
 ### 4. 에러 자동 리포팅
 - 시스템 에러 자동 감지 및 관리자 알림
@@ -83,11 +87,11 @@
 ### Database & Cache
 - **Primary DB**: Firebase Firestore
 - **Cache Layer**: Redis 4.7
-- **Caching Strategy**: 3-tier (Redis → Firestore → Crawling)
+- **Caching Strategy**: 3-tier (Redis → 공고 동기화 → Firestore)
 
 ### External APIs
 - **Discord**: discord.js 14.17
-- **Web Scraping**: Playwright 1.47
+- **공고 소스**: 사이트별 mock 공고 생성기
 - **AI**: Hugging Face Inference API
 
 ### DevOps
@@ -106,19 +110,19 @@ Firebase Functions (asia-northeast3)
 ├── Entry Points
 │   ├── HTTP (Express)
 │   ├── Discord Events
-│   └── Schedulers (4h/6h)
+│   └── Schedulers (공고 동기화, 알림)
 │
 ├── Presentation Layer (events/)
 │   └── Discord 이벤트 라우팅
 │
 ├── Application Layer
-│   ├── eventBus/     → 비즈니스 이벤트 허브
+│   ├── events/bus/   → 비즈니스 이벤트 허브
 │   ├── services/     → 비즈니스 로직
 │   └── features/     → 기능별 모듈
 │
 └── Integration Layer
-    ├── providers/    → 외부 API 통합
-    └── crawlers/     → 웹 크롤링
+    ├── providers/    → 외부 API 통합, 사이트별 공고 소스(providers/recruit/)
+    └── schedulers/   → 예약 작업 목록(공고 동기화, 알림)
 
 External Services
 ├── Discord API
@@ -133,14 +137,14 @@ External Services
 
 ```typescript
 // 타입 안전 이벤트 시스템
-eventBus.emitEvent('RECRUIT_NEW', { addedJobs, updatedJobs, deletedIds });
-eventBus.onEvent('RECRUIT_NEW', async (data) => {
-  await notificationService.notifyNewRecruits(data);
+await eventBus.emitEventAndSettle<NotificationSendEvent>(EventType.NOTIFICATION_SEND, payload);
+eventBus.onEvent<NotificationSendEvent>(EventType.NOTIFICATION_SEND, async (payload) => {
+  await sendNotificationDM(payload.userId, { content, embeds: [embed] });
 });
 ```
 
 **이벤트 도메인**:
-- **Recruit**: 크롤링, 새 공고, 공고 요청
+- **Recruit**: 공고 동기화, 공고 변경, 공고 요청
 - **Notification**: 구독, 알림 발송
 - **System**: 에러 처리 및 로깅
 - **Admin**: 관리자 기능
@@ -154,7 +158,7 @@ Discord User
 events/ (Presentation)
   ↓
 services/ (Application)
-  ↓ Redis → Firestore → Crawling
+  ↓ Redis → 공고 동기화 → Firestore
 providers/ (Integration)
   ↓
 Discord Response (Embed)
@@ -162,18 +166,22 @@ Discord Response (Embed)
 
 #### 자동 알림 플로우
 ```
-RecruitScheduler (4시간)
+notificationScheduler (매일 06~20시 짝수 정시)
   ↓
-recruitCacheService.setRecruitList()
-  ↓ SHA-256 hash comparison
-diffJobs() → { addedJobs, updatedJobs, deletedIds }
+notificationService.runNotification()
+  ↓ 사이트마다 syncRecruits()
+최신 공고 목록 ↔ 지난 알림 때 목록 (SHA-256 hash comparison)
   ↓
-eventBus.emit('recruit.new')
+notificationService.notifyRecruits()
+  ↓ filter by source & region
+eventBus.emit(NOTIFICATION_SEND)
   ↓
-notificationService.on('recruit.new')
-  ↓ filter by region & mode
+NotificationSendHandler
+  ↓
 사용자별 Discord DM 발송
 ```
+
+공고 동기화(사이트의 공고 목록을 가져와 저장)는 알림과 따로 돈다 (`recruitSchedule_sria` 2시간마다, `recruitSchedule_elias` 30분마다). 공고 동기화는 DM을 보내지 않는다.
 
 ## 프로젝트 구조
 
@@ -181,12 +189,11 @@ notificationService.on('recruit.new')
 sria-notify-discord/
 ├── functions/                  # Firebase Functions 코드
 │   ├── src/
-│   │   ├── eventBus/          # 비즈니스 이벤트 시스템
-│   │   ├── events/            # Discord 이벤트 핸들러
+│   │   ├── events/            # Discord 이벤트 핸들러, 비즈니스 이벤트(bus/)
 │   │   ├── features/          # 기능별 모듈
 │   │   ├── services/          # 비즈니스 로직
 │   │   ├── providers/         # 외부 서비스 통합
-│   │   ├── crawlers/          # 웹 크롤링
+│   │   ├── schedulers/        # 예약 작업 목록
 │   │   ├── common/            # 공통 유틸리티
 │   │   └── app/               # 진입점
 │   │
@@ -237,12 +244,11 @@ FIREBASE_PROJECT_ID=your-project-id
 
 # Discord
 DISCORD_BOT_TOKEN=your-bot-token
-DISCORD_CLIENT_ID=your-client-id
+DISCORD_APP_ID=your-app-id
 ADMIN_USER_ID=your-discord-user-id
 
 # Redis
 REDIS_URL=redis://127.0.0.1:6379
-REDIS_PASSWORD=your-redis-password
 
 # Hugging Face
 HUGGINGFACE_API_KEY=your-api-key
@@ -287,8 +293,11 @@ npm run register:commands
 옵션:
   - 전체 공고 알림 (ALL)
   - 특정 지역 알림 (SELECTED)
+  - 공고 켜기/끄기 (일반 공고 / elias 공고)
   - 알림 켜기/끄기
 ```
+
+지역과 사이트는 [⚙️ 설정 관리] 화면의 [📍 지역 설정]과 [🌐 사이트 설정]에서 바꿉니다.
 
 #### `/admin-broadcast` (관리자 전용)
 모든 구독자에게 공지를 발송합니다.
@@ -318,13 +327,77 @@ AI를 활용하여 자연어로 명령을 처리합니다.
 > 공유 Redis(Upstash) + Firestore로만 협업한다. 상세 절차·환경변수 매트릭스는
 > [build-deploy.md](./.claude/docs/build-deploy.md) 참조.
 
+### 실서비스 배포 전 체크리스트
+
+> 코드 빌드와 로컬 테스트는 끝났다고 가정한다. 아래는 개발자가 외부 서비스 계정에서 직접 해야 하는 작업이다.
+> 각 단계는 앞 단계가 끝난 뒤에 진행한다. 특히 1번을 빠뜨리면 배포는 되지만 함수가 실행될 때 실패한다.
+
+- [ ] **1. 비밀값을 Secret Manager에 저장** 🔴 가장 먼저 — 빠뜨리면 배포된 함수가 실행 중 실패
+- [ ] **2. Firebase 요금제를 Blaze(종량제)로 전환** — 정해진 시간마다 함수를 실행하려면 필요 (사용량만큼 과금)
+- [ ] **3. 스케줄러 배포** — Firebase Functions
+- [ ] **4. 게이트웨이(봇 상시 접속 프로세스) 실행** — Oracle Cloud VM + pm2
+- [ ] **5. 슬래시 커맨드를 실서버에 등록** — 게이트웨이가 켜진 뒤 `npm run register:commands`
+- [ ] **6. 구독자 확보** — 실제 Discord에서 알림 구독을 해 두어 DM을 받을 사용자를 만든다
+- [ ] **7. 실환경 확인** — 슬래시 커맨드·버튼 동작 / 정해진 시간에 함수 실행 / 실제 DM 수신
+
+### 외부 계정·리소스 설정 방법
+
+배포에 필요한 외부 서비스는 4개다. 코드와 무관하므로 코드 작업과 동시에 준비해도 된다.
+
+#### ① Secret Manager (비밀값 보관 서비스)
+
+토큰·비밀번호 같은 비밀값은 `.env`가 아니라 Google Cloud Secret Manager에 저장한다.
+`functions/src/app/scheduler.ts`의 `secrets` 목록에 이름이 적혀 있어서, 저장해 두면 함수가 실행될 때 `process.env`로 받는다.
+
+```bash
+cd functions
+# 명령마다 값을 입력하라는 안내가 나온다. FB_PRIVATE_KEY는 줄바꿈까지 포함해 통째로 붙여 넣는다
+firebase functions:secrets:set FB_PRIVATE_KEY
+firebase functions:secrets:set DISCORD_BOT_TOKEN
+firebase functions:secrets:set REDIS_URL
+
+# 저장된 값 확인
+firebase functions:secrets:access FB_PRIVATE_KEY
+```
+
+- 위 세 값(`FB_PRIVATE_KEY`, `DISCORD_BOT_TOKEN`, `REDIS_URL`)은 `functions/.env`에 적지 않는다. `.env`는 배포할 때 코드와 함께 올라가서 암호화되지 않은 채 남기 때문이다.
+- `REDIS_URL`도 비밀값이다. 접속 주소 안에 비밀번호가 들어 있다(`rediss://default:<비밀번호>@host`).
+- 노출돼도 문제없는 값(`FB_PROJECT_ID`, `FB_CLIENT_EMAIL` 등)은 `.env`에 적어도 된다.
+
+#### ② Firebase Blaze 요금제
+
+- Firebase Console → 프로젝트 → 요금제에서 **Blaze(종량제)**로 바꾼다. 정해진 시간마다 함수 실행(`onSchedule`)과 외부 서버 호출은 Blaze에서만 된다.
+- 사용량만큼 과금되므로 예산 알림을 설정해 둔다 (GCP Billing → Budgets & alerts).
+
+#### ③ Oracle Cloud VM (게이트웨이 실행 서버)
+
+```bash
+# Oracle Cloud Console에서 무료(Always Free) x86 Micro VM을 만든 뒤 SSH로 접속해서:
+git clone <repo> && cd <repo>/functions
+npm ci
+npm run build
+
+# pm2로 실행 (pm2: 프로세스가 죽거나 서버가 재부팅돼도 다시 켜 주는 도구)
+pm2 start lib/app/gateway.js --name sria-gateway
+pm2 startup   # 서버 부팅 시 pm2가 자동으로 켜지게 설정
+pm2 save      # 지금 실행 중인 목록을 저장 → 재부팅 후 그대로 다시 실행
+```
+
+- 게이트웨이는 Discord와 WebSocket으로만 연결하므로, 외부에서 들어오는 HTTP 요청을 받을 필요가 없다. 환경변수는 VM의 `.env`에 적는다.
+- 무료 VM은 리전에 따라 남은 자리가 없어 만들어지지 않을 때가 많다. 그러면 다른 리전이나 유료 소형 VM을 쓴다.
+
+#### ④ Upstash Redis (공유 캐시)
+
+- Upstash Console에서 Redis DB를 만들고, TLS(암호화) 접속 주소(`rediss://...`)를 복사한다. `s`가 두 개인지 확인한다.
+- 게이트웨이와 스케줄러 모두 `REDIS_URL`에 같은 주소를 쓴다. 이 값은 ①에서 Secret Manager에도 저장한다.
+
 ### 스케줄러 배포 (Firebase Functions)
 
 ```bash
 # 프로덕션 빌드
 npm run build
 
-# Firebase 배포 (recruitSchedule_sria / recruitSchedule_temp 스케줄 트리거만 배포)
+# Firebase 배포 (recruitSchedule_sria / recruitSchedule_elias / notificationScheduler 스케줄 트리거만 배포)
 npm run deploy
 ```
 
@@ -336,18 +409,11 @@ pm2 start lib/app/gateway.js --name sria-gateway
 pm2 startup && pm2 save   # 재부팅 시 자동 부활
 ```
 
-### 환경 변수 설정 (Firebase)
+### 환경변수·비밀값 설정
 
-```bash
-# Firebase 환경 변수 설정
-firebase functions:config:set \
-  discord.token="your-bot-token" \
-  discord.client_id="your-client-id" \
-  admin.user_id="your-discord-id"
+비밀값은 위 **① Secret Manager** 절차로 저장한다. 노출돼도 문제없는 값(`FB_PROJECT_ID`, `FB_CLIENT_EMAIL` 등)은 `functions/.env` 또는 VM의 `.env`에 적는다.
 
-# 설정 확인
-firebase functions:config:get
-```
+> ⚠️ 예전 방식인 `firebase functions:config:set`은 쓰지 않는다. Firebase가 폐기 예정으로 지정했고, 이 프로젝트가 쓰는 2세대 Functions에서는 동작하지 않는다.
 
 ---
 
@@ -379,13 +445,12 @@ dev (개발) → stable (검수) → main (배포)
 ## 문서
 
 ### 프로젝트 문서
-- [개발 진행 현황](./.claude/todo/PROGRESS.md) - 현재 Phase 진행 상황
-- [TODO 관리](./.claude/todo/TODO.md) - Phase별 작업 목록
-- [Phase 1 상세 계획](./.claude/todo/phase-1-core.md)
-- [검토 프로세스](./.claude/todo/review/REVIEW_PROCESS.md)
+- [스케줄링 가이드](./docs/guides/scheduling-guide.md) - 공고 동기화와 알림 스케줄러의 동작
+- [Phase별 작업 기록](./docs/archive/) - 계획서·설계서·분석서·완료 보고서
+- [검토 기록](./docs/reviews/) - Phase별 리뷰
+- [개선 보고서](./docs/reports/) - 에러·로깅 체계 개선, 설계 결정 기록
 
 ### 기술 문서
-- [EventBus 시스템](./functions/src/eventBus/claude.md)
 - [SystemLogger 가이드](./functions/src/common/utils/__docs__/SYSTEM_LOGGER_GUIDE.md)
 - [SystemError 가이드](./functions/src/common/utils/__docs__/SYSTEM_ERROR_GUIDE.md)
 

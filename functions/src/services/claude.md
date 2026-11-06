@@ -148,86 +148,52 @@ export class RecruitCacheService {
 
 ---
 
-## notificationService.ts (NEW - Phase 1.7)
+## notificationService.ts (Phase 1.7, Phase 1.15)
 
 ### 역할
-구독자 조회, 필터링, 알림 발송 조율
+알림 스케줄러. 사이트를 갱신하고 지난 알림 때 목록과 비교한 뒤, 구독자별로 판정해 `NOTIFICATION_SEND`를 발행한다. 실제 DM 발송은 `NotificationSendHandler`가 맡는다.
 
 ### 구현
-```typescript
-import { eventBus } from '@/eventBus/EventBus';
-import { EventType, RecruitChangedEvent } from '@/eventBus/types';
-import { SubscriptionStore } from '@/providers/firebase/store/subscription';
-import { sendNotificationDM } from '@/providers/discord/utils/dmSender';
-import { filterByRegion } from '@/features/notification/filters/RecruitFilter';
 
-export class NotificationService {
-  private readonly subscriptionStore = new SubscriptionStore();
+> **구현 SoT**: `services/notificationService.ts` (class `NotificationService`)
+>
+> 예시 코드를 복제하지 않고 시그니처·계약만 요약한다. 정확한 구현은 위 파일 참조.
 
-  constructor() {
-    // recruit:changed 이벤트 리스너 등록
-    eventBus.onEvent<RecruitChangedEvent>(EventType.RECRUIT_CHANGED, (payload) => {
-      this.notifyNewRecruits(payload.data);
-    });
-  }
+| 이름 | 반환 | 비고 |
+|------|------|------|
+| `runNotification()` | `number` | 알림 1회 실행. 발송을 시도한 구독자 수를 돌려준다. DM이 실패해도 센다. 건너뛰거나 저장만 했으면 0 |
+| `notifyRecruits(current, changedIds)` | `number` | 구독자별 판정과 `NOTIFICATION_SEND` 발행 |
+| `getNotificationService()` | `NotificationService` | 처음 부를 때 만든다. 파일을 불러올 때 만들면 Redis 초기화 전이라 예외가 나므로, Redis 초기화 뒤에만 부른다 |
 
-  async notifyNewRecruits(data: {
-    addedJobs: Job[];
-    updatedJobs: Job[];
-    deletedIds: string[];
-  }): Promise<void> {
-    const { addedJobs, updatedJobs } = data;
-    const allNewRecruits = [...addedJobs, ...updatedJobs];
+**실행 시각**: `schedulers/jobs.ts`의 `SCHEDULED_JOBS`에 있는 `notificationScheduler` 작업이다. 매일 06~20시 짝수 정시(한국 시간)에 돈다. 22~04시 사이 바뀐 공고는 06시 알림이 보낸다.
 
-    if (allNewRecruits.length === 0) return;
+**`runNotification` 순서**:
+1. 알림 락(`lock:notification`)을 잡는다. 못 잡으면 다른 실행이 진행 중이므로 바로 끝낸다
+2. `syncAllSources()`로 사이트마다 갱신한다. 최근 5분 안에 갱신했으면 건너뛰고, 진행 중인 갱신은 끝날 때까지 기다린다. 실패한 사이트와 사유는 경고 로그로 남긴다
+3. 최신 공고 목록을 지난 알림 때 목록(`recruit:notified:all`, 공고 ID → 비교값)과 비교해 새 공고와 내용이 바뀐 공고를 찾는다
+4. `notifyRecruits`로 발송한다
+5. 지난 알림 때 목록을 최신 목록으로 통째로 바꾼다. 발송 뒤에 저장하므로 발송 중 멈추면 다음 알림이 다시 보낸다 (누락보다 중복을 택한다)
+6. Firestore 공고 목록을 저장한다. 실패해도 알림은 성공으로 끝나고 다음 알림에서 다시 저장한다
 
-    const subscribers = await this.subscriptionStore.getAllActiveSubscribers();
-    console.log(`[NotificationService] Notifying ${subscribers.length} subscribers`);
+| 상황 | 처리 |
+|------|------|
+| 지난 알림 때 목록이 없음 (첫 실행이거나 키를 지움) | 저장만 하고 보내지 않는다. 이미 받은 공고를 다시 보내지 않기 위해서다 |
+| 갱신에 실패한 사이트가 있고 최신 공고 목록이 비어 있음 | 경고 로그만 남기고 아무것도 저장하지 않는다. 비교 기준과 Firestore 목록을 지키기 위해서다 |
+| 모든 사이트가 정상이고 공고가 0건 | 지난 알림 때 목록과 Firestore 목록을 비운다 |
+| 구독자 목록 읽기 실패 | 예외를 그대로 전달한다. 지난 알림 때 목록을 저장하지 않으므로 다음 알림이 다시 시도한다 |
 
-    for (const subscriber of subscribers) {
-      try {
-        const filteredRecruits = this.filterRecruitsForUser(
-          allNewRecruits,
-          subscriber
-        );
+**`notifyRecruits` 판정 순서**:
+1. 숨긴 사이트(`userFacing: false`)의 공고를 뺀다. `sources`가 `ALL`인 구독자에게도 가지 않는다
+2. 접수중 → 발표중 → 종료 순서로, 같은 상태 안에서는 시작 시점 최신순으로 정렬한다
+3. 구독자마다 `sources`와 `regions`로 거른다
+4. 거른 공고 중 바뀐 공고가 없으면 그 구독자는 건너뛴다
+5. 거른 공고 전체를 `RecruitDisplay`로 바꿔 `NOTIFICATION_SEND`를 발행한다. 바뀌지 않은 공고도 함께 보낸다
 
-        if (filteredRecruits.length === 0) continue;
-
-        await sendNotificationDM(subscriber.userId, {
-          title: '🔔 새로운 채용 공고',
-          recruits: filteredRecruits
-        });
-
-        eventBus.emitEvent(EventType.NOTIFICATION_SENT, {
-          type: EventType.NOTIFICATION_SENT,
-          timestamp: new Date(),
-          source: 'NotificationService',
-          data: { userId: subscriber.userId, count: filteredRecruits.length }
-        });
-
-      } catch (error) {
-        console.error(`[NotificationService] Failed for user ${subscriber.userId}`);
-
-        eventBus.emitEvent(EventType.NOTIFICATION_FAILED, {
-          type: EventType.NOTIFICATION_FAILED,
-          timestamp: new Date(),
-          source: 'NotificationService',
-          data: { userId: subscriber.userId, error: error.message }
-        });
-      }
-    }
-  }
-
-  private filterRecruitsForUser(recruits: Job[], subscriber) {
-    if (subscriber.alertMode === 'ALL') {
-      return recruits;
-    }
-    return filterByRegion(recruits, subscriber.regions);
-  }
-}
-
-export const notificationService = new NotificationService();
-```
+**계약**:
+- 공고 동기화(`recruitService.syncRecruits`)은 DM을 보내지 않는다. `RECRUIT_CHANGED`는 발행되지만 구독하는 핸들러가 없다
+- 최신 공고 목록에서 사라진 공고는 DM을 일으키지 않는다
+- 구독자 한 명의 오류는 나머지 발송을 막지 않는다
+- 쓰는 객체는 생성자로 받는다(`NotificationDeps`). 테스트는 가짜를 넘긴다
 
 ---
 
@@ -401,11 +367,11 @@ export const aiService = new AIService();
 2. setRecruitList()에서 이벤트 발행 추가
 3. 로그 개선
 
-### Phase 1.7 (notificationService)
+### Phase 1.7, Phase 1.15 (notificationService)
 1. notificationService.ts 생성
-2. recruit:changed 이벤트 리스너 등록
-3. 구독자 필터링 로직 구현
-4. DM 발송 조율
+2. `runNotification` 구현 후 `SCHEDULED_JOBS`에 알림 작업 등록
+3. 구독자별 판정(`notifyRecruits`) 구현
+4. `NOTIFICATION_SEND` 발행 (DM 발송은 `NotificationSendHandler`)
 
 ### Phase 2.1 (errorReportService)
 1. errorReportService.ts 생성
@@ -421,4 +387,4 @@ export const aiService = new AIService();
 
 ---
 
-*최종 수정: 2026-01-05*
+*최종 수정: 2026-11-01*

@@ -1,4 +1,11 @@
-import type { AlarmSubscription, AlarmSubscriptionInput, AlertMode, CityEn } from "@/common/types";
+import type {
+  AlarmFilter,
+  AlarmSubscription,
+  AlarmSubscriptionInput,
+  AlertMode,
+  CityEn,
+  RecruitSource,
+} from "@/common/types";
 import { AlertMode as AlertModeValue } from "@/common/types";
 import { SystemError } from "@/common/utils";
 import { eventBus, EventType } from "@/events/bus";
@@ -13,8 +20,8 @@ const EVENT_SOURCE = "AlarmSubscriptionService" as const;
  *
  * `SubscriptionStore`의 쓰기 메서드는 전부 `void`(CQS)이므로, 갱신된 상태가
  * 필요한 메서드는 쓰기 직후 `getNotificationSettings`로 재조회해 반환한다.
- * 부분 업데이트(`updateAlertMode`/`updateAlertRegions`)는 문서 선존재 전제이므로
- * `ensureExists`로 사전 보장한다(design §2.1·§2.2).
+ * 부분 업데이트(`updateRegionMode`/`updateRegionFilter`/`updateSourceFilter`)는 문서 선존재
+ * 전제이므로 `ensureExists`로 사전 보장한다(design §2.1·§2.2).
  *
  * 핸들러 → 서비스 → Store 단방향. 서비스는 Store만 호출한다.
  */
@@ -22,12 +29,12 @@ export class AlarmSubscriptionService {
   private readonly store = new SubscriptionStore();
 
   /**
-   * 사용자의 현재 알림 모드 조회. 구독 문서가 없으면 null.
+   * 사용자의 현재 지역 알림 모드 조회. 구독 문서가 없으면 null.
    */
   async getUserAlertMode(userId: string): Promise<AlertMode | null> {
     try {
       const settings = await this.store.getNotificationSettings(userId);
-      return settings?.alertMode ?? null;
+      return settings?.regions.mode ?? null;
     } catch (error) {
       throw SystemError.firestoreError("알림 모드 조회 실패", error as Error, { userId });
     }
@@ -75,7 +82,7 @@ export class AlarmSubscriptionService {
   /**
    * 사용자의 알림 모드 업데이트 (기존 구독자의 설정 변경).
    *
-   * 부분 업데이트이므로 `ensureExists`로 선존재를 보장한다.
+   * 부분 업데이트이므로 `ensureExists`로 선존재를 보장한다. 지역 목록은 남는다.
    * 설정 변경이므로 이벤트는 발행하지 않는다(design §2.1).
    */
   async updateMode(userId: string, alertMode: AlertMode): Promise<AlarmSubscription> {
@@ -83,7 +90,7 @@ export class AlarmSubscriptionService {
 
     let updated: AlarmSubscription | null;
     try {
-      await this.store.updateAlertMode(userId, alertMode);
+      await this.store.updateRegionMode(userId, alertMode);
       updated = await this.store.getNotificationSettings(userId);
     } catch (error) {
       throw SystemError.firestoreError("알림 모드 업데이트 실패", error as Error, { userId });
@@ -105,13 +112,48 @@ export class AlarmSubscriptionService {
 
     let updated: AlarmSubscription | null;
     try {
-      await this.store.updateAlertRegions(userId, regions);
+      await this.store.updateRegionFilter(userId, {
+        mode: AlertModeValue.SELECTED,
+        values: regions,
+      });
       updated = await this.store.getNotificationSettings(userId);
     } catch (error) {
       throw SystemError.firestoreError("지역 업데이트 실패", error as Error, { userId });
     }
     if (!updated) {
       throw SystemError.firestoreError("지역 업데이트 직후 조회 실패", undefined, { userId });
+    }
+    return updated;
+  }
+
+  /**
+   * 사용자의 사이트(소스) 필터 업데이트.
+   *
+   * SELECTED인데 값이 0개면 알림을 하나도 받지 못하므로 저장하지 않고 오류를 낸다.
+   * `update()`는 문서가 없으면 NOT_FOUND를 던지므로 `ensureExists`로 선존재를 보장한다.
+   * 설정 변경이므로 이벤트는 발행하지 않는다(design §2.3).
+   *
+   * @throws {SystemError} SELECTED + 값 0개이거나 Firestore 쓰기·조회에 실패했을 때
+   */
+  async updateSources(
+    userId: string,
+    filter: AlarmFilter<RecruitSource>
+  ): Promise<AlarmSubscription> {
+    if (filter.mode === AlertModeValue.SELECTED && filter.values.length === 0) {
+      throw SystemError.validationError("사이트를 1개 이상 선택해야 합니다", { userId });
+    }
+
+    await this.ensureExists(userId);
+
+    let updated: AlarmSubscription | null;
+    try {
+      await this.store.updateSourceFilter(userId, filter);
+      updated = await this.store.getNotificationSettings(userId);
+    } catch (error) {
+      throw SystemError.firestoreError("사이트 업데이트 실패", error as Error, { userId });
+    }
+    if (!updated) {
+      throw SystemError.firestoreError("사이트 업데이트 직후 조회 실패", undefined, { userId });
     }
     return updated;
   }
@@ -152,8 +194,8 @@ export class AlarmSubscriptionService {
   /**
    * 구독 재활성화 (꺼짐 → 켜짐). `unsubscribe`의 정확한 역 — 플래그만 다시 켠다.
    *
-   * `subscribe`(전체 문서 set+merge 덮어쓰기)와 달리 `enabled`만 토글하므로
-   * 기존 `alertMode`/`regions`를 그대로 보존한다(문서 선존재 전제 — 호출 측에서 보장).
+   * `subscribe`(필드 전체 교체)와 달리 `enabled`만 토글하므로
+   * 기존 `regions`/`sources`를 그대로 보존한다(문서 선존재 전제 — 호출 측에서 보장).
    * 재활성화는 라이프사이클 전이이므로 `subscribe`와 동일하게 `NOTIFICATION_SUBSCRIBE`를 발행한다.
    */
   async resubscribe(userId: string): Promise<AlarmSubscription> {
@@ -192,8 +234,8 @@ export class AlarmSubscriptionService {
 
       const defaults: AlarmSubscriptionInput = {
         enabled: true,
-        alertMode: AlertModeValue.ALL,
-        regions: [],
+        regions: { mode: AlertModeValue.ALL },
+        sources: { mode: AlertModeValue.ALL },
       };
       await this.store.setNotificationSettings(userId, defaults);
       const created = await this.store.getNotificationSettings(userId);

@@ -70,7 +70,7 @@ Ref: pdca-status.json Phase X.Y
    )"
    ```
 
-> **PDCA 사이클 PR 순서**: report 승인 → `/pdca archive` → `/pdca cleanup`까지 마친 뒤 PR을 생성한다 (문서 이동·상태 JSON 변경을 같은 PR에 포함). PR 머지 후 `git checkout dev && git pull` → `/pdca next`. 상세 순서는 `.claude/rules/review-process.md` 참조.
+> **PDCA 사이클 PR 순서**: report 승인 → `/pdca archive` → `/pdca cleanup`까지 마친 뒤 PR을 생성한다 (문서 이동·상태 JSON 변경을 같은 PR에 포함). PR 머지 후 `git checkout dev && git pull` → `/pdca next`. 상세 순서는 `.claude/docs/review-process.md` 참조.
 
 **PR 규칙**:
 
@@ -83,6 +83,5 @@ Ref: pdca-status.json Phase X.Y
 
 ## 검수자 가독성 (커밋·PR·코멘트 공통)
 
-외부 검수자가 읽는 글은 내부 맥락 없이 이해되게 쓴다.
-- 내부 용어(`C-1`, `E안`, `매치율`, `(C)/(U)` 등) 금지 — 문제·해결을 평범한 말로, 무엇을 + 왜.
+단어 선택·문장 쓰기는 `.claude/rules/writing-style.md`를 따른다.
 - 대안 비교·의사결정 경위 등 내부 상세는 기록용 문서(아카이브·메모리)에, 외부 글엔 요지만.

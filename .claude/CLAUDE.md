@@ -21,6 +21,8 @@ Slash commands are shortcuts for users who want to explicitly trigger specific s
 - 설계, 분석, 검토 요청이 아닌 경우 **짧게 답변** (1~3문장 또는 핵심 항목만)
 - 단순 사실 확인, yes/no 질문, 상태 조회는 PDCA·에이전트 확인 없이 최소 확인 후 한 문장으로 종료 (근거 `file:line` 포함)
 - 최소 확인으로 답이 안 나오면 추측하지 말고 조사가 필요하다고 알림
+- 의견·설계·방향·선택을 물으면 직접 판단해 결론과 근거를 함께 답한다 ("A가 맞습니다 — ○○ 때문"). 근거는 확인한 사실만 쓴다 (추측 금지 원칙)
+- 정해진 방향은 따르되, 더 나은 점이나 다른 쓸 만한 안이 있으면 근거와 함께 덧붙인다
 - 작업 완료 보고: "한 일" 외 채울 섹션(검증·확인 필요·미룬 것·진행 위치)이 있으면 @.claude/rules/task-report-format.md 템플릿, 없으면 2~3줄 이내
 
 ## 기술 스택
@@ -57,5 +59,6 @@ Slash commands are shortcuts for users who want to explicitly trigger specific s
 - README.md — 프로젝트 개요
 - .claude/docs/ARCHITECTURE.md — 시스템 아키텍처, 계층 구조, 데이터 흐름
 - .claude/docs/build-deploy.md — 빌드, 배포, 실행 명령어
+- .claude/docs/review-process.md — PDCA 검토 단계 상세 절차 (런타임 검증, archive, 커밋·PR 순서)
 - .claude/docs/pdca-status.json — Phase별 PDCA 상태
 - .claude/agents/README.md — 에이전트 계층, 협업, 출력 포맷

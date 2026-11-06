@@ -1,7 +1,7 @@
 import "@/common/utils/systemLogger";
 import crypto from "node:crypto";
 import { RedisClientType } from "redis";
-import { RecruitCacheStore, RecruitHashStore, RequestLimitStore } from "../store";
+import { NotifiedHashStore, RecruitCacheStore, RecruitHashStore } from "../store";
 import { redisKeyManager } from "../key";
 import { redisConnection } from "../client/connection";
 
@@ -13,7 +13,7 @@ export class RedisManager {
   public readonly store: {
     recruit: RecruitCacheStore;
     recruit_hash: RecruitHashStore;
-    requestLimit: RequestLimitStore;
+    notified: NotifiedHashStore;
   };
 
   private constructor(client: RedisClientType) {
@@ -21,7 +21,7 @@ export class RedisManager {
     this.store = {
       recruit: new RecruitCacheStore(client, redisKeyManager.recruit),
       recruit_hash: new RecruitHashStore(client, redisKeyManager.recruit),
-      requestLimit: new RequestLimitStore(client, redisKeyManager.requestLimit),
+      notified: new NotifiedHashStore(client, redisKeyManager.recruit),
     };
   }
 
@@ -104,6 +104,11 @@ export class RedisManager {
   /** 문자열 값 조회. */
   async getValue(key: string): Promise<string | null> {
     return this.client.get(key);
+  }
+
+  /** 문자열 값을 만료 시간과 함께 덮어쓴다 (SET key value PX). */
+  async setValue(key: string, value: string, ttlMs: number): Promise<void> {
+    await this.client.set(key, value, { PX: ttlMs });
   }
 
   /** 키 삭제. */

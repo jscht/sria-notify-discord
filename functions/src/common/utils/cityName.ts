@@ -59,7 +59,8 @@ export function isValidCityName(cityName: any): boolean {
   // eslint-disable-next-line @typescript-eslint/no-var-requires -- 순환참조 방지용 지연 require(파일 상단 주석 참조)
   const { CITIES } = require("@/common/constants");
 
-  const isKorean = (str: string) => /^[가-힣]+$/.test(str);
+  // "요정 왕국"처럼 공백이 있는 지역 이름도 한글로 판별한다
+  const isKorean = (str: string) => /^[가-힣 ]+$/.test(str);
 
   if (isKorean(cityName)) {
     return Object.values(CITIES).includes(cityName);

@@ -101,33 +101,43 @@ export async function sendNotificationDM(
 ```
 users/{userId}/notifications/settings   (문서 ID는 고정값 "settings")
 {
-  alertMode: 'ALL' | 'SELECTED',
-  regions: CityEn[],
   enabled: boolean,
+  regions: { mode: 'ALL' | 'SELECTED', values: CityEn[] },
+  sources: { mode: 'ALL' | 'SELECTED', values: RecruitSource[] },
   createdAt: Timestamp,   // 앱 계층은 number(ms)로 인지 — store가 Timestamp ↔ number 변환
   updatedAt: Timestamp
 }
 ```
 
+- `regions`(지역)와 `sources`(공고 사이트)는 서로 독립된 구독 조건이다. 두 조건을 모두 만족하는 공고만 보낸다.
+- `mode`가 `ALL`이면 `values`는 읽을 때 무시한다. 지역 모드만 바꿀 때 `values`를 남겨, `SELECTED`로 돌아오면 고른 지역이 그대로 보인다.
+- `mode`가 `SELECTED`이고 `regions.values`가 비어 있으면 정상 상태이며 알림은 0건이다.
+- 옛 형식 문서 `{ alertMode, regions: CityEn[] }`은 읽을 때 새 형식으로 바꾼다. 데이터 이전 작업은 없고, 다음 지역 쓰기나 전체 저장 때 저장 형식이 바뀌며 `alertMode`가 지워진다.
+- `SELECTED`의 `sources`는 공고 묶음 단위로 읽는다. `sria`가 있으면 일반 공고 전체가 켜진 것이다(`providers/recruit/sourceToggle.ts`의 `expandSourceFilter`).
+- `sources` 필드가 없으면 `{ mode: 'ALL' }`로 읽는다. 사이트를 고른 적 없는 구독자는 모든 사이트의 공고를 받는다.
+- 필터 형식이 잘못되면 던지지 않고 경고 로그를 남긴 뒤 기본값으로 읽는다. `regions`는 알림 0건 쪽(`SELECTED` + 빈 목록), `sources`는 `ALL`이다.
+
 ### 구현
 
 > **구현 SoT**: `providers/firebase/store/subscription.ts` (class `SubscriptionStore`)
-> **타입 SoT**: `@/common/types` (`AlarmSubscription` / `AlarmSubscriptionInput` / `AlertMode`)
+> **타입 SoT**: `@/common/types` (`AlarmSubscription` / `AlarmSubscriptionInput` / `AlarmFilter` / `AlertMode`)
 >
 > 예시 코드를 복제하지 않고 시그니처·계약만 요약한다 (문서-코드 드리프트 방지). 정확한 구현은 위 파일 참조.
 
 | 메서드 | 반환 | 비고 |
 |--------|------|------|
 | `getNotificationSettings(userId)` | `AlarmSubscription \| null` | 없으면 `null` (자동 생성 X) |
-| `setNotificationSettings(userId, input)` | `void` | CQS 쓰기 전용. 신규=createdAt+updatedAt, 기존=updatedAt만 |
-| `updateAlertMode(userId, mode)` | `void` | `update()` — 문서 없으면 NOT_FOUND throw |
-| `updateAlertRegions(userId, regions)` | `void` | `update()` |
+| `setNotificationSettings(userId, input)` | `void` | CQS 쓰기 전용. 신규=createdAt+updatedAt, 기존=updatedAt만. `regions`·`sources`를 통째로 교체하고 `alertMode`를 지운다 |
+| `updateRegionMode(userId, mode)` | `void` | 지역 모드만 변경하고 지역 목록은 남긴다. 옛 형식이면 배열을 `values`로 옮긴다. 문서 없으면 NOT_FOUND throw |
+| `updateRegionFilter(userId, filter)` | `void` | `regions` 전체 교체, `alertMode`를 지운다. 문서 없으면 NOT_FOUND throw |
+| `updateSourceFilter(userId, filter)` | `void` | `sources` 전체 교체. `regions`를 건드리지 않으므로 `alertMode`는 지우지 않는다. 문서 없으면 NOT_FOUND throw |
 | `toggleNotificationEnabled(userId, enabled)` | `void` | `update()` |
-| `getAllActiveSubscribers()` | `AlarmSubscription[]` | `collectionGroup('notifications')` + `enabled==true` |
+| `getAllActiveSubscribers()` | `AlarmSubscription[]` | `collectionGroup('notifications')` + `enabled==true`. 읽지 못한 문서는 경고 로그를 남기고 건너뛴다 |
 
 **계약**:
-- `Timestamp ↔ number` 변환은 store 경계(`toAlarmSubscription` 헬퍼)에서만 수행 — 외부 코드는 항상 `number`(ms)
+- `Timestamp ↔ number` 변환과 옛 형식 읽기 변환은 store 경계(`toAlarmSubscription` 헬퍼)에서만 수행 — 외부 코드는 항상 `number`(ms)와 새 형식만 본다
 - 쓰기 메서드는 `void`, 읽기 메서드만 데이터 반환 (CQS). 부분 업데이트는 `setNotificationSettings` 선행 전제
+- Firestore에 `undefined`를 쓰지 않는다. `ALL` 필터도 `values: []`로 저장한다 (`toStoredFilter` 헬퍼)
 - `ProxyStore` 패턴 준수: `private readonly db = getFirestore()`, private `getSettingsRef`, `providerLogger` 사용
 - 인스턴스화: `const subscriptionStore = new SubscriptionStore();` (싱글톤 export 없음)
 
@@ -291,7 +301,7 @@ export const FREE_TIER_LIMITS = {
 ## 작업 순서
 
 ### Phase 1.4 (subscription.ts) ✅ 완료
-- class `SubscriptionStore` 6개 메서드 구현 (CQS, `update()` 부분 업데이트, `Timestamp↔number` 격리)
+- class `SubscriptionStore` 구현 (CQS, `update()` 부분 업데이트, `Timestamp↔number` 격리)
 - 상세: 위 `firebase/store/subscription.ts` 섹션 참조
 
 ### Phase 1.8 (dmSender.ts)
@@ -314,4 +324,4 @@ export const FREE_TIER_LIMITS = {
 
 ---
 
-*최종 수정: 2026-05-25*
+*최종 수정: 2026-11-01*

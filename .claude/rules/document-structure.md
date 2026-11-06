@@ -5,6 +5,7 @@
 ### .claude/rules/ — 현재 구현 기준 문서 (Implementation Reference)
 - Update together with code changes
 - Always reflects current codebase state
+- `writing-style.md` — 모든 문서·주석·커밋의 글쓰기 규칙
 
 ### .claude/phases/ — Phase 시드 문서 (Phase Seeds)
 - Active phase planning documents
@@ -13,7 +14,7 @@
 ### .claude/docs/ — Claude 참조용 상태·설정 파일
 - `pdca-status.json` — PDCA 전체 상태 DB
 - `pdca-memory.json` — 현재 작업 포인터
-- `ARCHITECTURE.md`, `coding-conventions.md`, `tech-stack.md`, `build-deploy.md`
+- `ARCHITECTURE.md`, `coding-conventions.md`, `tech-stack.md`, `build-deploy.md`, `review-process.md`
 
 ### .claude/agents/ — 에이전트 정의
 - 12개 에이전트 파일 (YAML frontmatter + 마크다운)
@@ -33,6 +34,10 @@
 
 ### docs/reports/ — 보고서 (Reports)
 - 개선 보고서, 분석 보고서
+
+### docs/guides/ — 구조 가이드 (Guides)
+- 여러 Phase에 걸쳐 계속 쓰는 동작 설명 문서 (예: `scheduling-guide.md`)
+- 코드가 바뀌면 함께 고친다
 
 ### docs/archive/ — 아카이브 (Archived PDCA Documents)
 - PDCA 사이클 완료 후 아카이브된 문서

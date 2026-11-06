@@ -40,12 +40,11 @@ FIREBASE_PROJECT_ID=your-project-id
 
 # Discord
 DISCORD_BOT_TOKEN=your-bot-token
-DISCORD_CLIENT_ID=your-client-id
+DISCORD_APP_ID=your-app-id
 ADMIN_USER_ID=your-discord-user-id
 
 # Redis
 REDIS_URL=redis://127.0.0.1:6379
-REDIS_PASSWORD=your-redis-password
 
 # Hugging Face (Phase 4)
 HUGGINGFACE_API_KEY=your-api-key
@@ -73,10 +72,12 @@ functions/
    ```
 
 2. **환경 변수 추가 시**:
-   - `.env` 파일에 추가
-   - Firebase Functions에도 설정:
+   - 노출돼도 문제없는 값: `.env` 파일에 추가
+   - 비밀값(토큰·비밀번호·키): `.env`에 적지 않고 Secret Manager에 저장한 뒤,
+     `src/app/scheduler.ts`의 `FUNCTION_SECRETS` 목록에 이름을 추가한다.
+     목록에 없으면 배포된 함수가 실행될 때 값을 받지 못한다.
      ```bash
-     firebase functions:config:set key.name="value"
+     firebase functions:secrets:set <이름>
      ```
 
 3. **빌드 및 배포**:

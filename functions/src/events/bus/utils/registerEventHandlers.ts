@@ -7,7 +7,6 @@
 
 import { eventBus } from "../EventBus";
 import { eventLogger } from "./eventLogger";
-import { registerNotificationHandlers } from "../handlers/NotificationEventHandler";
 import { registerNotificationSendHandlers } from "../handlers/NotificationSendHandler";
 
 /**
@@ -21,7 +20,6 @@ let handlersRegistered = false;
  *
  * Phase별로 핸들러가 추가될 예정:
  * - Phase 1.3: RecruitCacheService 이벤트 핸들러
- * - Phase 1.7: NotificationService 이벤트 핸들러
  * - Phase 2.1: ErrorReportHandler 이벤트 핸들러
  * - Phase 2.2: AdminBroadcastHandler 이벤트 핸들러
  *
@@ -44,10 +42,6 @@ export function registerAllEventHandlers(): void {
 
   // Phase 1.3: RecruitCacheService 핸들러 (TODO)
   // registerRecruitHandlers();
-
-  // Phase 1.7: NotificationService 핸들러
-  // 등록만 연결 — registerAllEventHandlers() 자체의 startup 호출은 Phase 1.9 위임
-  registerNotificationHandlers();
 
   // Phase 1.8: NOTIFICATION_SEND 소비 핸들러 (DM 발송)
   // 등록만 연결 — startup 호출·client 로그인은 Phase 1.9 위임

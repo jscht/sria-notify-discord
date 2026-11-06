@@ -1,7 +1,7 @@
-import crypto from "node:crypto";
 import { RecruitCacheStore, RecruitHashStore } from "../providers/redis/store";
-import type { Job, HashedString, JobDiffResult, JobHashes } from "@/common/types/job.d";
+import type { Job, JobDiffResult, JobHashes } from "@/common/types/job.d";
 import type { Recruit, RecruitSource } from "@/common/types";
+import { hashRecruits } from "@/common/utils/recruitHash";
 
 /**
  * 공고 캐시 갱신 결과 상태
@@ -43,7 +43,7 @@ export class RecruitCacheService {
   ): Promise<{ status: CacheUpdateStatus; diff: JobDiffResult }> {
     const expiration = 6 * 60 * 60; // 6시간
     const newJobs = this.mapToJob(list);
-    const newHashes = this.createHashes(newJobs);
+    const newHashes = hashRecruits(list);
 
     // 소스 지정 시 diff 기준선을 그 소스 파티션으로만 한정.
     const allCurrent = await this.hashStore.getAll();
@@ -98,16 +98,6 @@ export class RecruitCacheService {
     }
 
     return { status, diff: diffJobs };
-  }
-
-  private createHashes(jobs: Job[]): JobHashes {
-    const hashObject = (obj: unknown): HashedString =>
-      crypto.createHash("sha256").update(JSON.stringify(obj)).digest("hex");
-
-    return jobs.reduce<JobHashes>((acc, job) => {
-      acc[job.id] = hashObject(job.value);
-      return acc;
-    }, {});
   }
 
   /**

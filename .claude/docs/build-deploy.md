@@ -37,7 +37,7 @@ Phase 1.10부터 봇은 **두 개의 독립 프로세스**로 나뉘어 배포�
 | 프로세스 | 역할 | 실행 대상 | 엔트리 | 트리거 |
 |----------|------|-----------|--------|--------|
 | **A · 게이트웨이** | discord.js WS 로그인 + 인터랙션(슬래시 커맨드·버튼 등) 수신 | Oracle Cloud x86 Micro VM (무료 티어) + pm2 상주 | `lib/app/gateway.js` | WS 상주 (HTTP 리슨 없음 · WS-only) |
-| **B · 스케줄러** | `onSchedule` → `syncRecruits` → REST DM 발송 (알림 체인 전체가 이 프로세스 안에서 완결) | Firebase Functions (`asia-northeast3`) | `lib/app/scheduler.js` (`package.json` `main`) | `recruitSchedule_sria` / `recruitSchedule_temp` |
+| **B · 스케줄러** | `onSchedule` → 공고 동기화(`syncRecruits`) 또는 알림(`runNotification` → REST DM 발송). 알림 체인 전체가 이 프로세스 안에서 완결 | Firebase Functions (`asia-northeast3`) | `lib/app/scheduler.js` (`package.json` `main`) | `recruitSchedule_sria` / `recruitSchedule_elias` / `notificationScheduler` |
 
 > **설계 근거**: DM 발송은 `providers/discord/dmSender.ts`가 REST(`rest.post`)를 사용하므로
 > 알림 체인 전체가 스케줄러/Functions 프로세스 내부에서 완결된다. WS 게이트웨이는 구독
@@ -53,7 +53,14 @@ Phase 1.10부터 봇은 **두 개의 독립 프로세스**로 나뉘어 배포�
 cd functions
 npm run deploy   # firebase deploy --only functions
 ```
-배포되는 함수: `recruitSchedule_sria`, `recruitSchedule_temp` (스케줄 트리거만).
+배포되는 함수는 스케줄 트리거 3개다. 작업은 `schedulers/jobs.ts`의 `SCHEDULED_JOBS` 한 곳에만 적는다. 운영 함수, 로컬 1회 실행, 로컬 계속 실행이 모두 이 목록을 읽기 때문이다.
+
+| 함수 | 일정 (한국 시간) | 제한 시간 | 하는 일 |
+|------|------------------|-----------|---------|
+| `recruitSchedule_sria` | 2시간마다 | 120초 | sria 공고 갱신 |
+| `recruitSchedule_elias` | 30분마다 | 120초 | elias 공고 갱신 |
+| `notificationScheduler` | 매일 06~20시 짝수 정시 | 300초 | 공고 동기화 뒤 구독자별 판정과 DM 발송 |
+
 `firebase.json`의 predeploy는 `npm run build`만 강제한다(lint는 repo-wide 스타일 debt로 별도 lint-cleanup 태스크로 분리 — todo.md).
 
 ### A · 게이트웨이 배포 (Oracle Cloud VM + pm2)
@@ -85,9 +92,9 @@ npm run register:commands
 3. 합친 dev에서 통합 스모크 1회: `npm run build` + 재연결/seed 하네스 + 로컬 DUMMY E2E(`RUN_SCHEDULER_ONCE=true node lib/app/scheduler.js`)
 
 ### 운영 실행 (U · 사용자)
-4. **🔴 Secret Manager 주입 (선행 필수)** — `firebase functions:secrets:set FB_PRIVATE_KEY` / `DISCORD_BOT_TOKEN` + 함수 바인딩. 미실행 시 이후 deploy가 런타임 실패
+4. **🔴 비밀값을 Secret Manager에 저장 (가장 먼저)** — `firebase functions:secrets:set`으로 `FB_PRIVATE_KEY` / `DISCORD_BOT_TOKEN` / `REDIS_URL` 세 값을 저장한다. 함수가 받을 값 목록은 `scheduler.ts`의 `FUNCTION_SECRETS`에 이미 적혀 있다. 저장하지 않으면 배포된 함수가 실행 중 실패한다
 5. **Blaze 종량제 전환** — onSchedule/egress에 필수 (과금 노출)
-6. **스케줄러 배포** — `npm run deploy` (프로세스 B, Functions)
+6. **스케줄러 배포** — `npm run deploy` (프로세스 B, Functions). 배포 뒤 Cloud Scheduler 작업 목록에 3개가 보이는지 확인한다
 7. **게이트웨이 상주** — Oracle VM: `pm2 start lib/app/gateway.js` + `pm2 startup` + `pm2 save` (프로세스 A)
 8. **슬래시커맨드 등록** — `npm run register:commands` (게이트웨이 live 후)
 9. **구독자 시드** — 실 Discord 구독 인터랙션으로 DM 대상 확보
@@ -103,8 +110,8 @@ CLAUDE.md의 일부 표기(`FIREBASE_PROJECT_ID`)는 오기다 — 코드는 아
 | 변수 | 게이트웨이(VM) | 스케줄러(Functions) | 비고 |
 |------|:---:|:---:|------|
 | `DISCORD_BOT_TOKEN` | ✅ (WS login) | ✅ (REST DM) | 두 프로세스 모두 필요 |
-| `DISCORD_CLIENT_ID` | ✅ | — | 커맨드 등록/인터랙션 |
-| `ADMIN_USER_ID` | ✅ | ✅ | 관리자 알림 |
+| `DISCORD_APP_ID` | ✅ | — | 커맨드 등록/인터랙션 (코드·.env 표기, `register-commands.ts:21`) |
+| `ADMIN_USER_ID` | (2.1/2.2) | (2.1/2.2) | 관리자 알림 — 현재 `.ts` 미사용(모니터링 미구현). Phase 2.1/2.2 도입 시 필요 |
 | `REDIS_URL` | ✅ | ✅ | 공유 캐시(Upstash). **O-2**: 코드는 `REDIS_URL`만 사용하며 `REDIS_PASSWORD`는 미사용 — Upstash 인증은 `rediss://<user>:<password>@host:port` URL에 내장된다(`rediss://` = TLS) |
 | `FB_PROJECT_ID` | ✅ | ✅ | **O-1**: 코드(`initFirebaseApp.ts`)는 명시적 cert로 `FB_PROJECT_ID` / `FB_CLIENT_EMAIL` / `FB_PRIVATE_KEY`를 사용. `FIREBASE_PROJECT_ID`(CLAUDE.md 표기)는 미사용 |
 | `FB_CLIENT_EMAIL` | ✅ | ✅ | 서비스 계정 이메일 |
@@ -112,7 +119,8 @@ CLAUDE.md의 일부 표기(`FIREBASE_PROJECT_ID`)는 오기다 — 코드는 아
 | `FB_*` (그 외) | ✅ | ✅ | `FB_TYPE`, `FB_PRIVATE_KEY_ID`, `FB_CLIENT_ID`, `FB_AUTH_URI`, `FB_TOKEN_URI`, `FB_AUTH_PROVIDER_X509_CERT_URL`, `FB_CLIENT_X509_CERT_URL`, `FB_UNIVERSE_DOMAIN` |
 | `HUGGINGFACE_API_KEY` | — | — | Phase 4 AI (미도입) |
 
-> ⚠️ **Secret Manager (Phase 1.14 U-P1 · 사용자 실행)**: Functions 프로덕션에서
-> `FB_PRIVATE_KEY` / `DISCORD_BOT_TOKEN` 같은 시크릿은 dotenv(`.env`)가 아니라
-> **Firebase/GCP Secret Manager**로 주입해야 한다(위 파이프라인 4단계, 🔴 선행 필수).
+> ⚠️ **Secret Manager (Phase 1.14 U-P1(배포용 비밀값 저장) · 사용자 실행)**: 배포된 Functions에서
+> 비밀값(`FB_PRIVATE_KEY` / `DISCORD_BOT_TOKEN` / `REDIS_URL`)은 `.env`가 아니라
+> **Google Cloud Secret Manager**에 저장해야 한다(위 파이프라인 4단계, 🔴 가장 먼저).
+> `.env`는 배포할 때 코드와 함께 올라가 암호화되지 않은 채 남기 때문이다.
 > `.env`는 로컬·VM용이며, VM(게이트웨이)은 `.env` 파일 또는 pm2 ecosystem env로 관리 가능하다.

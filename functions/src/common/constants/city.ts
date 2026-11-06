@@ -113,6 +113,12 @@ const JejuCities = {
   seogwipo: "서귀포",
 } as const;
 
+// elias 전용 지역. 구독 지역 이름이 공고 제목에 있어야 지역 필터를 통과하므로 여기에 적는다
+const EliasRegions = {
+  fairyKingdom: "요정 왕국",
+  worldTreeOrder: "세계수 교단",
+} as const;
+
 // 모든 도시를 합친 객체
 export const CITIES = {
   ...MetropolitanCities,
@@ -125,20 +131,22 @@ export const CITIES = {
   ...GyeongbukCities,
   ...GyeongnamCities,
   ...JejuCities,
+  ...EliasRegions,
 } as const;
 
 // 권역 그룹 (권역→시 2단계 SelectMenu 구성용)
 export const CITY_GROUPS = {
-  metropolitan: { label: "광역시", cities: MetropolitanCities },
-  gyeonggi: { label: "경기", cities: GyeonggiCities },
-  gangwon: { label: "강원", cities: GangwonCities },
-  chungbuk: { label: "충북", cities: ChungbukCities },
-  chungnam: { label: "충남", cities: ChungnamCities },
-  jeonbuk: { label: "전북", cities: JeonbukCities },
-  jeonnam: { label: "전남", cities: JeonnamCities },
-  gyeongbuk: { label: "경북", cities: GyeongbukCities },
-  gyeongnam: { label: "경남", cities: GyeongnamCities },
-  jeju: { label: "제주", cities: JejuCities },
+  metropolitan: { label: "광역시", itemPrompt: "시를 선택하세요", cities: MetropolitanCities },
+  gyeonggi: { label: "경기", itemPrompt: "시를 선택하세요", cities: GyeonggiCities },
+  gangwon: { label: "강원", itemPrompt: "시를 선택하세요", cities: GangwonCities },
+  chungbuk: { label: "충북", itemPrompt: "시를 선택하세요", cities: ChungbukCities },
+  chungnam: { label: "충남", itemPrompt: "시를 선택하세요", cities: ChungnamCities },
+  jeonbuk: { label: "전북", itemPrompt: "시를 선택하세요", cities: JeonbukCities },
+  jeonnam: { label: "전남", itemPrompt: "시를 선택하세요", cities: JeonnamCities },
+  gyeongbuk: { label: "경북", itemPrompt: "시를 선택하세요", cities: GyeongbukCities },
+  gyeongnam: { label: "경남", itemPrompt: "시를 선택하세요", cities: GyeongnamCities },
+  jeju: { label: "제주", itemPrompt: "시를 선택하세요", cities: JejuCities },
+  eliasRegions: { label: "elias 지역", itemPrompt: "지역을 선택하세요", cities: EliasRegions },
 } as const;
 
 export type CityGroupKey = keyof typeof CITY_GROUPS;

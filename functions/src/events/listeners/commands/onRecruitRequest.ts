@@ -2,7 +2,9 @@ import "@/common/utils/systemLogger";
 import { CommandInteraction } from "discord.js";
 import { RecruitService } from "../../../services";
 import { isValidCityName, chooseEunNeun } from "@/common/utils";
+import { sortByStartDateDesc } from "@/common/utils/recruitFilter";
 import { recruitMessageEmbed } from "@/providers/discord/builder/embeds/recruitMessageEmbed";
+import { getUserFacingSources, toDisplay } from "@/providers/recruit";
 import { eventBus, EventType } from "@/events/bus";
 import type { RecruitRequestedEvent, RecruitRequestCompletedEvent } from "@/events/bus";
 import type { CityEn } from "@/common/types";
@@ -53,12 +55,19 @@ export async function onRecruitRequest(interaction: CommandInteraction) {
       globalLogger.error("이벤트 발행 실패", e as Error, { event: EventType.RECRUIT_REQUEST_COMPLETED });
     }
 
-    if (!data || data.length === 0) {
-      await interaction.editReply(`❌ \`${region}\` 지역에 대한 공고가 없어요.`);
+    // 노출 사이트만 보여 준다. toDisplay()가 모르는 옛 소스 항목도 여기서 걸러진다.
+    const visible = new Set(getUserFacingSources());
+    const displays = sortByStartDateDesc(
+      (data ?? []).filter((r) => visible.has(r.source)),
+      (r) => r,
+    ).map(toDisplay);
+
+    if (displays.length === 0) {
+      await interaction.editReply(`❌ \`${region ?? "전체"}\` 지역에 대한 공고가 없어요.`);
       return;
     }
 
-    await interaction.editReply({ embeds: [recruitMessageEmbed(data, region)] });
+    await interaction.editReply({ embeds: [recruitMessageEmbed(displays, region)] });
   } catch (error) {
     try {
       eventBus.emitEvent<RecruitRequestCompletedEvent>(EventType.RECRUIT_REQUEST_COMPLETED, {

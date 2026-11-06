@@ -1,19 +1,61 @@
 import { providerLogger } from "@/common/utils/systemLogger";
-import { getFirestore, Timestamp } from "firebase-admin/firestore";
+import { FieldValue, getFirestore, Timestamp } from "firebase-admin/firestore";
 
+import { AlertMode } from "@/common/types";
 import type {
+  AlarmFilter,
   AlarmSubscription,
   AlarmSubscriptionInput,
-  AlertMode,
   CityEn,
+  RecruitSource,
 } from "@/common/types";
 import { FirebaseCollection } from "../constants/collections";
 
 const SETTINGS_DOC_ID = "settings" as const;
 
+/** 필드가 없거나 형식이 잘못된 소스 필터의 기본값 (기존 구독자는 모든 소스를 받음) */
+const ALL_FILTER: AlarmFilter<never> = { mode: AlertMode.ALL };
+/** 필드가 없거나 형식이 잘못된 지역 필터의 기본값 (알림 0건 쪽으로 안전하게) */
+const EMPTY_SELECTED: AlarmFilter<never> = { mode: AlertMode.SELECTED, values: [] };
+
+/**
+ * 저장된 필터 필드 하나를 AlarmFilter로 읽는다.
+ * 형식 오류는 던지지 않고 기본값으로 읽으며 경고 로그를 남긴다.
+ */
+function readFilter<T>(
+  raw: unknown,
+  fallback: AlarmFilter<T>,
+  field: string,
+  userId: string
+): AlarmFilter<T> {
+  if (raw === undefined) return fallback;
+  const obj = raw as { mode?: unknown; values?: unknown } | null;
+  if (obj?.mode === AlertMode.ALL) return { mode: AlertMode.ALL };
+  if (obj?.mode === AlertMode.SELECTED && Array.isArray(obj.values)) {
+    return { mode: AlertMode.SELECTED, values: obj.values as T[] };
+  }
+  providerLogger.warn("구독 필터 형식 오류 — 기본값으로 읽음", { userId, field });
+  return fallback;
+}
+
+/**
+ * 지역 필터를 읽는다. `regions`가 배열이면 옛 형식 `{alertMode, regions[]}`로 본다.
+ */
+function readRegions(
+  data: FirebaseFirestore.DocumentData,
+  userId: string
+): AlarmFilter<CityEn> {
+  if (Array.isArray(data.regions)) {
+    return data.alertMode === AlertMode.ALL ?
+      { mode: AlertMode.ALL } :
+      { mode: AlertMode.SELECTED, values: data.regions as CityEn[] };
+  }
+  return readFilter<CityEn>(data.regions, EMPTY_SELECTED, "regions", userId);
+}
+
 /**
  * Firestore 문서 → AlarmSubscription 변환 헬퍼
- * Timestamp → number(ms) 변환을 store 경계 한 곳에서 수행
+ * Timestamp → number(ms) 변환과 옛 형식 읽기 변환을 store 경계 한 곳에서 수행
  */
 function toAlarmSubscription(
   userId: string,
@@ -22,11 +64,21 @@ function toAlarmSubscription(
   return {
     userId,
     enabled: data.enabled,
-    alertMode: data.alertMode,
-    regions: data.regions ?? [],
+    regions: readRegions(data, userId),
+    sources: readFilter<RecruitSource>(data.sources, ALL_FILTER, "sources", userId),
     createdAt: (data.createdAt as Timestamp).toMillis(),
     updatedAt: (data.updatedAt as Timestamp).toMillis(),
   };
+}
+
+/**
+ * 도메인 필터 → 저장용 객체. ALL이어도 `values`는 항상 배열로 넣는다
+ * (모드만 SELECTED로 바꿨을 때 `values` 없는 문서가 생기지 않게 하고, `undefined` 쓰기를 막는다).
+ */
+function toStoredFilter<T>(f: AlarmFilter<T>): { mode: AlertMode; values: T[] } {
+  return f.mode === AlertMode.ALL ?
+    { mode: AlertMode.ALL, values: [] } :
+    { mode: AlertMode.SELECTED, values: f.values };
 }
 
 /**
@@ -74,35 +126,78 @@ export class SubscriptionStore {
     const now = Timestamp.now();
     const snap = await ref.get();
 
-    const docData = snap.exists ?
-      { ...input, updatedAt: now } :
-      { ...input, createdAt: now, updatedAt: now };
-
-    await ref.set(docData, { merge: true });
+    // merge 없이 필드 전체를 교체한다 (중첩 객체가 필드 단위로 합쳐지는 것을 피함)
+    const regions = toStoredFilter(input.regions);
+    const sources = toStoredFilter(input.sources);
+    if (snap.exists) {
+      await ref.update({
+        enabled: input.enabled,
+        regions,
+        sources,
+        alertMode: FieldValue.delete(),
+        updatedAt: now,
+      });
+    } else {
+      await ref.set({
+        enabled: input.enabled,
+        regions,
+        sources,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
     providerLogger.info("Notification settings saved", {
       userId,
-      alertMode: input.alertMode,
+      regionMode: input.regions.mode,
+      sourceMode: input.sources.mode,
       enabled: input.enabled,
     });
   }
 
   /**
-   * 알림 모드만 부분 업데이트.
+   * 지역 모드(ALL ↔ SELECTED)만 변경한다. 지역 목록은 남긴다.
    *
-   * @remarks 문서 선존재 전제 — `setNotificationSettings`로 먼저 생성돼 있어야 함.
-   *   `update()`는 문서가 없으면 NOT_FOUND를 throw → `createdAt` 누락 문서 생성을 차단.
+   * @remarks 문서 선존재 전제 — 없으면 `update()`가 NOT_FOUND를 throw.
+   *   옛 형식(`regions`가 배열)이면 배열을 `values`로 옮겨 새 형식으로 교체한다.
    */
-  async updateAlertMode(userId: string, alertMode: AlertMode): Promise<void> {
-    await this.getSettingsRef(userId).update({ alertMode, updatedAt: Timestamp.now() });
+  async updateRegionMode(userId: string, mode: AlertMode): Promise<void> {
+    const ref = this.getSettingsRef(userId);
+    const regions = (await ref.get()).data()?.regions;
+    const updatedAt = Timestamp.now();
+    if (Array.isArray(regions)) {
+      await ref.update({
+        regions: { mode, values: regions },
+        alertMode: FieldValue.delete(),
+        updatedAt,
+      });
+      return;
+    }
+    await ref.update({ "regions.mode": mode, "alertMode": FieldValue.delete(), updatedAt });
   }
 
   /**
-   * 알림 지역 목록만 부분 업데이트.
+   * 지역 필터 전체 교체.
    *
    * @remarks 문서 선존재 전제 — `setNotificationSettings` 선행 필수. 없으면 NOT_FOUND throw.
    */
-  async updateAlertRegions(userId: string, regions: CityEn[]): Promise<void> {
-    await this.getSettingsRef(userId).update({ regions, updatedAt: Timestamp.now() });
+  async updateRegionFilter(userId: string, filter: AlarmFilter<CityEn>): Promise<void> {
+    await this.getSettingsRef(userId).update({
+      regions: toStoredFilter(filter),
+      alertMode: FieldValue.delete(),
+      updatedAt: Timestamp.now(),
+    });
+  }
+
+  /**
+   * 소스 필터 전체 교체. `regions`는 건드리지 않으므로 `alertMode`도 지우지 않는다.
+   *
+   * @remarks 문서 선존재 전제 — `setNotificationSettings` 선행 필수. 없으면 NOT_FOUND throw.
+   */
+  async updateSourceFilter(userId: string, filter: AlarmFilter<RecruitSource>): Promise<void> {
+    await this.getSettingsRef(userId).update({
+      sources: toStoredFilter(filter),
+      updatedAt: Timestamp.now(),
+    });
   }
 
   /**
@@ -126,9 +221,18 @@ export class SubscriptionStore {
 
     return snapshot.docs
       .filter((doc) => doc.id === SETTINGS_DOC_ID)
-      .map((doc) => {
+      .flatMap((doc) => {
         const userId = doc.ref.parent.parent!.id;
-        return toAlarmSubscription(userId, doc.data());
+        try {
+          return [toAlarmSubscription(userId, doc.data())];
+        } catch (error) {
+          // 문서 하나 때문에 그 회차 알림 전체가 멈추지 않게 한다
+          providerLogger.warn("구독 문서를 읽지 못해 건너뜀", {
+            userId,
+            reason: (error as Error).message,
+          });
+          return [];
+        }
       });
   }
 }
